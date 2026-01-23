@@ -46,3 +46,9 @@
 - Key decisions: Use System.CommandLine to parse options and emit help output while keeping config file overrides intact
 - Files changed: src/Coralph/Coralph.csproj, src/Coralph/ArgParser.cs, src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 3 (2026-01-23T22:07:16.5238250+00:00)
+
+<promise>COMPLETE</promise>
