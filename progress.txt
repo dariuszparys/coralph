@@ -69,6 +69,15 @@ Model: GPT-5.1-Codex
 
 <promise>COMPLETE</promise>
 
+
+---
+# Iteration 1 (2026-01-23T22:25:28.823Z)
+
+- Task completed: Fix tool header colors and remove intent noise (issue #10)
+- Key decisions: Use ANSI background/foreground for headers when not redirected; suppress report_intent and "Intent logged" tool output
+- Files changed: src/Coralph/CopilotRunner.cs
+- Blockers/notes: None
+
 ---
 # Iteration 1 (2026-01-23T22:17:37.239Z)
 
@@ -92,3 +101,11 @@ Model: GPT-5.1-Codex
 - Key decisions: Use Figgle Standard font to render "Coralph" and trim trailing newline
 - Files changed: src/Coralph/Coralph.csproj, src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T22:23:33.5196990+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>

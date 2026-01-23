@@ -31,6 +31,7 @@ internal static class CopilotRunner
             var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var output = new StringBuilder();
 
+            string? lastToolName = null;
             using var sub = session.On(evt =>
             {
                 switch (evt)
@@ -44,6 +45,7 @@ internal static class CopilotRunner
                         Console.Write(reasoning.Data.DeltaContent);
                         break;
                     case ToolExecutionStartEvent toolStart:
+                        lastToolName = toolStart.Data.ToolName;
                         WriteToolHeader($"\n[Tool: {toolStart.Data.ToolName}]");
                         break;
                     case ToolExecutionCompleteEvent toolComplete:
@@ -51,9 +53,15 @@ internal static class CopilotRunner
                         var toolOutput = toolComplete.Data.Result?.Content;
                         if (!string.IsNullOrWhiteSpace(toolOutput))
                         {
+                            if (IsIgnorableToolOutput(lastToolName, toolOutput))
+                            {
+                                lastToolName = null;
+                                break;
+                            }
                             var display = SummarizeToolOutput(toolOutput);
                             Console.WriteLine(display);
                         }
+                        lastToolName = null;
                         break;
                     case AssistantMessageEvent:
                     case AssistantReasoningEvent:
@@ -84,13 +92,15 @@ internal static class CopilotRunner
 
     private static void WriteToolHeader(string text)
     {
-        var previousForeground = Console.ForegroundColor;
-        var previousBackground = Console.BackgroundColor;
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.BackgroundColor = ConsoleColor.DarkBlue;
-        Console.WriteLine(text);
-        Console.ForegroundColor = previousForeground;
-        Console.BackgroundColor = previousBackground;
+        if (Console.IsOutputRedirected)
+        {
+            Console.WriteLine(text);
+            return;
+        }
+
+        const string start = "\u001b[44m\u001b[97m";
+        const string reset = "\u001b[0m";
+        Console.WriteLine($"{start}{text}{reset}");
     }
 
     private static string SummarizeToolOutput(string toolOutput)
@@ -118,5 +128,16 @@ internal static class CopilotRunner
         }
 
         return preview;
+    }
+
+    private static bool IsIgnorableToolOutput(string? toolName, string toolOutput)
+    {
+        if (!string.IsNullOrWhiteSpace(toolName) &&
+            string.Equals(toolName, "report_intent", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(toolOutput.Trim(), "Intent logged", StringComparison.OrdinalIgnoreCase);
     }
 }
