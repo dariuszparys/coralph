@@ -7,7 +7,7 @@ internal static class ArgParser
     internal static (LoopOptions? Options, string? Error) Parse(string[] args)
     {
         var maxIterations = 10;
-        string model = "gpt-5";
+        string model = "gpt-5.1-codex";
 
         string promptFile = "prompt.md";
         string progressFile = "progress.txt";
@@ -119,7 +119,7 @@ internal static class ArgParser
         w.WriteLine();
         w.WriteLine("Options:");
         w.WriteLine("  --max-iterations <n>   Max loop iterations (default: 10)");
-        w.WriteLine("  --model <name>         Model (default: gpt-5)");
+        w.WriteLine("  --model <name>         Model (default: gpt-5.1-codex)");
         w.WriteLine("  --prompt-file <path>   Prompt file (default: prompt.md)");
         w.WriteLine("  --progress-file <path> Progress file (default: progress.txt)");
         w.WriteLine("  --issues-file <path>   Issues json file (default: issues.json)");
