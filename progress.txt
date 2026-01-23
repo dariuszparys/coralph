@@ -13,3 +13,14 @@
 - Key decisions: Gate COMPLETE sentinel until at least one pass per issue, capped by max iterations; treat invalid issues JSON as zero
 - Files changed: src/Coralph/Program.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T21:54:16.8764940+00:00)
+
+<promise>COMPLETE</promise>
+
+- Task completed: Display version and model on startup plus per-iteration model (issue #5)
+- Key decisions: Use assembly informational/version label for startup banner; record model in progress entries
+- Files changed: src/Coralph/Program.cs
+- Blockers/notes: None

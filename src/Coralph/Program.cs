@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Coralph;
@@ -38,6 +39,8 @@ if (initialConfig)
 
 var opt = LoadOptions(overrides, configFile);
 
+Console.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
+
 var ct = CancellationToken.None;
 
 if (opt.RefreshIssues)
@@ -73,7 +76,7 @@ for (var i = 1; i <= opt.MaxIterations; i++)
         Console.Error.WriteLine(output);
     }
 
-    var entry = $"\n\n---\n# Iteration {i} ({DateTimeOffset.UtcNow:O})\n\n{output}\n";
+    var entry = $"\n\n---\n# Iteration {i} ({DateTimeOffset.UtcNow:O})\n\nModel: {opt.Model}\n\n{output}\n";
     await File.AppendAllTextAsync(opt.ProgressFile, entry, ct);
 
     progress += entry;
@@ -175,4 +178,13 @@ static int CountIssues(string issuesJson)
     {
         return 0;
     }
+}
+
+static string GetVersionLabel()
+{
+    var assembly = Assembly.GetExecutingAssembly();
+    var info = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+    if (!string.IsNullOrWhiteSpace(info))
+        return info;
+    return assembly.GetName().Version?.ToString() ?? "unknown";
 }
