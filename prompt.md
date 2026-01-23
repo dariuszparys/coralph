@@ -58,18 +58,25 @@ Before comitting, run the feedback loops:
 
 After completing, append to progress.txt:
 
-- Task completed and PRD reference
-- Key decisions made
-- Files changed
-- Blockers or notes for next iteration
-- Ensure you commit progress.txt with the changed code
+```markdown
+## [Date] - [GitHub Issue ID]
+
+- What was implemented
+- Files changed: [list]
+- **Learnings:**
+  - Any patterns discovered
+  - Gotchas encountered
+```
 
 # COMMIT
 
 Make a git commit with using conventional commits:
 
+- What was implemented
 - Add key decisions made
-- Notes for next iteration
+- **Learnings:**
+  - Any patterns discovered
+  - Gotchas encountered
 
 # THE ISSUE
 

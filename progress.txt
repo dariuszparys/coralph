@@ -141,3 +141,50 @@ Model: GPT-5.1-Codex
 - Key decisions: Render tool headers with Spectre.Console Rule in orange; escape markup in headers; add xUnit test with TestConsole via InternalsVisibleTo
 - Files changed: src/Coralph/CopilotRunner.cs, src/Coralph/Coralph.csproj, src/Coralph.Tests/Coralph.Tests.csproj, src/Coralph.Tests/ToolOutputStylingTests.cs
 - Blockers/notes: None
+
+
+---
+# Iteration 1 (2026-01-23T22:37:53.5915250+00:00)
+
+Model: GPT-5.1-Codex
+
+<promise>COMPLETE</promise>
+
+## 2026-01-23 - #13
+
+- Updated README with prerequisites and clarified config file behavior
+- Files changed: README.md
+- **Learnings:**
+  - Keep README usage aligned with CLI defaults and optional config behavior
+
+
+---
+# Iteration 1 (2026-01-23T22:40:51.3128750+00:00)
+
+Model: GPT-5.1-Codex
+
+I see unexpected changes in prompt.md that I didn’t make. How would you like me to proceed with that file (keep, revert, or investigate)?
+
+
+---
+# Iteration 2 (2026-01-23T22:40:59.8210340+00:00)
+
+Model: GPT-5.1-Codex
+
+I see unexpected changes in prompt.md that I didn’t make. How would you like me to proceed with that file (keep, revert, or investigate)?
+
+
+---
+# Iteration 3 (2026-01-23T22:41:13.8942520+00:00)
+
+Model: GPT-5.1-Codex
+
+I see unexpected changes in prompt.md that I didn’t make. How would you like me to proceed with that file (keep, revert, or investigate)?
+
+
+---
+# Iteration 4 (2026-01-23T22:41:22.9380580+00:00)
+
+Model: GPT-5.1-Codex
+
+I see unexpected changes in prompt.md that I didn’t make. How would you like me to proceed with that file (keep, revert, or investigate)?

@@ -1,6 +1,11 @@
-# coralph
+# Coralph
 
 A first cut of a “Ralph loop” runner implemented in C#/.NET 10 using the GitHub Copilot SDK.
+
+## Prerequisites
+
+- .NET SDK 10 preview
+- GitHub CLI (`gh`) authenticated if you use `--refresh-issues`
 
 ## Run
 
@@ -8,7 +13,7 @@ A first cut of a “Ralph loop” runner implemented in C#/.NET 10 using the Git
 # optional: refresh issues.json using gh
 (dotnet run --project src/Coralph -- --refresh-issues --repo owner/name) || true
 
-# run loop (default reads ./issues.json)
+# run loop (default reads ./issues.json and uses ./coralph.config.json if present)
 dotnet run --project src/Coralph -- --max-iterations 10
 
 # create a config file with defaults (safe: refuses to overwrite existing file)
