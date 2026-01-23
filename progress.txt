@@ -52,3 +52,11 @@
 # Iteration 3 (2026-01-23T22:07:16.5238250+00:00)
 
 <promise>COMPLETE</promise>
+
+---
+# Iteration 4 (2026-01-23T22:15:14.343168+00:00)
+
+- Task completed: Add ASCII startup banner for Coralph output (issue #8)
+- Key decisions: Keep banner as simple ASCII lines before version/model line
+- Files changed: src/Coralph/Program.cs
+- Blockers/notes: None

@@ -40,6 +40,16 @@ if (initialConfig)
 
 var opt = LoadOptions(overrides, configFile);
 
+var banner = string.Join(Environment.NewLine, new[]
+{
+    "  _____                _       _",
+    " / ____|              | |     | |",
+    "| |     ___  _ __  ___| | ___ | |__",
+    "| |    / _ \\\\| '_ \\\\/ __| |/ _ \\\\| '_ \\\\",
+    "| |___| (_) | | | \\__ \\ | (_) | |_) |",
+    " \\_____\\___/|_| |_|___/_|\\___/|_.__/"
+});
+Console.WriteLine(banner);
 Console.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
 
 var ct = CancellationToken.None;
