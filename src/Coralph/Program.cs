@@ -68,7 +68,7 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     var sb = new StringBuilder();
 
     sb.AppendLine("You are running inside a loop. Use the files and repository as your source of truth.");
-    sb.AppendLine("Stop condition: when everything is done, output the single word COMPLETE.");
+    sb.AppendLine("Stop condition: when everything is done, output EXACTLY: <promise>COMPLETE</promise>.");
     sb.AppendLine();
 
     sb.AppendLine("# ISSUES_JSON");
@@ -88,12 +88,18 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     sb.AppendLine();
 
     sb.AppendLine("# OUTPUT_RULES");
-    sb.AppendLine("- If you are done, output EXACTLY: COMPLETE");
+    sb.AppendLine("- If you are done, output EXACTLY: <promise>COMPLETE</promise>");
     sb.AppendLine("- Otherwise, output what you changed and what you will do next iteration.");
 
     return sb.ToString();
 }
 
 static bool ContainsComplete(string output)
-    => output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+{
+    if (output.Contains("<promise>COMPLETE</promise>", StringComparison.OrdinalIgnoreCase))
+        return true;
+
+    // Back-compat with older sentinel
+    return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Any(l => string.Equals(l, "COMPLETE", StringComparison.OrdinalIgnoreCase));
+}
