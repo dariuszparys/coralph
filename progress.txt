@@ -1,0 +1,24 @@
+
+
+---
+# Iteration 1 (2026-01-23T20:00:12.8086270+00:00)
+
+ERROR: InvalidOperationException: Execution failed: Error: Failed to get response from the AI model; retried 5 times (total retry wait time: 101.7873466111709 seconds) (Request-ID FC55:3037B:33411F2:39E9280:6973D309) Last error: CAPIError: 400 {"message":"","code":"invalid_request_body"}
+
+
+---
+# Iteration 2 (2026-01-23T20:02:10.3213650+00:00)
+
+ERROR: InvalidOperationException: Execution failed: Error: Failed to get response from the AI model; retried 5 times (total retry wait time: 87.71420928390478 seconds) (Request-ID 1D3E:38AAD4:3320CEE:39CDA86:6973D38E) Last error: CAPIError: 400 {"message":"","code":"invalid_request_body"}
+Task completed: Add simple issues.json test harness (Issue #1)
+
+Key decisions:
+- Provide a repo-local sample issues file (`issues.sample.json`) that matches the gh `issue list --json` shape.
+- Keep runtime behavior unchanged; use existing `--issues-file` option to select the harness.
+
+Files changed:
+- issues.sample.json (new)
+- README.md (docs)
+
+Notes:
+- Use: dotnet run --project src/Coralph -- --issues-file issues.sample.json
