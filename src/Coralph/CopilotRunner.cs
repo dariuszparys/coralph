@@ -39,13 +39,24 @@ internal static class CopilotRunner
                         output.Append(delta.Data.DeltaContent);
                         break;
                     case AssistantReasoningDeltaEvent reasoning:
-                        // Stream reasoning/thinking content
+                        // Stream reasoning to console only (not saved to progress)
                         Console.Write(reasoning.Data.DeltaContent);
-                        output.Append(reasoning.Data.DeltaContent);
                         break;
                     case ToolExecutionStartEvent toolStart:
                         Console.WriteLine($"\n[Tool: {toolStart.Data.ToolName}]");
-                        output.AppendLine($"\n[Tool: {toolStart.Data.ToolName}]");
+                        break;
+                    case ToolExecutionCompleteEvent toolComplete:
+                        // Show tool output in console
+                        var toolOutput = toolComplete.Data.Result?.Content;
+                        if (!string.IsNullOrWhiteSpace(toolOutput))
+                        {
+                            // Truncate very long outputs for readability
+                            const int maxLen = 2000;
+                            var display = toolOutput.Length > maxLen
+                                ? toolOutput[..maxLen] + "\n... (truncated)"
+                                : toolOutput;
+                            Console.WriteLine(display);
+                        }
                         break;
                     case AssistantMessageEvent:
                     case AssistantReasoningEvent:

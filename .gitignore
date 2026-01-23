@@ -44,6 +44,7 @@ CodeCoverage/
 # Coralph loop artifacts
 progress.txt
 issues.json
+*.tmp
 
 # MSBuild Binary and Structured Log
 *.binlog
