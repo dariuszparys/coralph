@@ -1,4 +1,4 @@
-Task: Add running args from options file (Issue #2)
-Key decisions: Added JSON configuration provider with overrides, implemented --initial-config generator, ensured Copilot model default is GPT-5.1-Codex
-Files changed: src/Coralph/Program.cs, src/Coralph/ArgParser.cs, src/Coralph/LoopOptions.cs, README.md, coralph.config.json
-Notes: No blockers
+- Task completed: Make config file optional (issue #6)
+- Key decisions: Treat missing config as optional by marking JSON file optional when loading
+- Files changed: src/Coralph/Program.cs
+- Blockers/notes: None

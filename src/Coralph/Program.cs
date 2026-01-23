@@ -89,12 +89,14 @@ return 0;
 static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
 {
     var path = configFile ?? LoopOptions.ConfigurationFileName;
+    if (!Path.IsPathRooted(path))
+        path = Path.Combine(AppContext.BaseDirectory, path);
     var options = new LoopOptions();
 
     if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
     {
         var config = new ConfigurationBuilder()
-            .AddJsonFile(path, optional: false, reloadOnChange: false)
+            .AddJsonFile(path, optional: true, reloadOnChange: false)
             .Build();
 
         config.GetSection(LoopOptions.ConfigurationSectionName).Bind(options);
