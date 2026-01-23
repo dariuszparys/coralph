@@ -104,7 +104,8 @@ internal static class CopilotRunner
             return;
         }
 
-        AnsiConsole.MarkupLine($"[orange1]{Markup.Escape(text)}[/]");
+        var escaped = Markup.Escape(text);
+        AnsiConsole.MarkupLine($"[black on orange1] {escaped} [/]");
     }
 
     private static string SummarizeToolOutput(string toolOutput)
