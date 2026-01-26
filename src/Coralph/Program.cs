@@ -70,6 +70,18 @@ var issues = File.Exists(opt.IssuesFile)
 var progress = File.Exists(opt.ProgressFile)
     ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
     : string.Empty;
+
+if (!TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
+{
+    ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
+    return 1;
+}
+
+if (!hasOpenIssues)
+{
+    ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+    return 0;
+}
 for (var i = 1; i <= opt.MaxIterations; i++)
 {
     ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
@@ -171,6 +183,51 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     sb.AppendLine("- If unsure whether to output COMPLETE, do NOT output it - continue working.");
 
     return sb.ToString();
+}
+
+static bool TryGetHasOpenIssues(string issuesJson, out bool hasOpenIssues, out string? error)
+{
+    hasOpenIssues = false;
+    error = null;
+
+    if (string.IsNullOrWhiteSpace(issuesJson))
+        return true;
+
+    try
+    {
+        using var doc = JsonDocument.Parse(issuesJson);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            error = "issues.json must be a JSON array.";
+            return false;
+        }
+
+        foreach (var issue in doc.RootElement.EnumerateArray())
+        {
+            if (issue.ValueKind != JsonValueKind.Object)
+            {
+                hasOpenIssues = true;
+                break;
+            }
+
+            if (issue.TryGetProperty("state", out var state) && state.ValueKind == JsonValueKind.String)
+            {
+                var stateValue = state.GetString();
+                if (string.Equals(stateValue, "closed", StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+
+            hasOpenIssues = true;
+            break;
+        }
+
+        return true;
+    }
+    catch (JsonException ex)
+    {
+        error = $"Failed to parse issues JSON: {ex.Message}";
+        return false;
+    }
 }
 
 static async Task<int> RunIssueGeneratorAsync(LoopOptions opt, CancellationToken ct)

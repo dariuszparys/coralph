@@ -276,3 +276,26 @@ Model: GPT-5.1-Codex
 Model: GPT-5.2-Codex
 
 Added Dependabot config for GitHub.Copilot.SDK with daily NuGet checks, ran build/tests, logged progress, committed, and closed #24.
+
+
+---
+# Iteration 1 (2026-01-26T12:16:51.4532510+00:00)
+
+Model: GPT-5.2-Codex
+
+NO_OPEN_ISSUES
+
+
+---
+# Iteration 2 (2026-01-26T12:16:55.8759130+00:00)
+
+Model: GPT-5.2-Codex
+
+NO_OPEN_ISSUES
+
+## 2026-01-26 - #N/A
+
+- Exit the loop early when issues.json has no open issues (prints NO_OPEN_ISSUES) and validate issues JSON before running.
+- Files changed: src/Coralph/Program.cs, README.md
+- **Learnings:**
+  - Guarding the loop with a lightweight issues.json parse prevents wasted iterations and keeps behavior explicit.

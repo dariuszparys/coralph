@@ -49,4 +49,4 @@ Files used:
 - `coralph.config.json` (optional configuration overrides)
 - `--prd-file` (input; used with `--generate-issues`)
 
-The loop stops early when the assistant outputs a line containing `COMPLETE`.
+The loop stops early when the assistant outputs a line containing `COMPLETE`, or when issues.json has no open issues (prints `NO_OPEN_ISSUES`).
