@@ -1,3 +1,10 @@
+import {
+  buildCombinedPrompt,
+  readIssuesJson,
+  readProgressText,
+  readPromptTemplate,
+} from "./utils/files";
+
 const args = process.argv.slice(2);
 
 let maxIterations = 10;
@@ -49,11 +56,9 @@ for (let i = 0; i < args.length; i += 1) {
   }
 }
 
-const prompt = await Bun.file(promptFile).text();
-const issuesExists = await Bun.file(issuesFile).exists();
-const issues = issuesExists ? await Bun.file(issuesFile).text() : "[]";
-const progressExists = await Bun.file(progressFile).exists();
-let progress = progressExists ? await Bun.file(progressFile).text() : "";
+const prompt = await readPromptTemplate(promptFile);
+const issues = await readIssuesJson(issuesFile);
+let progress = await readProgressText(progressFile);
 
 const combinedPrompt = buildCombinedPrompt(prompt, issues, progress);
 
@@ -69,27 +74,3 @@ for (let i = 1; i <= maxIterations; i += 1) {
 }
 
 console.log(combinedPrompt.length > 0 ? "" : "");
-
-function buildCombinedPrompt(promptTemplate: string, issuesJson: string, progressText: string) {
-  const lines = [];
-  lines.push("You are running inside a loop. Use the files and repository as your source of truth.");
-  lines.push("Stop condition: when everything is done, output EXACTLY: <promise>COMPLETE</promise>.");
-  lines.push("");
-  lines.push("# ISSUES_JSON");
-  lines.push("```json");
-  lines.push(issuesJson.trim());
-  lines.push("```");
-  lines.push("");
-  lines.push("# PROGRESS_SO_FAR");
-  lines.push("```text");
-  lines.push(progressText.trim() === "" ? "(empty)" : progressText.trim());
-  lines.push("```");
-  lines.push("");
-  lines.push("# INSTRUCTIONS");
-  lines.push(promptTemplate.trim());
-  lines.push("");
-  lines.push("# OUTPUT_RULES");
-  lines.push("- If you are done, output EXACTLY: <promise>COMPLETE</promise>");
-  lines.push("- Otherwise, output what you changed and what you will do next iteration.");
-  return lines.join("\n");
-}

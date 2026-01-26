@@ -1,0 +1,6 @@
+## 2026-01-26 - #17
+
+- Implemented utils/files.ts for prompt/issue/progress reads and combined prompt composition aligned with the .NET runner.
+- Files changed: src/index.ts, src/utils/files.ts
+- **Learnings:**
+  - Bun file existence checks map cleanly to the .NET defaults for missing issues/progress.
