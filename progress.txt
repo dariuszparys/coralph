@@ -435,3 +435,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - GitHub Actions workflows need explicit permissions for GITHUB_TOKEN when creating releases
   - The softprops/action-gh-release@v1 action requires write access to repository contents
   - Adding permissions at workflow level (not job level) grants access to all jobs
+
+---
+## 2026-01-26 - #32
+
+- Created comprehensive documentation for using Coralph with non-.NET repositories
+- Added docs/using-with-other-repos.md with setup instructions, customization patterns, and examples for Python, JavaScript, Go, and Rust
+- Updated README.md with link to new documentation
+- Files changed: docs/using-with-other-repos.md, README.md
+- **Learnings:**
+  - Clear separation between Coralph's runtime requirements (.NET) and target repository tech stack (any language)
+  - `prompt.md` customization is the key to adapting Coralph for different tech stacks
+  - Examples of Python, JavaScript, Go, and Docker-based workflows help users understand adaptation patterns
+  - Configuration reference table provides quick overview of available options

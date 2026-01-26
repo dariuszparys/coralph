@@ -48,6 +48,10 @@ dotnet run --project src/Coralph -- --issues-file issues.sample.json --max-itera
 dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 ```
 
+## Documentation
+
+- **[Using Coralph with Other Repositories](docs/using-with-other-repos.md)** - Adapt Coralph for Python, JavaScript, Go, and other tech stacks
+
 ## Features
 
 ### Streaming Output Improvements
