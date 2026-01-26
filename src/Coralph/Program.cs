@@ -178,16 +178,6 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
 
     sb.AppendLine("# INSTRUCTIONS");
     sb.AppendLine(promptTemplate.Trim());
-    sb.AppendLine();
-
-    sb.AppendLine("# OUTPUT_RULES");
-    sb.AppendLine("- Work on ONE issue per iteration. Make real changes to files.");
-    sb.AppendLine("- After making changes, summarize what you did and what remains.");
-    sb.AppendLine("- Only output <promise>COMPLETE</promise> when ALL of these are true:");
-    sb.AppendLine("  1. You made changes in THIS iteration (not just reviewed code)");
-    sb.AppendLine("  2. Every issue in ISSUES_JSON has been addressed");
-    sb.AppendLine("  3. There is genuinely no remaining work");
-    sb.AppendLine("- If unsure whether to output COMPLETE, do NOT output it - continue working.");
 
     return sb.ToString();
 }

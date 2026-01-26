@@ -107,3 +107,13 @@ done.
 - Do NOT make unnecessary commits (like updating progress.txt for work already
   logged)
 - If nothing needs to be done, output "ALL_TASKS_COMPLETE" and stop
+
+# OUTPUT_RULES
+
+- Work on ONE issue per iteration. Make real changes to files.
+- After making changes, summarize what you did and what remains.
+- Only output <promise>COMPLETE</promise> when ALL of these are true:
+  1. You made changes in THIS iteration (not just reviewed code)
+  2. Every issue in ISSUES_JSON has been addressed
+  3. There is genuinely no remaining work
+- If unsure whether to output COMPLETE, do NOT output it - continue working.

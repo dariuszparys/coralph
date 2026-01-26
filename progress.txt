@@ -299,3 +299,11 @@ NO_OPEN_ISSUES
 - Files changed: src/Coralph/Program.cs, README.md
 - **Learnings:**
   - Guarding the loop with a lightweight issues.json parse prevents wasted iterations and keeps behavior explicit.
+
+## 2026-01-26 - #26
+
+- Consolidated prompt content: moved OUTPUT_RULES from Program.cs to prompt.md to eliminate duplication
+- Files changed: prompt.md, src/Coralph/Program.cs
+- **Learnings:**
+  - Keeping all prompt content in a single file makes it easier to maintain and modify the loop behavior
+  - The BuildCombinedPrompt method now only assembles the structure, not the content
