@@ -448,3 +448,17 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - `prompt.md` customization is the key to adapting Coralph for different tech stacks
   - Examples of Python, JavaScript, Go, and Docker-based workflows help users understand adaptation patterns
   - Configuration reference table provides quick overview of available options
+
+---
+## 2026-01-26 - #31
+
+- Configured Coralph.csproj for self-contained publishing with PublishSingleFile and IncludeNativeLibrariesForSelfExtract properties
+- Simplified publish commands in README and docs to remove redundant CLI flags (now in .csproj)
+- Updated release workflow to use simpler dotnet publish command
+- Verified self-contained build produces single ~83MB executable with embedded .NET runtime
+- Files changed: src/Coralph/Coralph.csproj, README.md, docs/using-with-other-repos.md, .github/workflows/release.yml
+- **Learnings:**
+  - Adding PublishSingleFile and IncludeNativeLibrariesForSelfExtract to .csproj eliminates need for /p: flags in every publish command
+  - Self-contained builds create larger binaries (~83MB) but eliminate .NET runtime dependency for end users
+  - Keeping RID out of .csproj allows flexibility to build for different platforms without editing the project file
+  - Workflow now has simpler, more maintainable publish command

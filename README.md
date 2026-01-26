@@ -68,13 +68,25 @@ Built-in domain-specific tools available to the assistant:
 
 ## Build a distributable binary
 
-```bash
-# self-contained, single-file publish (adjust RID as needed: osx-arm64, osx-x64, linux-x64, win-x64)
-dotnet publish src/Coralph -c Release -r osx-arm64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+Coralph is configured for self-contained, single-file publishing by default. Choose your target platform's Runtime Identifier (RID):
 
-# run the published binary
-./src/Coralph/bin/Release/net10.0/osx-arm64/publish/Coralph --max-iterations 5
+```bash
+# Linux (most common)
+dotnet publish src/Coralph -c Release -r linux-x64 --self-contained
+
+# macOS (Intel)
+dotnet publish src/Coralph -c Release -r osx-x64 --self-contained
+
+# macOS (Apple Silicon)
+dotnet publish src/Coralph -c Release -r osx-arm64 --self-contained
+
+# Windows
+dotnet publish src/Coralph -c Release -r win-x64 --self-contained
+
+# The binary will be in: src/Coralph/bin/Release/net10.0/<RID>/publish/
 ```
+
+**Note**: Self-contained builds include the .NET runtime (~77MB), so users don't need .NET installed.
 
 Files used:
 - `prompt.md` (instructions)

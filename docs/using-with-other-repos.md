@@ -32,7 +32,9 @@ sudo mv coralph-linux-x64 /usr/local/bin/coralph
 ```bash
 git clone https://github.com/dariuszparys/coralph.git
 cd coralph
-dotnet build
+dotnet publish src/Coralph -c Release -r linux-x64 --self-contained
+
+# Binary will be in: src/Coralph/bin/Release/net10.0/linux-x64/publish/Coralph
 ```
 
 ### 2. Navigate to Your Target Repository
