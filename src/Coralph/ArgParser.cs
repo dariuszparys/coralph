@@ -28,6 +28,7 @@ internal static class ArgParser
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
+        var bannerOption = new Option<bool>("--banner", "Show Coralph banner and version info");
 
         root.AddOption(helpOption);
         root.AddOption(maxIterationsOption);
@@ -43,6 +44,7 @@ internal static class ArgParser
         root.AddOption(cliUrlOption);
         root.AddOption(configOption);
         root.AddOption(initialConfigOption);
+        root.AddOption(bannerOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -150,6 +152,11 @@ internal static class ArgParser
             options.GenerateIssues = true;
         }
 
+        if (result.GetValueForOption(bannerOption))
+        {
+            options.Banner = true;
+        }
+
         if (options.GenerateIssues == true && string.IsNullOrWhiteSpace(options.PrdFile))
         {
             errorMessages.Add("--prd-file is required when using --generate-issues");
@@ -233,6 +240,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
+        root.AddOption(new Option<bool>("--banner", "Show Coralph banner and version info"));
         return root;
     }
 }

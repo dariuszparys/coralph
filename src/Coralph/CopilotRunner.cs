@@ -38,12 +38,12 @@ internal static class CopilotRunner
                 switch (evt)
                 {
                     case AssistantMessageDeltaEvent delta:
-                        Console.Write(delta.Data.DeltaContent);
+                        ConsoleOutput.Write(delta.Data.DeltaContent);
                         output.Append(delta.Data.DeltaContent);
                         break;
                     case AssistantReasoningDeltaEvent reasoning:
                         // Stream reasoning to console only (not saved to progress)
-                        Console.Write(reasoning.Data.DeltaContent);
+                        ConsoleOutput.Write(reasoning.Data.DeltaContent);
                         break;
                     case ToolExecutionStartEvent toolStart:
                         lastToolName = toolStart.Data.ToolName;
@@ -60,13 +60,13 @@ internal static class CopilotRunner
                                 break;
                             }
                             var display = SummarizeToolOutput(toolOutput);
-                            Console.WriteLine(display);
+                            ConsoleOutput.WriteLine(display);
                         }
                         lastToolName = null;
                         break;
                     case AssistantMessageEvent:
                     case AssistantReasoningEvent:
-                        Console.WriteLine();
+                        ConsoleOutput.WriteLine();
                         break;
                     case SessionErrorEvent err:
                         done.TrySetException(new InvalidOperationException(err.Data.Message));
@@ -100,12 +100,12 @@ internal static class CopilotRunner
     {
         if (isOutputRedirected)
         {
-            Console.WriteLine(text);
+            ConsoleOutput.WriteLine(text);
             return;
         }
 
         var escaped = Markup.Escape(text);
-        AnsiConsole.MarkupLine($"[black on orange1] {escaped} [/]");
+        ConsoleOutput.MarkupLine($"[black on orange1] {escaped} [/]");
     }
 
     private static string SummarizeToolOutput(string toolOutput)

@@ -254,3 +254,10 @@ Model: GPT-5.1-Codex
 - Files changed: package.json, tsconfig.json, migration.md, src/index.ts, src/utils/files.ts, coralph.config.json, progress.txt
 - **Learnings:**
   - Keep migration artifacts out of the main branch until the port is ready.
+
+## 2026-01-26 - #23
+
+- Added --banner flag to show the Coralph ASCII banner with version/model on demand.
+- Files changed: src/Coralph/ArgParser.cs, src/Coralph/LoopOptions.cs, src/Coralph/Program.cs, README.md, coralph.config.json
+- **Learnings:**
+  - Keeping banner output behind a flag avoids changing default startup output.

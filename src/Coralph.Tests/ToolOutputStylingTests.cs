@@ -11,7 +11,7 @@ public class ToolOutputStylingTests
     public void ToolHeader_UsesOrangeMarkup()
     {
         var console = new TestConsole();
-        AnsiConsole.Console = console;
+        ConsoleOutput.Configure(console, console);
 
         var method = typeof(CopilotRunner).GetMethod(
             "WriteToolHeader",
@@ -25,5 +25,6 @@ public class ToolOutputStylingTests
 
         var output = console.Output;
         Assert.Contains("[Tool: sample]", output);
+        ConsoleOutput.Reset();
     }
 }

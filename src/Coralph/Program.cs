@@ -12,11 +12,11 @@ if (overrides is null)
 {
     if (err is not null)
     {
-        Console.Error.WriteLine(err);
-        Console.Error.WriteLine();
+        ConsoleOutput.WriteErrorLine(err);
+        ConsoleOutput.WriteErrorLine();
     }
 
-    var output = err is null ? Console.Out : Console.Error;
+    var output = err is null ? ConsoleOutput.OutWriter : ConsoleOutput.ErrorWriter;
     ArgParser.PrintUsage(output);
     return showHelp && err is null ? 0 : 2;
 }
@@ -26,7 +26,7 @@ if (initialConfig)
     var path = configFile ?? LoopOptions.ConfigurationFileName;
     if (File.Exists(path))
     {
-        Console.Error.WriteLine($"Refusing to overwrite existing config file: {path}");
+        ConsoleOutput.WriteErrorLine($"Refusing to overwrite existing config file: {path}");
         return 1;
     }
 
@@ -36,15 +36,18 @@ if (initialConfig)
     };
     var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
     await File.WriteAllTextAsync(path, json, CancellationToken.None);
-    Console.WriteLine($"Wrote default configuration to {path}");
+    ConsoleOutput.WriteLine($"Wrote default configuration to {path}");
     return 0;
 }
 
 var opt = LoadOptions(overrides, configFile);
 
-var banner = FiggleFonts.Standard.Render("Coralph");
-Console.WriteLine(banner.TrimEnd());
-Console.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
+if (opt.Banner)
+{
+    var banner = FiggleFonts.Standard.Render("Coralph");
+    ConsoleOutput.WriteLine(banner.TrimEnd());
+    ConsoleOutput.WriteLine($"Coralph {GetVersionLabel()} | Model: {opt.Model}");
+}
 
 var ct = CancellationToken.None;
 
@@ -55,7 +58,7 @@ if (opt.GenerateIssues)
 
 if (opt.RefreshIssues)
 {
-    Console.WriteLine("Refreshing issues...");
+    ConsoleOutput.WriteLine("Refreshing issues...");
     var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
     await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
 }
@@ -67,11 +70,9 @@ var issues = File.Exists(opt.IssuesFile)
 var progress = File.Exists(opt.ProgressFile)
     ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
     : string.Empty;
-var minimumIterations = Math.Min(opt.MaxIterations, Math.Max(1, CountIssues(issues)));
-
 for (var i = 1; i <= opt.MaxIterations; i++)
 {
-    Console.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
+    ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
     var combinedPrompt = BuildCombinedPrompt(promptTemplate, issues, progress);
 
@@ -83,7 +84,7 @@ for (var i = 1; i <= opt.MaxIterations; i++)
     catch (Exception ex)
     {
         output = $"ERROR: {ex.GetType().Name}: {ex.Message}";
-        Console.Error.WriteLine(output);
+        ConsoleOutput.WriteErrorLine(output);
     }
 
     var entry = $"\n\n---\n# Iteration {i} ({DateTimeOffset.UtcNow:O})\n\nModel: {opt.Model}\n\n{output}\n";
@@ -91,9 +92,9 @@ for (var i = 1; i <= opt.MaxIterations; i++)
 
     progress += entry;
 
-    if (ContainsComplete(output) && i >= minimumIterations)
+    if (ContainsComplete(output))
     {
-        Console.WriteLine("\nCOMPLETE detected, stopping.\n");
+        ConsoleOutput.WriteLine("\nCOMPLETE detected, stopping.\n");
         break;
     }
 }
@@ -128,6 +129,7 @@ static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
     if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
     if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
     if (!string.IsNullOrWhiteSpace(overrides.PrdFile)) target.PrdFile = overrides.PrdFile;
+    if (overrides.Banner is { } banner) target.Banner = banner;
     if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
     if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
     if (overrides.GenerateIssues is { } generateIssues) target.GenerateIssues = generateIssues;
@@ -140,7 +142,7 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     var sb = new StringBuilder();
 
     sb.AppendLine("You are running inside a loop. Use the files and repository as your source of truth.");
-    sb.AppendLine("Stop condition: when everything is done, output EXACTLY: <promise>COMPLETE</promise>.");
+    sb.AppendLine("Ignore any pre-existing uncommitted changes in the working tree - focus only on the issues listed below.");
     sb.AppendLine();
 
     sb.AppendLine("# ISSUES_JSON");
@@ -160,8 +162,13 @@ static string BuildCombinedPrompt(string promptTemplate, string issuesJson, stri
     sb.AppendLine();
 
     sb.AppendLine("# OUTPUT_RULES");
-    sb.AppendLine("- If you are done, output EXACTLY: <promise>COMPLETE</promise>");
-    sb.AppendLine("- Otherwise, output what you changed and what you will do next iteration.");
+    sb.AppendLine("- Work on ONE issue per iteration. Make real changes to files.");
+    sb.AppendLine("- After making changes, summarize what you did and what remains.");
+    sb.AppendLine("- Only output <promise>COMPLETE</promise> when ALL of these are true:");
+    sb.AppendLine("  1. You made changes in THIS iteration (not just reviewed code)");
+    sb.AppendLine("  2. Every issue in ISSUES_JSON has been addressed");
+    sb.AppendLine("  3. There is genuinely no remaining work");
+    sb.AppendLine("- If unsure whether to output COMPLETE, do NOT output it - continue working.");
 
     return sb.ToString();
 }
@@ -170,7 +177,7 @@ static async Task<int> RunIssueGeneratorAsync(LoopOptions opt, CancellationToken
 {
     if (string.IsNullOrWhiteSpace(opt.PrdFile))
     {
-        Console.Error.WriteLine("ERROR: --prd-file is required when using --generate-issues.");
+        ConsoleOutput.WriteErrorLine("ERROR: --prd-file is required when using --generate-issues.");
         return 2;
     }
 
@@ -182,14 +189,14 @@ static async Task<int> RunIssueGeneratorAsync(LoopOptions opt, CancellationToken
 
     if (!File.Exists(prdPath))
     {
-        Console.Error.WriteLine($"PRD file not found: {prdPath}");
+        ConsoleOutput.WriteErrorLine($"PRD file not found: {prdPath}");
         return 1;
     }
 
     var prdContent = await File.ReadAllTextAsync(prdPath, ct);
     if (string.IsNullOrWhiteSpace(prdContent))
     {
-        Console.Error.WriteLine("PRD file is empty.");
+        ConsoleOutput.WriteErrorLine("PRD file is empty.");
         return 1;
     }
 
@@ -202,44 +209,44 @@ static async Task<int> RunIssueGeneratorAsync(LoopOptions opt, CancellationToken
     }
     catch (Exception ex)
     {
-        Console.Error.WriteLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+        ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
         return 1;
     }
 
     if (string.IsNullOrWhiteSpace(output))
     {
-        Console.Error.WriteLine("Copilot returned empty output.");
+        ConsoleOutput.WriteErrorLine("Copilot returned empty output.");
         return 1;
     }
 
-    Console.WriteLine(output);
+    ConsoleOutput.WriteLine(output);
 
     var commands = ExtractGhIssueCommands(output);
     if (commands.Count == 0)
     {
-        Console.Error.WriteLine("No `gh issue create` commands found.");
+        ConsoleOutput.WriteErrorLine("No `gh issue create` commands found.");
         return 1;
     }
 
-    Console.WriteLine($"\nCreating {commands.Count} issue(s)...");
+    ConsoleOutput.WriteLine($"\nCreating {commands.Count} issue(s)...");
     foreach (var command in commands)
     {
         var args = NormalizeGhArgs(command, opt.Repo);
-        Console.WriteLine($"gh {args}");
+        ConsoleOutput.WriteLine($"gh {args}");
         var (exitCode, stdout, stderr) = await RunGhAsync(args, ct);
         if (!string.IsNullOrWhiteSpace(stdout))
         {
-            Console.WriteLine(stdout.TrimEnd());
+            ConsoleOutput.WriteLine(stdout.TrimEnd());
         }
 
         if (exitCode != 0)
         {
             if (!string.IsNullOrWhiteSpace(stderr))
             {
-                Console.Error.WriteLine(stderr.TrimEnd());
+                ConsoleOutput.WriteErrorLine(stderr.TrimEnd());
             }
 
-            Console.Error.WriteLine($"`gh` failed (exit {exitCode}).");
+            ConsoleOutput.WriteErrorLine($"`gh` failed (exit {exitCode}).");
             return exitCode;
         }
     }
@@ -393,22 +400,6 @@ static bool ContainsComplete(string output)
     // Back-compat with older sentinel
     return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Any(l => string.Equals(l, "COMPLETE", StringComparison.OrdinalIgnoreCase));
-}
-
-static int CountIssues(string issuesJson)
-{
-    if (string.IsNullOrWhiteSpace(issuesJson))
-        return 0;
-
-    try
-    {
-        using var doc = JsonDocument.Parse(issuesJson);
-        return doc.RootElement.ValueKind == JsonValueKind.Array ? doc.RootElement.GetArrayLength() : 0;
-    }
-    catch (JsonException)
-    {
-        return 0;
-    }
 }
 
 static string GetVersionLabel()

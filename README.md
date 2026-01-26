@@ -25,6 +25,9 @@ dotnet run --project src/Coralph -- --config coralph.config.json --max-iteration
 # run loop using the bundled sample harness (no GitHub access needed)
 dotnet run --project src/Coralph -- --issues-file issues.sample.json --max-iterations 10
 
+# show the Coralph banner and version info
+dotnet run --project src/Coralph -- --banner
+
 # generate GitHub issues from a PRD markdown file
 dotnet run --project src/Coralph -- --generate-issues --prd-file path/to/prd.md --repo owner/name
 ```

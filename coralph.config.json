@@ -5,6 +5,7 @@
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
     "IssuesFile": "issues.json",
+    "Banner": false,
     "RefreshIssues": false,
     "Repo": null,
     "CliPath": null,

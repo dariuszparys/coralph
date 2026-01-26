@@ -30,8 +30,6 @@ TL;DR - build a tiny, end-to-end slice of the feature first, then expand it out.
 1. Polish and quick wins
 2. Refactors
 
-if all tasks are complete, output <promise>COMPLETE</promise>.
-
 # EXPLORATION
 
 Explore the repo and fill your context window with relevant information that

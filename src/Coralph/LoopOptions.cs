@@ -13,6 +13,7 @@ internal sealed class LoopOptions
     public string IssuesFile { get; set; } = "issues.json";
     public string? PrdFile { get; set; }
 
+    public bool Banner { get; set; }
     public bool RefreshIssues { get; set; }
     public string? Repo { get; set; }
 
@@ -31,6 +32,7 @@ internal sealed class LoopOptionsOverrides
     public string? IssuesFile { get; set; }
     public string? PrdFile { get; set; }
 
+    public bool? Banner { get; set; }
     public bool? RefreshIssues { get; set; }
     public string? Repo { get; set; }
 
