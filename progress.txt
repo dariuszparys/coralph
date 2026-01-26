@@ -307,3 +307,15 @@ NO_OPEN_ISSUES
 - **Learnings:**
   - Keeping all prompt content in a single file makes it easier to maintain and modify the loop behavior
   - The BuildCombinedPrompt method now only assembles the structure, not the content
+
+
+---
+## 2026-01-26 - #27
+
+- Fixed progress.txt handling to prevent verbose loop output from being appended automatically
+- Changed Program.cs to reload progress.txt from disk each iteration instead of auto-appending raw assistant output
+- Files changed: src/Coralph/Program.cs, progress.txt
+- **Learnings:**
+  - Separating assistant-managed progress (clean summaries with learnings) from system-managed output prevents pollution
+  - Reloading progress from file each iteration allows the assistant to control what gets logged
+  - This ensures progress.txt contains only meaningful, structured entries instead of verbose tool calls

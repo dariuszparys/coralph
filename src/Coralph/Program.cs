@@ -86,6 +86,11 @@ for (var i = 1; i <= opt.MaxIterations; i++)
 {
     ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
+    // Reload progress before each iteration so assistant sees updates it made
+    progress = File.Exists(opt.ProgressFile)
+        ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
+        : string.Empty;
+
     var combinedPrompt = BuildCombinedPrompt(promptTemplate, issues, progress);
 
     string output;
@@ -99,10 +104,8 @@ for (var i = 1; i <= opt.MaxIterations; i++)
         ConsoleOutput.WriteErrorLine(output);
     }
 
-    var entry = $"\n\n---\n# Iteration {i} ({DateTimeOffset.UtcNow:O})\n\nModel: {opt.Model}\n\n{output}\n";
-    await File.AppendAllTextAsync(opt.ProgressFile, entry, ct);
-
-    progress += entry;
+    // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
+    // The assistant writes clean, formatted summaries with learnings instead of raw output
 
     if (ContainsComplete(output))
     {
