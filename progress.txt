@@ -319,3 +319,69 @@ NO_OPEN_ISSUES
   - Separating assistant-managed progress (clean summaries with learnings) from system-managed output prevents pollution
   - Reloading progress from file each iteration allows the assistant to control what gets logged
   - This ensures progress.txt contains only meaningful, structured entries instead of verbose tool calls
+
+
+---
+# Iteration 1 (2026-01-26T14:17:24.0655000+00:00)
+
+Model: GPT-5.1-Codex
+
+I'll investigate how progress.txt is being written and fix the issue where verbose loop output is appended instead of clean, summarized entries with learnings.Now I can see the issue clearly! Looking at lines 102-103 in Program.cs:
+
+```csharp
+var entry = $"\n\n---\n# Iteration {i} ({DateTimeOffset.UtcNow:O})\n\nModel: {opt.Model}\n\n{output}\n";
+await File.AppendAllTextAsync(opt.ProgressFile, entry, ct);
+```
+
+The problem is that `{output}` contains the ENTIRE verbose output from the Copilot assistant (all the tool calls, thinking, etc.), not a clean summary with learnings. The assistant should only write structured summaries to progress.txt, not raw output.
+
+The solution is to **NOT** append the raw assistant output to progress.txt. Instead, the assistant should explicitly use tools to write progress entries. Let me check if there's already a tool for that or if we need to add one.Perfect! The prompt says the assistant should "append to progress.txt" manually, but the loop is ALSO appending the raw output automatically on lines 102-103. This creates the problem described in the issue.
+
+**Solution:**
+1. Remove the automatic appending of raw output to progress.txt from Program.cs
+2. Let the assistant handle all progress.txt writes via the edit/bash tools as instructed in the prompt
+3. This ensures only clean, formatted entries with learnings are written
+
+Let me implement this fix:Wait, I need to rethink this. Removing the automatic progress appending means the `progress` variable won't be updated, and subsequent iterations won't see what happened in previous iterations. Let me look more carefully:I see - on line 89, `progress` is passed to BuildCombinedPrompt. But I removed the line that updates `progress`. I need to reload progress from the file each iteration instead. Let me fix this:Perfect! Now let's verify the fix by building and testing:Excellent! Build and tests pass. Now I need to clean up progress.txt by removing the verbose entry at the end and adding a proper summary for this issue. Let me first check the current state:I can see the verbose output at the end of progress.txt. Now I need to:
+1. Remove this verbose entry from the end
+2. Add a clean, proper summary for issue #27
+
+Let me do that:Perfect! I can see line 311-312 starts the verbose entry. I need to remove everything from line 311 onwards and add a proper summary. Let me get the line count first to know what to keep:Now let me append a proper summary for issue #27:Perfect! Now let's verify the changes and commit:Perfect! Now let's commit the changes and close the issue:## Summary
+
+I've successfully completed issue #27 by fixing how progress.txt is managed:
+
+**What was done:**
+- Removed automatic appending of raw assistant output to progress.txt (lines 102-105 in Program.cs)
+- Modified the loop to reload progress from disk each iteration (line 89-92) so it sees the assistant's explicit updates
+- Cleaned up the existing verbose entry from progress.txt
+- Added a proper, structured summary for this issue with learnings
+
+**Key changes:**
+- **src/Coralph/Program.cs**: Removed auto-append logic; added file reload each iteration
+- **progress.txt**: Cleaned up verbose entry; added clean summary with learnings
+
+**Verification:**
+- Build: ✅ Success
+- Tests: ✅ All 3 tests passed
+- Issue: ✅ Closed
+
+**Learnings:**
+- Separating system-managed output from assistant-managed progress keeps logs clean and meaningful
+- The file-reload pattern allows the assistant to control what gets logged via explicit tool calls
+- This ensures progress.txt contains only structured summaries with learnings, not verbose tool output
+
+<promise>COMPLETE</promise>
+
+
+---
+## 2026-01-26 - #28
+
+- Investigated feasibility of using git history for progress handling instead of progress.txt
+- Posted detailed analysis to issue with recommendation to keep current design
+- Files analyzed: src/Coralph/Program.cs, progress.txt, git history
+- **Learnings:**
+  - Git history optimized for source evolution, not knowledge management
+  - progress.txt provides curated, high-signal learnings vs. noisy commit log
+  - Performance: single file read faster than git log parsing on each iteration
+  - Separation of concerns: version control ≠ learning journal
+  - Suggested hybrid approach: optional --include-git-history flag if needed
