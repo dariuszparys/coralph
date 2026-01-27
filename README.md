@@ -88,6 +88,30 @@ dotnet publish src/Coralph -c Release -r win-x64 --self-contained
 
 **Note**: Self-contained builds include the .NET runtime (~77MB), so users don't need .NET installed.
 
+## Development
+
+### Using the Justfile
+
+Coralph uses [just](https://just.systems) as a cross-platform command runner with PowerShell support.
+
+```bash
+# List available recipes
+just
+
+# Run full CI pipeline (restore, build, test)
+just ci
+
+# Individual steps
+just restore   # Restore dependencies
+just build     # Build solution
+just test      # Run tests
+
+# Create a version tag
+just tag v1.0.0
+```
+
+**Note**: Install `just` from [https://just.systems](https://just.systems). The justfile uses PowerShell for cross-platform compatibility.
+
 ## Versioning and Releases
 
 Coralph uses [Semantic Versioning](https://semver.org/) (SemVer).

@@ -546,3 +546,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - AssemblyInformationalVersionAttribute preserves semantic version with prerelease tag
   - Stripping build metadata suffix (+sha) keeps display clean
   - InternalsVisibleTo means GetVersion can be tested separately if needed
+
+## 2026-01-27 - #41
+
+- Migrated ci-local.sh to justfile with PowerShell cross-platform support
+- Justfile includes: help, restore, build, test, ci (full pipeline), and tag recipes
+- Uses PowerShell shebang and shell settings per blog guidance for Windows/macOS/Linux compatibility
+- Removed deprecated ci-local.sh
+- Updated README.md with Development section documenting justfile usage
+- Files changed: justfile (new), ci-local.sh (removed), README.md
+- **Learnings:**
+  - just shebang pattern allows multi-line PowerShell scripts to maintain context
+  - Setting shell and windows-shell ensures consistent behavior across platforms
+  - Recipe dependencies (test: build: restore) mirror the bash script's chain
