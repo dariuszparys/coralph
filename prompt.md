@@ -29,8 +29,8 @@ investing significant time in development.
 
 TL;DR - build a tiny, end-to-end slice of the feature first, then expand it out.
 
-1. Polish and quick wins
-2. Refactors
+3. Polish and quick wins
+4. Refactors
 
 **If no tasks remain from open issues, output "ALL_TASKS_COMPLETE" and stop
 immediately.**
