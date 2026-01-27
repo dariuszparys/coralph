@@ -100,11 +100,48 @@ for (var i = 1; i <= opt.MaxIterations; i++)
     if (ContainsComplete(output))
     {
         ConsoleOutput.WriteLine("\nCOMPLETE detected, stopping.\n");
+        await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
         break;
     }
 }
 
 return 0;
+
+static async Task CommitProgressIfNeededAsync(string progressFile, CancellationToken ct)
+{
+    if (!File.Exists(progressFile))
+        return;
+
+    // Check if progress file has uncommitted changes
+    var statusResult = await RunGitAsync($"status --porcelain -- \"{progressFile}\"", ct);
+    if (string.IsNullOrWhiteSpace(statusResult))
+        return; // No changes to commit
+
+    // Stage and commit the progress file
+    await RunGitAsync($"add \"{progressFile}\"", ct);
+    var commitResult = await RunGitAsync("commit -m \"chore: update progress.txt\"", ct);
+    if (!string.IsNullOrWhiteSpace(commitResult))
+        ConsoleOutput.WriteLine($"Auto-committed {progressFile}");
+}
+
+static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
+{
+    var psi = new ProcessStartInfo("git", arguments)
+    {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+    };
+
+    using var process = Process.Start(psi);
+    if (process is null)
+        return string.Empty;
+
+    var output = await process.StandardOutput.ReadToEndAsync(ct);
+    await process.WaitForExitAsync(ct);
+    return output.Trim();
+}
 
 static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
 {

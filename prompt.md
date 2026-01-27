@@ -84,7 +84,8 @@ After completing, append to progress.txt:
 
 # COMMIT
 
-Make a git commit using conventional commits:
+Make a git commit using conventional commits. **Include progress.txt in your
+commit** - ensure all changes including progress.txt are staged and committed:
 
 - What was implemented
 - Add key decisions made
@@ -118,5 +119,6 @@ done.
   1. You made changes in THIS iteration (not just reviewed code)
   2. EVERY issue in ISSUES_JSON has been addressed (not just the current one)
   3. There is genuinely no remaining work across ALL issues
+  4. progress.txt has been updated AND committed (verify with `git status`)
 - If you completed one issue but others remain open, do NOT output COMPLETE
 - If unsure whether to output COMPLETE, do NOT output it - continue working.
