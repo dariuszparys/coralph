@@ -492,3 +492,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - **Learnings:**
   - Each template follows a consistent structure: repo context, build/test commands, project structure, feedback loops, and coding standards
   - Templates reference language-specific tooling (pytest/flake8/black for Python, cargo for Rust, go test for Go, npm for JS/TS)
+
+## 2026-01-27 - #38
+
+- Implemented animated ASCII banner for "Coralph" that displays on CLI startup
+- Created Banner.cs with gradient-colored ASCII art and line-by-line reveal animation (50ms delay)
+- Banner uses Spectre.Console's RGB colors for coral/orange/yellow/blue/purple gradient
+- Falls back to plain text when output is redirected
+- Files changed: src/Coralph/Banner.cs (new), src/Coralph/Program.cs
+- **Learnings:**
+  - Spectre.Console RGB colors work well for gradient effects
+  - Simple line-by-line delay creates effective animation without complexity
+  - Checking Console.IsOutputRedirected ensures proper behavior in CI/piped contexts

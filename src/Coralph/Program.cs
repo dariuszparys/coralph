@@ -43,6 +43,10 @@ var opt = LoadOptions(overrides, configFile);
 
 var ct = CancellationToken.None;
 
+// Display animated ASCII banner on startup
+await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+ConsoleOutput.WriteLine();
+
 if (opt.RefreshIssues)
 {
     ConsoleOutput.WriteLine("Refreshing issues...");
