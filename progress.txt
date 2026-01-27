@@ -484,3 +484,11 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - When `download-artifact@v4` creates directories named after artifacts, moving `./artifacts/name/File` to `./artifacts/name` creates a conflict
   - Using a different destination name (Coralph vs coralph) ensures source and destination are always distinct
   - This fix flattens the artifact directory structure while avoiding the "same file" error
+
+## 2026-01-27 - #34
+
+- Created language-specific example prompt.md templates for Python, JavaScript/TypeScript, Go, and Rust
+- Files added: examples/python-prompt.md, examples/javascript-prompt.md, examples/go-prompt.md, examples/rust-prompt.md
+- **Learnings:**
+  - Each template follows a consistent structure: repo context, build/test commands, project structure, feedback loops, and coding standards
+  - Templates reference language-specific tooling (pytest/flake8/black for Python, cargo for Rust, go test for Go, npm for JS/TS)
