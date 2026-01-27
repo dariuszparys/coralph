@@ -139,7 +139,7 @@ internal static class CopilotRunner
         return result;
     }
 
-    private static string SummarizeToolOutput(string toolOutput)
+    internal static string SummarizeToolOutput(string toolOutput)
     {
         var normalized = toolOutput.Replace("\r\n", "\n").TrimEnd();
         if (string.IsNullOrWhiteSpace(normalized)) return string.Empty;
@@ -166,7 +166,7 @@ internal static class CopilotRunner
         return preview;
     }
 
-    private static bool IsIgnorableToolOutput(string? toolName, string toolOutput)
+    internal static bool IsIgnorableToolOutput(string? toolName, string toolOutput)
     {
         if (!string.IsNullOrWhiteSpace(toolName) &&
             string.Equals(toolName, "report_intent", StringComparison.OrdinalIgnoreCase))

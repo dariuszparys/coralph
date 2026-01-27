@@ -516,3 +516,21 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - MSBuild /p:Version flag at publish time overrides .csproj defaults
   - Version extraction from GITHUB_REF using bash parameter expansion works across platforms
   - Default dev version (0.0.1-dev) makes local builds clearly distinguishable from releases
+
+## 2026-01-27 - #39
+
+- Enhanced unit testing from 3 tests to 82 tests for improved coverage
+- Extracted testable utility functions from Program.cs into PromptHelpers.cs
+- Made CopilotRunner helper methods (SummarizeToolOutput, IsIgnorableToolOutput) internal
+- Made CustomTools methods (ListOpenIssuesAsync, GetProgressSummaryAsync, SearchProgressAsync) internal
+- Added comprehensive test files:
+  - ArgParserTests.cs: 20 tests for CLI parsing (options, errors, help)
+  - PromptHelpersTests.cs: 30 tests for ContainsComplete, TryGetHasOpenIssues, BuildCombinedPrompt, ApplyOverrides
+  - CustomToolsTests.cs: 15 tests for custom AI tools
+  - CopilotRunnerTests.cs: 14 tests for tool output summarization and filtering
+- Files changed: src/Coralph/Program.cs, src/Coralph/PromptHelpers.cs (new), src/Coralph/CopilotRunner.cs, src/Coralph/CustomTools.cs, src/Coralph.Tests/*.cs (new tests)
+- **Learnings:**
+  - Extracting static helpers into dedicated classes improves testability without changing behavior
+  - Anonymous types' ToString() doesn't serialize nested data - use JsonSerializer for test assertions
+  - InternalsVisibleTo enables testing internal methods without exposing them publicly
+  - Good test coverage helps document expected behavior and catch regressions

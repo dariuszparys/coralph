@@ -31,7 +31,7 @@ internal static class CustomTools
         ];
     }
 
-    private static async Task<object> ListOpenIssuesAsync(string issuesFile, bool includeClosed)
+    internal static async Task<object> ListOpenIssuesAsync(string issuesFile, bool includeClosed)
     {
         if (!File.Exists(issuesFile))
         {
@@ -72,7 +72,7 @@ internal static class CustomTools
         return new { count = issues.Count, issues };
     }
 
-    private static async Task<object> GetProgressSummaryAsync(string progressFile, int count)
+    internal static async Task<object> GetProgressSummaryAsync(string progressFile, int count)
     {
         if (!File.Exists(progressFile))
         {
@@ -92,7 +92,7 @@ internal static class CustomTools
         return new { count = entries.Length, entries };
     }
 
-    private static async Task<object> SearchProgressAsync(string progressFile, string searchTerm)
+    internal static async Task<object> SearchProgressAsync(string progressFile, string searchTerm)
     {
         if (!File.Exists(progressFile))
         {
