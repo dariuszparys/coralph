@@ -40,3 +40,17 @@ tag version:
     git tag "{{version}}"
     Write-Host "✅ Created tag {{version}}" -ForegroundColor Green
     Write-Host "Run 'git push origin {{version}}' to push the tag" -ForegroundColor Yellow
+
+# Publish local build with version from latest git tag (usage: just publish-local osx-arm64)
+publish-local rid:
+    #!{{shebang}}
+    $tag = git describe --tags --abbrev=0 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $tag) {
+        $version = "0.0.1-dev"
+        Write-Host "⚠️  No git tag found, using default version: $version" -ForegroundColor Yellow
+    } else {
+        $version = $tag -replace '^v', ''
+        Write-Host "📦 Using version from tag $tag`: $version" -ForegroundColor Cyan
+    }
+    dotnet publish src/Coralph -c Release -r {{rid}} --self-contained /p:Version=$version
+    Write-Host "✅ Published to src/Coralph/bin/Release/net10.0/{{rid}}/publish/" -ForegroundColor Green

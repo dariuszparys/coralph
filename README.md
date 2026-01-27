@@ -121,14 +121,26 @@ Coralph uses [Semantic Versioning](https://semver.org/) (SemVer).
 
 ### How versioning works
 
-- **Development builds**: Default to `0.0.1-dev` when building locally
-- **Release builds**: Version is automatically extracted from git tags (e.g., `v1.2.3` → `1.2.3`)
+- **Development builds**: Default to `0.0.1-dev` when building locally without explicit version
+- **Release builds**: Version is automatically extracted from git tags (e.g., `v1.2.3` → `1.2.3`) via GitHub Actions
+
+### Local builds with custom version
+
+Local builds use the default `0.0.1-dev` version unless you override it. To simulate a release build locally:
+
+```bash
+# Override version with any semver value
+dotnet publish src/Coralph -c Release -r osx-arm64 --self-contained /p:Version=1.2.3
+
+# Use justfile to auto-detect version from latest git tag
+just publish-local osx-arm64
+```
 
 ### Creating a release
 
 1. **Tag the release** with a semantic version:
    ```bash
-   git tag v1.0.0
+   just tag v1.0.0
    git push origin v1.0.0
    ```
 

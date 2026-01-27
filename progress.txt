@@ -571,3 +571,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - **Learnings:**
   - Reusing existing Banner.GetVersion() ensures consistent version display across banner and --version flag
   - Short flags (-v, -h) are easy to add with System.CommandLine's array syntax for option aliases
+
+## 2026-01-27 - #43
+
+- Fixed release build versioning documentation and added local version tooling
+- Updated README to clarify that local builds use `0.0.1-dev` unless overridden
+- Added `just publish-local <rid>` recipe that auto-detects version from latest git tag
+- Verified published binary shows correct version (1.0.5 from v1.0.5 tag)
+- Files changed: README.md, justfile
+- **Learnings:**
+  - `git describe --tags --abbrev=0` reliably gets the latest tag for version extraction
+  - PowerShell in justfile allows cross-platform scripts with proper error handling
+  - Providing both manual override and automatic detection covers all user needs
