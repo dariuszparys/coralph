@@ -2,16 +2,49 @@
 
 A first cut of a “Ralph loop” runner implemented in C#/.NET 10 using the GitHub Copilot SDK.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-10-blue.svg)](https://dotnet.microsoft.com/)
+[![GitHub release](https://img.shields.io/github/v/release/dariuszparys/coralph)](https://github.com/dariuszparys/coralph/releases)
+
+
+
+## What is a Ralph Loop?
+
+A Ralph loop is an AI-powered development workflow where an AI assistant:
+1. Reads open GitHub issues from your repository
+2. Breaks them down into small, manageable tasks
+3. Implements changes incrementally
+4. Runs tests and commits code automatically
+5. Repeats until all issues are resolved
+
+Coralph automates this process, allowing you to delegate routine coding tasks to AI while maintaining quality through automated testing and feedback loops.
+
+
+## Table of Contents
+
+- [What is a Ralph Loop?](#what-is-a-ralph-loop)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Run](#run)
+- [Documentation](#documentation)
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Build a distributable binary](#build-a-distributable-binary)
+- [Development](#development)
+- [Versioning and Releases](#versioning-and-releases)
+
 ## Installation
 
 ### Option 1: Download Pre-built Binary (Recommended)
 
 Download the latest release for your platform from the [Releases page](https://github.com/dariuszparys/coralph/releases):
 
-- **Windows**: `coralph-win-x64.exe`
-- **macOS (Intel)**: `coralph-osx-x64`
-- **macOS (Apple Silicon)**: `coralph-osx-arm64`
-- **Linux**: `coralph-linux-x64`
+- **Windows**: `Coralph-win-x64.exe`
+- **macOS (Intel)**: `Coralph-osx-x64`
+- **macOS (Apple Silicon)**: `Coralph-osx-arm64`
+- **Linux**: `Coralph-linux-x64`
+
+> **Note**: Release binaries use capitalized names (e.g., `Coralph-linux-x64`), while examples in this documentation use lowercase for convenience (e.g., `coralph`). Rename the binary as needed.
 
 After downloading:
 - **macOS/Linux**: Make the binary executable: `chmod +x coralph-*`
@@ -22,6 +55,23 @@ After downloading:
 **Prerequisites:**
 - .NET SDK 10 preview
 - GitHub CLI (`gh`) authenticated if you use `--refresh-issues`
+
+## Quick Start
+
+```bash
+# 1. Download and install (or build from source above)
+chmod +x coralph-linux-x64
+sudo mv coralph-linux-x64 /usr/local/bin/coralph
+
+# 2. Navigate to your repository
+cd your-repo
+
+# 3. Fetch your GitHub issues
+coralph --refresh-issues --repo owner/repo-name
+
+# 4. Run the loop
+coralph --max-iterations 10
+```
 
 ## Run
 
@@ -67,7 +117,18 @@ Built-in domain-specific tools available to the assistant:
 - `list_open_issues`: Query issues from issues.json
 - `get_progress_summary`: Retrieve recent progress entries
 - `search_progress`: Search progress.txt for specific terms
-```
+
+## How It Works
+
+Coralph uses several files in your repository to manage the development loop:
+- **`prompt.md`**: Instructions for the AI assistant on how to work with your codebase
+- **`issues.json`**: Cached GitHub issues (refreshed via `--refresh-issues`)
+- **`progress.txt`**: Append-only log of completed work and learnings
+- **`coralph.config.json`**: Optional configuration overrides
+
+The loop stops early when:
+- The assistant outputs a line containing `COMPLETE`, or
+- `issues.json` has no open issues (prints `NO_OPEN_ISSUES`)
 
 ## Build a distributable binary
 
@@ -157,11 +218,3 @@ var version = Assembly.GetExecutingAssembly()
     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
     .InformationalVersion ?? "unknown";
 ```
-
-Files used:
-- `prompt.md` (instructions)
-- `issues.json` (input; optional refresh via `gh`)
-- `progress.txt` (append-only log)
-- `coralph.config.json` (optional configuration overrides)
-
-The loop stops early when the assistant outputs a line containing `COMPLETE`, or when issues.json has no open issues (prints `NO_OPEN_ISSUES`).

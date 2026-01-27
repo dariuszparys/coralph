@@ -7,7 +7,7 @@ Coralph CLI is designed to work with any GitHub repository, not just .NET/C# pro
 ## Prerequisites
 
 ### System Requirements
-- **.NET SDK 10**: Required to build and run Coralph itself
+- **.NET SDK 10**: Only required if building Coralph from source (pre-built binaries don't need .NET installed)
 - **GitHub CLI (`gh`)**: For issue synchronization (authenticated with `gh auth login`)
 - **Target repository**: Clone of the repository you want to use with Coralph
 
@@ -61,6 +61,8 @@ touch progress.txt
 ### 4. Customize for Your Tech Stack
 
 The key file to customize is `prompt.md`. This file instructs the AI assistant on how to work with your repository.
+
+> **Note**: The `prompt.md` included in this repository is tailored for .NET projects (since Coralph itself is a .NET application). You'll need to adapt it for your specific tech stack by changing the build/test commands and project structure references.
 
 **Example: Python Project**
 
@@ -353,19 +355,19 @@ Before committing:
 
 ### Python Template
 
-See [examples/python-prompt.md](examples/python-prompt.md)
+See [examples/python-prompt.md](../examples/python-prompt.md)
 
 ### JavaScript/TypeScript Template
 
-See [examples/javascript-prompt.md](examples/javascript-prompt.md)
+See [examples/javascript-prompt.md](../examples/javascript-prompt.md)
 
 ### Go Template
 
-See [examples/go-prompt.md](examples/go-prompt.md)
+See [examples/go-prompt.md](../examples/go-prompt.md)
 
 ### Rust Template
 
-See [examples/rust-prompt.md](examples/rust-prompt.md)
+See [examples/rust-prompt.md](../examples/rust-prompt.md)
 
 ## Getting Help
 
