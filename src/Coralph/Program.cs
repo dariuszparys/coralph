@@ -3,7 +3,14 @@ using System.Text.Json;
 using Coralph;
 using Microsoft.Extensions.Configuration;
 
-var (overrides, err, initialConfig, configFile, showHelp) = ArgParser.Parse(args);
+var (overrides, err, initialConfig, configFile, showHelp, showVersion) = ArgParser.Parse(args);
+
+if (showVersion)
+{
+    ConsoleOutput.WriteLine($"Coralph {Banner.GetVersion()}");
+    return 0;
+}
+
 if (overrides is null)
 {
     if (err is not null)

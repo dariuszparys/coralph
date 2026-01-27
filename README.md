@@ -44,6 +44,9 @@ dotnet run --project src/Coralph -- --config coralph.config.json --max-iteration
 # run loop using the bundled sample harness (no GitHub access needed)
 dotnet run --project src/Coralph -- --issues-file issues.sample.json --max-iterations 10
 
+# show version
+dotnet run --project src/Coralph -- --version
+
 # customize streaming output
 dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 ```

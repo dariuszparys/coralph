@@ -559,3 +559,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - just shebang pattern allows multi-line PowerShell scripts to maintain context
   - Setting shell and windows-shell ensures consistent behavior across platforms
   - Recipe dependencies (test: build: restore) mirror the bash script's chain
+
+## 2026-01-27 - #42
+
+- Added `--version` / `-v` CLI flag to display assembly version and exit
+- Updated ArgParser.Parse to return 6-element tuple with ShowVersion flag
+- Version output uses Banner.GetVersion() for consistent version sourcing
+- Updated README documentation with `--version` usage example
+- Added 2 new tests for version flag parsing (total now 84 tests)
+- Files changed: src/Coralph/ArgParser.cs, src/Coralph/Program.cs, src/Coralph.Tests/ArgParserTests.cs, README.md
+- **Learnings:**
+  - Reusing existing Banner.GetVersion() ensures consistent version display across banner and --version flag
+  - Short flags (-v, -h) are easy to add with System.CommandLine's array syntax for option aliases

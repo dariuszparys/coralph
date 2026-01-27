@@ -5,16 +5,18 @@ namespace Coralph;
 
 internal static class ArgParser
 {
-    internal static (LoopOptionsOverrides? Overrides, string? Error, bool PrintInitialConfig, string? ConfigFile, bool ShowHelp) Parse(string[] args)
+    internal static (LoopOptionsOverrides? Overrides, string? Error, bool PrintInitialConfig, string? ConfigFile, bool ShowHelp, bool ShowVersion) Parse(string[] args)
     {
         var options = new LoopOptionsOverrides();
         string? configFile = null;
         var showHelp = false;
+        var showVersion = false;
         var printInitialConfig = false;
         var errorMessages = new List<string>();
 
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
         var helpOption = new Option<bool>(new[] { "-h", "--help" }, "Show help");
+        var versionOption = new Option<bool>(new[] { "-v", "--version" }, "Show version");
         var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
         var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
@@ -30,6 +32,7 @@ internal static class ArgParser
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
 
         root.AddOption(helpOption);
+        root.AddOption(versionOption);
         root.AddOption(maxIterationsOption);
         root.AddOption(modelOption);
         root.AddOption(promptFileOption);
@@ -46,6 +49,7 @@ internal static class ArgParser
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
+        showVersion = result.GetValueForOption(versionOption);
         printInitialConfig = result.GetValueForOption(initialConfigOption);
         configFile = result.GetValueForOption(configOption);
 
@@ -177,15 +181,20 @@ internal static class ArgParser
 
         if (showHelp)
         {
-            return (null, null, printInitialConfig, configFile, true);
+            return (null, null, printInitialConfig, configFile, true, false);
+        }
+
+        if (showVersion)
+        {
+            return (null, null, printInitialConfig, configFile, false, true);
         }
 
         if (errorMessages.Count > 0)
         {
-            return (null, string.Join(Environment.NewLine, errorMessages), printInitialConfig, configFile, false);
+            return (null, string.Join(Environment.NewLine, errorMessages), printInitialConfig, configFile, false, false);
         }
 
-        return (options, null, printInitialConfig, configFile, false);
+        return (options, null, printInitialConfig, configFile, false, false);
     }
 
     internal static void PrintUsage(TextWriter w)
@@ -204,6 +213,7 @@ internal static class ArgParser
     {
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
         root.AddOption(new Option<bool>(new[] { "-h", "--help" }, "Show help"));
+        root.AddOption(new Option<bool>(new[] { "-v", "--version" }, "Show version"));
         root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
         root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
