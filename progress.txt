@@ -633,3 +633,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Flowchart TD (top-down) layout works well for showing component hierarchy
   - Sequence diagrams effectively show runtime data flow and async patterns
   - Grouping components into subgraphs (CLI Layer, Core Loop, I/O Layer) improves readability
+
+## 2026-01-29 - #51
+
+- Audited branch protection rules on main branch: all properly configured
+- Verified no push exceptions or bypass users exist
+- Confirmed enforce_admins=true prevents admin bypass
+- Created CONTRIBUTING.md documenting PR-based workflow and audit findings
+- Files changed: CONTRIBUTING.md (new)
+- **Learnings:**
+  - GitHub API `repos/{owner}/{repo}/branches/main/protection` provides complete protection details
+  - enforce_admins:true is critical for preventing any bypass of branch protection
+  - Push restrictions returning 404 means no bypass users are configured (good)
+  - Repository rulesets are a separate feature from branch protection rules
