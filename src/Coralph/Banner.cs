@@ -57,9 +57,9 @@ internal static class Banner
             var line = AsciiLines[lineIndex];
             var colorIndex = lineIndex % GradientColors.Length;
             var color = GradientColors[colorIndex];
-            
+
             console.MarkupLine($"[rgb({color.R},{color.G},{color.B})]{Markup.Escape(line)}[/]");
-            
+
             // Small delay between lines for animation effect
             try
             {
@@ -70,7 +70,7 @@ internal static class Banner
                 break;
             }
         }
-        
+
         // Display version after banner
         console.MarkupLine($"[dim]v{GetVersion()}[/]");
     }
@@ -92,10 +92,10 @@ internal static class Banner
             var line = AsciiLines[lineIndex];
             var colorIndex = lineIndex % GradientColors.Length;
             var color = GradientColors[colorIndex];
-            
+
             console.MarkupLine($"[rgb({color.R},{color.G},{color.B})]{Markup.Escape(line)}[/]");
         }
-        
+
         // Display version after banner
         console.MarkupLine($"[dim]v{GetVersion()}[/]");
     }

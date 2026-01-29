@@ -241,9 +241,9 @@ public class ArgParserTests
     public void PrintUsage_WritesToTextWriter()
     {
         var sw = new StringWriter();
-        
+
         ArgParser.PrintUsage(sw);
-        
+
         var output = sw.ToString();
         Assert.Contains("Coralph", output);
         Assert.Contains("--max-iterations", output);

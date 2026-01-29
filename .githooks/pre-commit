@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+dotnet format --verify-no-changes
+
+max_size=1000000
+failed=0
+
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+  if [ -f "$file" ]; then
+    size=$(wc -c < "$file")
+    if [ "$size" -gt "$max_size" ]; then
+      echo "Error: $file is $size bytes (limit $max_size)."
+      failed=1
+    fi
+  fi
+done
+
+if [ "$failed" -ne 0 ]; then
+  echo "Commit aborted due to large files. Consider Git LFS or reduce file size."
+  exit 1
+fi

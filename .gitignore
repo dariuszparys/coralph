@@ -41,6 +41,20 @@ ScaffoldingReadMe.txt
 *~
 CodeCoverage/
 
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/
+
+# Node artifacts (when working in other repos)
+node_modules/
+
 # Coralph loop artifacts
 issues.json
 !progress.txt
