@@ -13,6 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Validate copilot-instructions.md
+      run: |
+        chmod +x .github/scripts/validate-copilot-instructions.sh
+        .github/scripts/validate-copilot-instructions.sh
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:

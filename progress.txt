@@ -606,3 +606,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - softprops/action-gh-release@v1 supports GitHub's native generate_release_notes feature
   - This provides auto-generated release notes from commits/PRs with zero additional tooling
   - More complex solutions (semantic-release, changesets) can be added later if needed
+
+## 2026-01-29 - #49
+
+- Created validation script for .github/copilot-instructions.md
+- Script validates required sections (Repo context, Build and test, Run loops)
+- Script validates referenced files exist (Coralph.sln, src/Coralph, prompt.md, progress.txt)
+- Added validation step to CI workflow (runs before build)
+- Documented the validation workflow in README
+- Files changed: .github/scripts/validate-copilot-instructions.sh (new), .github/workflows/ci.yml, README.md
+- **Learnings:**
+  - Simple bash validation scripts are effective for documentation drift detection
+  - Running validation early in CI catches issues before costly build steps
+  - Checking file references ensures docs stay in sync with actual project structure
