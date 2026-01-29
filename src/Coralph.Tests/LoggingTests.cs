@@ -11,13 +11,28 @@ public class LoggingTests
     {
         // Arrange
         var options = new LoopOptions { Model = "test-model" };
+        var originalDirectory = Directory.GetCurrentDirectory();
+        var tempDir = Path.Combine(Path.GetTempPath(), $"coralph-logs-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
 
-        // Act
-        Logging.Configure(options);
+        try
+        {
+            Directory.SetCurrentDirectory(tempDir);
 
-        // Assert - logs directory should be created when first log is written
-        // We just verify Configure doesn't throw
-        Logging.Close();
+            // Act
+            Logging.Configure(options);
+
+            // Assert
+            var logDir = Path.Combine(tempDir, "logs");
+            Assert.True(Directory.Exists(logDir));
+        }
+        finally
+        {
+            Logging.Close();
+            Directory.SetCurrentDirectory(originalDirectory);
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
+        }
     }
 
     [Fact]

@@ -112,7 +112,7 @@ internal static class GitPermissions
 
         var output = await process.StandardOutput.ReadToEndAsync(ct);
         await process.WaitForExitAsync(ct);
-        
+
         if (process.ExitCode != 0)
             throw new InvalidOperationException($"gh api failed with exit code {process.ExitCode}");
 

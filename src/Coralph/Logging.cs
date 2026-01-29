@@ -20,6 +20,8 @@ internal static class Logging
     /// <param name="options">Loop options containing configuration</param>
     public static void Configure(LoopOptions options)
     {
+        Directory.CreateDirectory(LogDirectory);
+
         var logConfig = new LoggerConfiguration()
             .MinimumLevel.Information()
             .Enrich.FromLogContext()

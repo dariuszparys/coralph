@@ -62,6 +62,54 @@ public class PromptHelpersTests
 
     #endregion
 
+    #region TryGetTerminalSignal Tests
+
+    [Fact]
+    public void TryGetTerminalSignal_WithAllTasksComplete_ReturnsSignal()
+    {
+        var output = "**ALL_TASKS_COMPLETE**";
+
+        var result = PromptHelpers.TryGetTerminalSignal(output, out var signal);
+
+        Assert.True(result);
+        Assert.Equal("ALL_TASKS_COMPLETE", signal);
+    }
+
+    [Fact]
+    public void TryGetTerminalSignal_WithNoOpenIssues_ReturnsSignal()
+    {
+        var output = "NO_OPEN_ISSUES";
+
+        var result = PromptHelpers.TryGetTerminalSignal(output, out var signal);
+
+        Assert.True(result);
+        Assert.Equal("NO_OPEN_ISSUES", signal);
+    }
+
+    [Fact]
+    public void TryGetTerminalSignal_WithPromiseComplete_ReturnsComplete()
+    {
+        var output = "<promise>COMPLETE</promise>";
+
+        var result = PromptHelpers.TryGetTerminalSignal(output, out var signal);
+
+        Assert.True(result);
+        Assert.Equal("COMPLETE", signal);
+    }
+
+    [Fact]
+    public void TryGetTerminalSignal_WithTokenInSentence_ReturnsFalse()
+    {
+        var output = "All tasks complete but not a sentinel";
+
+        var result = PromptHelpers.TryGetTerminalSignal(output, out var signal);
+
+        Assert.False(result);
+        Assert.Equal(string.Empty, signal);
+    }
+
+    #endregion
+
     #region TryGetHasOpenIssues Tests
 
     [Fact]

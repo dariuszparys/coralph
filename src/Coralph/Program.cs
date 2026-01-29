@@ -28,7 +28,7 @@ if (overrides is null)
 
 if (initialConfig)
 {
-    var path = configFile ?? LoopOptions.ConfigurationFileName;
+    var path = ResolveConfigPath(configFile);
     if (File.Exists(path))
     {
         ConsoleOutput.WriteErrorLine($"Refusing to overwrite existing config file: {path}");
@@ -75,7 +75,7 @@ else if (opt.PrMode == PrMode.Never)
 else // PrMode.Auto
 {
     (repoOwner, repoName) = await GitPermissions.GetRepoFromGitRemoteAsync(ct);
-    
+
     if (repoOwner is not null && repoName is not null)
     {
         var canPush = await GitPermissions.CanPushToMainAsync(repoOwner, repoName, ct);
@@ -173,10 +173,10 @@ for (var i = 1; i <= opt.MaxIterations; i++)
         // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
         // The assistant writes clean, formatted summaries with learnings instead of raw output
 
-        if (PromptHelpers.ContainsComplete(output))
+        if (PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal))
         {
-            Log.Information("COMPLETE detected at iteration {Iteration}, stopping loop", i);
-            ConsoleOutput.WriteLine("\nCOMPLETE detected, stopping.\n");
+            Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
+            ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
             await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
             break;
         }
@@ -225,9 +225,7 @@ static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
 
 static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
 {
-    var path = configFile ?? LoopOptions.ConfigurationFileName;
-    if (!Path.IsPathRooted(path))
-        path = Path.Combine(AppContext.BaseDirectory, path);
+    var path = ResolveConfigPath(configFile);
     var options = new LoopOptions();
 
     if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
@@ -243,10 +241,23 @@ static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFil
     return options;
 }
 
+static string ResolveConfigPath(string? configFile)
+{
+    var path = configFile ?? LoopOptions.ConfigurationFileName;
+    if (Path.IsPathRooted(path))
+        return path;
+
+    var basePath = configFile is null
+        ? AppContext.BaseDirectory
+        : Directory.GetCurrentDirectory();
+
+    return Path.Combine(basePath, path);
+}
+
 static async Task<Dictionary<int, PrFeedbackData>> FetchPrFeedbackForAllIssuesAsync(string issuesJson, string owner, string repo, CancellationToken ct)
 {
     var result = new Dictionary<int, PrFeedbackData>();
-    
+
     try
     {
         using var doc = JsonDocument.Parse(issuesJson);

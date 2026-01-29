@@ -197,7 +197,7 @@ public class PrFeedbackTests
         var feedback = new PrFeedbackData(1, 2, "branch", comments);
 
         Assert.Equal(3, feedback.Feedback.Count);
-        Assert.Single(feedback.Feedback.Where(c => c.Type == "mention"));
+        Assert.Single(feedback.Feedback, c => c.Type == "mention");
         Assert.Equal(2, feedback.Feedback.Count(c => c.Type == "unresolved_thread"));
     }
 

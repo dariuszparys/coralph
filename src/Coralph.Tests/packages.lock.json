@@ -2,12 +2,6 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
-      "coverlet.collector": {
-        "type": "Direct",
-        "requested": "[6.0.4, )",
-        "resolved": "6.0.4",
-        "contentHash": "lkhqpF8Pu2Y7IiN7OntbsTtdbpR1syMsm2F3IgX6ootA4ffRqWL5jF7XipHuZQTdVuWG/gVAAcf8mjk8Tz0xPg=="
-      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[17.14.1, )",
@@ -47,8 +41,8 @@
       },
       "GitHub.Copilot.SDK": {
         "type": "Transitive",
-        "resolved": "0.1.18",
-        "contentHash": "OSZjqb4bFcHB5D5+U+hGLKzNq0dCeBb/rfDuvw6sVgn4syLYCKB/hVadnhCfXmSc0x0Ty0G/0r8xTptoFc4NEw==",
+        "resolved": "0.1.19",
+        "contentHash": "IXKhkkV5nY8Q3J9PjGC0xSfsWcpPNYW5rH2bgrrTkQcn0TvCdY285Yd9Y8WUVKyY8jRZZm7eQYKD1d+Le6LRJA==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.1.1",
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
@@ -353,7 +347,7 @@
       "coralph": {
         "type": "Project",
         "dependencies": {
-          "GitHub.Copilot.SDK": "[0.1.18, )",
+          "GitHub.Copilot.SDK": "[0.1.19, )",
           "Microsoft.Extensions.Configuration.Json": "[8.0.0, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
           "Serilog": "[4.2.0, )",

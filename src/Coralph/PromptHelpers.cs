@@ -99,14 +99,53 @@ internal static class PromptHelpers
         }
     }
 
+    internal static bool TryGetTerminalSignal(string output, out string signal)
+    {
+        signal = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(output))
+            return false;
+
+        if (output.Contains("<promise>COMPLETE</promise>", StringComparison.OrdinalIgnoreCase))
+        {
+            signal = "COMPLETE";
+            return true;
+        }
+
+        foreach (var rawLine in output.Split('\n'))
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            line = TrimMarkdownWrapper(line);
+
+            if (line.Equals("COMPLETE", StringComparison.OrdinalIgnoreCase))
+            {
+                signal = "COMPLETE";
+                return true;
+            }
+
+            if (line.Equals("ALL_TASKS_COMPLETE", StringComparison.OrdinalIgnoreCase))
+            {
+                signal = "ALL_TASKS_COMPLETE";
+                return true;
+            }
+
+            if (line.Equals("NO_OPEN_ISSUES", StringComparison.OrdinalIgnoreCase))
+            {
+                signal = "NO_OPEN_ISSUES";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     internal static bool ContainsComplete(string output)
     {
-        if (output.Contains("<promise>COMPLETE</promise>", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        // Back-compat with older sentinel
-        return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Any(l => string.Equals(l, "COMPLETE", StringComparison.OrdinalIgnoreCase));
+        return TryGetTerminalSignal(output, out var signal) &&
+               string.Equals(signal, "COMPLETE", StringComparison.OrdinalIgnoreCase);
     }
 
     internal static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
@@ -124,5 +163,10 @@ internal static class PromptHelpers
         if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
         if (overrides.PrMode is { } prMode) target.PrMode = prMode;
         if (overrides.PrModeBypassUsers is { } bypassUsers) target.PrModeBypassUsers = new List<string>(bypassUsers);
+    }
+
+    private static string TrimMarkdownWrapper(string value)
+    {
+        return value.Trim('`', '*', '_');
     }
 }

@@ -26,7 +26,7 @@ internal static class PrFeedback
             // Search for PRs that reference this issue
             var searchQuery = $"repo:{owner}/{repo} is:pr is:open {issueNumber} in:body,title";
             var result = await RunGhAsync($"pr list --search \"{searchQuery}\" --json number --jq '.[].number'", ct);
-            
+
             if (string.IsNullOrWhiteSpace(result))
                 return new List<int>();
 
@@ -70,7 +70,7 @@ internal static class PrFeedback
                         : "unknown";
 
                     var state = review.TryGetProperty("state", out var stateProp) ? stateProp.GetString() : null;
-                    
+
                     // Check for @coralph mentions
                     if (body.Contains("@coralph", StringComparison.OrdinalIgnoreCase))
                     {
@@ -198,7 +198,7 @@ internal static class PrFeedback
 
         var output = await process.StandardOutput.ReadToEndAsync(ct);
         await process.WaitForExitAsync(ct);
-        
+
         if (process.ExitCode != 0)
             return string.Empty;
 

@@ -218,7 +218,7 @@ public class PromptHelpersPrModeTests
         Assert.True(feedbackIndex > 0, "PR_FEEDBACK not found");
         Assert.True(progressIndex > 0, "PROGRESS_SO_FAR not found");
         Assert.True(instructionsIndex > 0, "INSTRUCTIONS not found");
-        
+
         // Verify correct ordering
         Assert.True(issuesIndex < feedbackIndex, $"Issues ({issuesIndex}) should come before Feedback ({feedbackIndex})");
         Assert.True(feedbackIndex < progressIndex, $"Feedback ({feedbackIndex}) should come before Progress ({progressIndex})");
