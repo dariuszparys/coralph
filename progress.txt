@@ -595,3 +595,14 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - `dotnet list package` provides quick visibility into top-level and auto-referenced packages
   - grep for `using` statements is effective for verifying package usage in .NET
   - coverlet.collector is often added by default templates but unused without explicit coverage config
+
+## 2026-01-29 - #48
+
+- Enabled automatic release notes generation in GitHub Actions release workflow
+- Added `generate_release_notes: true` to softprops/action-gh-release step
+- Updated README to document that release notes are auto-generated
+- Files changed: .github/workflows/release.yml, README.md
+- **Learnings:**
+  - softprops/action-gh-release@v1 supports GitHub's native generate_release_notes feature
+  - This provides auto-generated release notes from commits/PRs with zero additional tooling
+  - More complex solutions (semantic-release, changesets) can be added later if needed

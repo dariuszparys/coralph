@@ -209,6 +209,7 @@ just publish-local osx-arm64
    - Builds self-contained binaries for all platforms
    - Creates a GitHub Release with the version from the tag
    - Attaches platform-specific binaries to the release
+   - **Generates release notes** from commits and PRs since the last release
 
 ### Version in code
 
