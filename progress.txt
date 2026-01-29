@@ -619,3 +619,17 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Simple bash validation scripts are effective for documentation drift detection
   - Running validation early in CI catches issues before costly build steps
   - Checking file references ensures docs stay in sync with actual project structure
+
+## 2026-01-29 - #50
+
+- Created comprehensive architecture documentation with Mermaid diagrams
+- Documented component diagram showing CLI, Core Loop, I/O, and External Dependencies
+- Documented data flow sequence diagram showing iteration lifecycle
+- Added component descriptions, external dependencies table, and key design decisions
+- Updated README to link to new architecture documentation
+- Files changed: docs/architecture.md (new), README.md
+- **Learnings:**
+  - Mermaid diagrams render well in GitHub and provide interactive visualization
+  - Flowchart TD (top-down) layout works well for showing component hierarchy
+  - Sequence diagrams effectively show runtime data flow and async patterns
+  - Grouping components into subgraphs (CLI Layer, Core Loop, I/O Layer) improves readability

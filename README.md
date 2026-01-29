@@ -108,6 +108,8 @@ dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 
 ## Documentation
 
+- **[Architecture](docs/architecture.md)** - High-level architecture diagrams
+  and component descriptions
 - **[Using Coralph with Other Repositories](docs/using-with-other-repos.md)** -
   Adapt Coralph for Python, JavaScript, Go, and other tech stacks
 
