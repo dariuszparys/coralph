@@ -660,3 +660,14 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - All feedback loops (build, test) pass without regressions
   - CLI interface working as documented (version, help, all options)
   - Test coverage at 122 tests provides good confidence in stability
+
+## 2026-01-29 - #53
+
+- Fixed bug where changes were not pushed when PR mode is disabled
+- Updated prompt.md to instruct assistant to push changes in Direct Push Mode
+- Added explicit "git push" instruction after committing in non-PR mode
+- Files changed: prompt.md
+- **Learnings:**
+  - The prompt.md file controls assistant behavior - missing push instruction meant assistant only committed locally
+  - Direct Push Mode and PR Mode now have symmetric commit+push workflows
+  - Clear instructions prevent silent failures like local-only commits

@@ -121,6 +121,10 @@ commit** - ensure all changes including progress.txt are staged and committed:
 - Make your changes and commit them to the feature branch
 - Push the branch: `git push -u origin coralph/issue-{number}`
 
+**In Direct Push Mode (default):**
+- Commit your changes to the current branch (typically main)
+- Push the changes: `git push`
+
 # CREATE OR UPDATE PULL REQUEST
 
 **In PR Mode Only:**
