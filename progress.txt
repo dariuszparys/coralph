@@ -769,3 +769,16 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - The pre-commit hook feature was already implemented but only documented in AGENTS.md (developer docs)
   - Adding clear user-facing documentation in CONTRIBUTING.md helps contributors discover and use the opt-in hook
   - Explaining the opt-in nature prevents confusion about why Git doesn't use the hook by default
+
+## 2026-02-01 - #61
+
+- Added CHANGELOG.md validation to `just tag` command to prevent releases without changelog entries
+- Updated `just tag` to check for matching version entry in CHANGELOG.md before creating/pushing tag
+- Provides helpful error message with example changelog format when entry is missing
+- Updated README documentation to reflect the new validation behavior
+- Files changed: justfile, README.md
+- **Learnings:**
+  - Pre-tag validation prevents the common mistake of forgetting to update CHANGELOG.md
+  - PowerShell Select-String works well for pattern matching in justfiles
+  - Failing fast with clear instructions is better than silent failures in CI
+  - This approach balances automation (validation) with flexibility (user still writes the changelog)

@@ -37,6 +37,25 @@ tag version:
         Write-Host "❌ Version must start with 'v' (e.g., v1.0.0)" -ForegroundColor Red
         exit 1
     }
+    $cleanVersion = "{{version}}" -replace '^v', ''
+    $changelogEntry = Get-Content CHANGELOG.md | Select-String -Pattern "^## \[$cleanVersion\]"
+    if (-not $changelogEntry) {
+        Write-Host "❌ CHANGELOG.md is missing an entry for version $cleanVersion" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Please add a changelog entry before tagging:" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "## [$cleanVersion] - $(Get-Date -Format 'yyyy-MM-dd')" -ForegroundColor Cyan
+        Write-Host "### Added" -ForegroundColor Cyan
+        Write-Host "- New feature description" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "### Changed" -ForegroundColor Cyan
+        Write-Host "- Changed feature description" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "### Fixed" -ForegroundColor Cyan
+        Write-Host "- Bug fix description" -ForegroundColor Cyan
+        Write-Host ""
+        exit 1
+    }
     git tag "{{version}}"
     git push origin "{{version}}"
     Write-Host "✅ Created tag {{version}}" -ForegroundColor Green

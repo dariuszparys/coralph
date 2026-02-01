@@ -324,15 +324,30 @@ just publish-local osx-arm64
 
 ### Creating a release
 
-1. **Update the changelog** with a new section for the version you are releasing.
-   The release workflow fails if the entry is missing.
+1. **Update the changelog** with a new section for the version you are releasing:
+
+   ```markdown
+   ## [1.0.0] - 2026-02-01
+   ### Added
+   - New feature description
+   
+   ### Changed
+   - Changed feature description
+   
+   ### Fixed
+   - Bug fix description
+   ```
 
 2. **Tag the release** with a semantic version:
 
    ```bash
    just tag v1.0.0
-   git push origin v1.0.0
    ```
+   
+   The `just tag` command will:
+   - ✅ Validate that CHANGELOG.md has an entry for the version
+   - ✅ Create the git tag and push it to origin
+   - ❌ Fail with a helpful message if the changelog entry is missing
 
 3. **GitHub Actions automatically**:
    - Builds self-contained binaries for all platforms
