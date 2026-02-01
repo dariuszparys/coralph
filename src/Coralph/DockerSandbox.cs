@@ -102,6 +102,8 @@ internal static class DockerSandbox
         output.Append(" -e ");
         output.Append(Quote($"{SandboxFlagEnv}=1"));
         output.Append(" -e ");
+        output.Append("DOTNET_ROLL_FORWARD_TO_PRERELEASE=1");
+        output.Append(" -e ");
         output.Append(Quote($"{CombinedPromptEnv}={MapPathToContainer(repoRoot, combinedPromptPath, "Combined prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true)}"));
 
         output.Append(' ');

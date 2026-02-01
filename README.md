@@ -184,6 +184,8 @@ Consumers should treat unknown fields as optional to allow forward compatibility
 
 Enable Docker sandboxing to run each loop iteration in an isolated container.
 Coralph checks that Docker is installed and running before starting the loop.
+The sandbox enables .NET roll-forward to prerelease runtimes so the devcontainer
+image can run net10.0 apps without installing a GA runtime.
 
 ```bash
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true

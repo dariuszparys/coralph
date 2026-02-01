@@ -710,3 +710,12 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Passing a combined prompt file into the sandbox avoids nested loop rehydration while keeping iteration behavior intact.
   - Mounting the repo plus the Coralph assembly keeps Docker runs portable without relying on in-container builds.
   - Disabling event streaming inside the container prevents mixed stdout/stderr output while preserving host logs.
+
+## 2026-02-01 - #57
+
+- Enabled Docker sandbox runs to roll forward to prerelease .NET runtimes so devcontainer images with preview runtimes can start.
+- Updated Docker sandbox documentation with the prerelease roll-forward note.
+- Files changed: src/Coralph/DockerSandbox.cs, README.md
+- **Learnings:**
+  - Setting DOTNET_ROLL_FORWARD_TO_PRERELEASE=1 is a safe way to run net10.0 apps inside preview-only containers.
+  - Documenting the roll-forward behavior prevents confusion when containers ship prerelease runtimes.
