@@ -59,6 +59,9 @@ node_modules/
 issues.json
 !progress.txt
 *.tmp
+events.jsonl
+coralph.log
+*.jsonl
 
 # MSBuild Binary and Structured Log
 *.binlog

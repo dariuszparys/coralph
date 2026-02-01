@@ -202,6 +202,16 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithStreamEvents_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--stream-events", "true"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.True(overrides.StreamEvents);
+    }
+
+    [Fact]
     public void Parse_WithMultipleOptions_SetsAllOverrides()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse([

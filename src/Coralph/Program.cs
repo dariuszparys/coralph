@@ -47,145 +47,201 @@ if (initialConfig)
 
 var opt = LoadOptions(overrides, configFile);
 
+EventStreamWriter? eventStream = null;
+if (opt.StreamEvents)
+{
+    var sessionId = Guid.NewGuid().ToString("N");
+    eventStream = new EventStreamWriter(Console.Out, sessionId);
+    eventStream.WriteSessionHeader(Directory.GetCurrentDirectory());
+
+    var errorConsole = ConsoleOutput.CreateConsole(Console.Error, Console.IsErrorRedirected);
+    ConsoleOutput.Configure(errorConsole, errorConsole);
+}
+
 // Configure structured logging
 Logging.Configure(opt);
 Log.Information("Coralph starting with Model={Model}, MaxIterations={MaxIterations}", opt.Model, opt.MaxIterations);
 
-var ct = CancellationToken.None;
-
-// Display animated ASCII banner on startup
-await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
-ConsoleOutput.WriteLine();
-
-// Detect repository and determine PR mode
-bool prModeActive = false;
-string? repoOwner = null;
-string? repoName = null;
-
-if (opt.PrMode == PrMode.Always)
+eventStream?.Emit("agent_start", fields: new Dictionary<string, object?>
 {
-    prModeActive = true;
-    ConsoleOutput.WriteLine("PR Mode: Always (forced via config/flag)");
+    ["model"] = opt.Model,
+    ["maxIterations"] = opt.MaxIterations,
+    ["prMode"] = opt.PrMode.ToString(),
+    ["version"] = Banner.GetVersion(),
+    ["showReasoning"] = opt.ShowReasoning,
+    ["colorizedOutput"] = opt.ColorizedOutput
+});
+
+var exitCode = 1;
+try
+{
+    exitCode = await RunAsync(opt, eventStream);
+    return exitCode;
 }
-else if (opt.PrMode == PrMode.Never)
+finally
 {
-    prModeActive = false;
-    ConsoleOutput.WriteLine("PR Mode: Disabled (forced via config/flag)");
-}
-else // PrMode.Auto
-{
-    (repoOwner, repoName) = await GitPermissions.GetRepoFromGitRemoteAsync(ct);
-
-    if (repoOwner is not null && repoName is not null)
+    eventStream?.Emit("agent_end", fields: new Dictionary<string, object?>
     {
-        var canPush = await GitPermissions.CanPushToMainAsync(repoOwner, repoName, ct);
-        prModeActive = !canPush;
-        var reason = $"auto-detected for {repoOwner}/{repoName}";
-
-        if (prModeActive && opt.PrModeBypassUsers.Count > 0)
-        {
-            var login = await GitPermissions.GetCurrentUserLoginAsync(ct);
-            if (GitPermissions.IsUserInBypassList(login, opt.PrModeBypassUsers))
-            {
-                prModeActive = false;
-                reason = $"bypass user {login}";
-            }
-        }
-
-        ConsoleOutput.WriteLine($"PR Mode: {(prModeActive ? "Enabled" : "Disabled")} ({reason})");
-    }
-    else
-    {
-        // No repo detected, default to direct push mode
-        prModeActive = false;
-        ConsoleOutput.WriteLine("PR Mode: Disabled (no GitHub repo detected)");
-    }
-}
-
-ConsoleOutput.WriteLine();
-
-if (opt.RefreshIssues)
-{
-    Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
-    ConsoleOutput.WriteLine("Refreshing issues...");
-    var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
-    await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
-}
-
-var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
-var issues = File.Exists(opt.IssuesFile)
-    ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-    : "[]";
-var progress = File.Exists(opt.ProgressFile)
-    ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-    : string.Empty;
-
-// Fetch PR feedback if in PR mode
-Dictionary<int, PrFeedbackData> prFeedbackByIssue = new();
-if (prModeActive && repoOwner is not null && repoName is not null)
-{
-    prFeedbackByIssue = await FetchPrFeedbackForAllIssuesAsync(issues, repoOwner, repoName, ct);
-}
-
-if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
-{
-    ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
-    return 1;
-}
-
-if (!hasOpenIssues)
-{
-    Log.Information("No open issues found, exiting");
-    ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+        ["exitCode"] = exitCode
+    });
     Logging.Close();
+}
+
+static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
+{
+    var ct = CancellationToken.None;
+
+    // Display animated ASCII banner on startup
+    await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+    ConsoleOutput.WriteLine();
+
+    // Detect repository and determine PR mode
+    bool prModeActive = false;
+    string? repoOwner = null;
+    string? repoName = null;
+
+    if (opt.PrMode == PrMode.Always)
+    {
+        prModeActive = true;
+        ConsoleOutput.WriteLine("PR Mode: Always (forced via config/flag)");
+    }
+    else if (opt.PrMode == PrMode.Never)
+    {
+        prModeActive = false;
+        ConsoleOutput.WriteLine("PR Mode: Disabled (forced via config/flag)");
+    }
+    else // PrMode.Auto
+    {
+        (repoOwner, repoName) = await GitPermissions.GetRepoFromGitRemoteAsync(ct);
+
+        if (repoOwner is not null && repoName is not null)
+        {
+            var canPush = await GitPermissions.CanPushToMainAsync(repoOwner, repoName, ct);
+            prModeActive = !canPush;
+            var reason = $"auto-detected for {repoOwner}/{repoName}";
+
+            if (prModeActive && opt.PrModeBypassUsers.Count > 0)
+            {
+                var login = await GitPermissions.GetCurrentUserLoginAsync(ct);
+                if (GitPermissions.IsUserInBypassList(login, opt.PrModeBypassUsers))
+                {
+                    prModeActive = false;
+                    reason = $"bypass user {login}";
+                }
+            }
+
+            ConsoleOutput.WriteLine($"PR Mode: {(prModeActive ? "Enabled" : "Disabled")} ({reason})");
+        }
+        else
+        {
+            // No repo detected, default to direct push mode
+            prModeActive = false;
+            ConsoleOutput.WriteLine("PR Mode: Disabled (no GitHub repo detected)");
+        }
+    }
+
+    ConsoleOutput.WriteLine();
+
+    if (opt.RefreshIssues)
+    {
+        Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
+        ConsoleOutput.WriteLine("Refreshing issues...");
+        var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
+        await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+    }
+
+    var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
+    var issues = File.Exists(opt.IssuesFile)
+        ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
+        : "[]";
+    var progress = File.Exists(opt.ProgressFile)
+        ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
+        : string.Empty;
+
+    // Fetch PR feedback if in PR mode
+    Dictionary<int, PrFeedbackData> prFeedbackByIssue = new();
+    if (prModeActive && repoOwner is not null && repoName is not null)
+    {
+        prFeedbackByIssue = await FetchPrFeedbackForAllIssuesAsync(issues, repoOwner, repoName, ct);
+    }
+
+    if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
+    {
+        ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
+        return 1;
+    }
+
+    if (!hasOpenIssues)
+    {
+        Log.Information("No open issues found, exiting");
+        ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+        return 0;
+    }
+
+    for (var i = 1; i <= opt.MaxIterations; i++)
+    {
+        eventStream?.Emit("turn_start", turn: i, fields: new Dictionary<string, object?>
+        {
+            ["maxIterations"] = opt.MaxIterations
+        });
+
+        using (LogContext.PushProperty("Iteration", i))
+        {
+            Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
+            ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
+
+            // Reload progress and issues before each iteration so assistant sees updates it made
+            progress = File.Exists(opt.ProgressFile)
+                ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
+                : string.Empty;
+            issues = File.Exists(opt.IssuesFile)
+                ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
+                : "[]";
+
+            var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, prModeActive, prFeedbackByIssue);
+
+            string output;
+            string? turnError = null;
+            var success = true;
+            try
+            {
+                output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
+                Log.Information("Iteration {Iteration} completed successfully", i);
+            }
+            catch (Exception ex)
+            {
+                success = false;
+                turnError = $"{ex.GetType().Name}: {ex.Message}";
+                output = $"ERROR: {turnError}";
+                Log.Error(ex, "Iteration {Iteration} failed with error", i);
+                ConsoleOutput.WriteErrorLine(output);
+            }
+
+            // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
+            // The assistant writes clean, formatted summaries with learnings instead of raw output
+
+            var hasTerminalSignal = PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal);
+            eventStream?.Emit("turn_end", turn: i, fields: new Dictionary<string, object?>
+            {
+                ["success"] = success,
+                ["output"] = output,
+                ["error"] = turnError,
+                ["terminalSignal"] = hasTerminalSignal ? terminalSignal : null
+            });
+
+            if (hasTerminalSignal)
+            {
+                Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
+                ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
+                await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+                break;
+            }
+        } // end LogContext scope
+    }
+
+    Log.Information("Coralph loop finished");
     return 0;
 }
-for (var i = 1; i <= opt.MaxIterations; i++)
-{
-    using (LogContext.PushProperty("Iteration", i))
-    {
-        Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
-        ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
-
-        // Reload progress and issues before each iteration so assistant sees updates it made
-        progress = File.Exists(opt.ProgressFile)
-            ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-            : string.Empty;
-        issues = File.Exists(opt.IssuesFile)
-            ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-            : "[]";
-
-        var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, prModeActive, prFeedbackByIssue);
-
-        string output;
-        try
-        {
-            output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct);
-            Log.Information("Iteration {Iteration} completed successfully", i);
-        }
-        catch (Exception ex)
-        {
-            output = $"ERROR: {ex.GetType().Name}: {ex.Message}";
-            Log.Error(ex, "Iteration {Iteration} failed with error", i);
-            ConsoleOutput.WriteErrorLine(output);
-        }
-
-        // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
-        // The assistant writes clean, formatted summaries with learnings instead of raw output
-
-        if (PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal))
-        {
-            Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
-            ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
-            await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
-            break;
-        }
-    } // end LogContext scope
-}
-
-Log.Information("Coralph loop finished");
-Logging.Close();
-return 0;
 
 static async Task CommitProgressIfNeededAsync(string progressFile, CancellationToken ct)
 {
@@ -298,4 +354,3 @@ static async Task<Dictionary<int, PrFeedbackData>> FetchPrFeedbackForAllIssuesAs
 
     return result;
 }
-

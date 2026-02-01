@@ -104,6 +104,9 @@ dotnet run --project src/Coralph -- --version
 
 # customize streaming output
 dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
+
+# emit structured JSON events (stdout) and keep human output on stderr
+dotnet run --project src/Coralph -- --max-iterations 5 --stream-events true 1>events.jsonl 2>coralph.log
 ```
 
 ## Documentation
@@ -143,6 +146,33 @@ dotnet run --project src/Coralph -- --max-iterations 10 --pr-mode Never
   `--colorized-output` flags
 - **Mode tracking**: Automatic separation of reasoning vs. assistant vs. tool
   output
+
+### Structured Event Stream (JSONL)
+
+Enable structured streaming with `--stream-events true`. When enabled, Coralph
+emits JSON objects (one per line) to stdout and routes human-friendly console
+output to stderr. This makes it easy for UIs and integrations to parse output
+while keeping terminal logs readable.
+
+Example JSONL (truncated):
+```json
+{"type":"session","version":1,"id":"b7e4b9...","timestamp":"2026-02-01T12:34:56.789Z","cwd":"/path/to/repo","seq":1}
+{"type":"turn_start","timestamp":"2026-02-01T12:34:57.012Z","sessionId":"b7e4b9...","seq":2,"turn":1,"maxIterations":10}
+{"type":"message_start","timestamp":"2026-02-01T12:34:57.890Z","sessionId":"b7e4b9...","seq":3,"turn":1,"messageId":"assistant-1","message":{"id":"assistant-1","role":"assistant"}}
+{"type":"message_update","timestamp":"2026-02-01T12:34:58.123Z","sessionId":"b7e4b9...","seq":4,"turn":1,"messageId":"assistant-1","delta":"Hello"}
+{"type":"tool_execution_start","timestamp":"2026-02-01T12:34:58.456Z","sessionId":"b7e4b9...","seq":5,"turn":1,"toolCallId":"call-123","toolName":"list_open_issues","args":{"includeClosed":false}}
+{"type":"tool_execution_end","timestamp":"2026-02-01T12:34:58.789Z","sessionId":"b7e4b9...","seq":6,"turn":1,"toolCallId":"call-123","toolName":"list_open_issues","success":true,"isError":false,"result":"..."}
+{"type":"turn_end","timestamp":"2026-02-01T12:35:01.000Z","sessionId":"b7e4b9...","seq":7,"turn":1,"success":true,"output":"..."}
+```
+
+Event types include:
+- session framing: `session`
+- lifecycle: `agent_start`, `agent_end`, `turn_start`, `turn_end`
+- messages: `message_start`, `message_update`, `message_end`
+- tools: `tool_execution_start`, `tool_execution_update`, `tool_execution_end`
+- system: `compaction_start`, `compaction_end`, `retry`, `session_usage`, `usage`
+
+Consumers should treat unknown fields as optional to allow forward compatibility.
 
 ### Custom Tools
 

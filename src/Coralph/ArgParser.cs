@@ -30,6 +30,7 @@ internal static class ArgParser
         var initialConfigOption = new Option<bool>("--initial-config", "Writes default config json and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
+        var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var prModeOption = new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never");
 
         root.AddOption(helpOption);
@@ -47,6 +48,7 @@ internal static class ArgParser
         root.AddOption(initialConfigOption);
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
+        root.AddOption(streamEventsOption);
         root.AddOption(prModeOption);
 
         var result = root.Parse(args);
@@ -150,6 +152,12 @@ internal static class ArgParser
             options.ColorizedOutput = colorizedOutput.Value;
         }
 
+        var streamEvents = result.GetValueForOption(streamEventsOption);
+        if (streamEvents.HasValue)
+        {
+            options.StreamEvents = streamEvents.Value;
+        }
+
         var cliPath = result.GetValueForOption(cliPathOption);
         if (cliPath is not null)
         {
@@ -246,6 +254,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool>("--initial-config", "Writes default config json and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
+        root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
         root.AddOption(new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never"));
         return root;
     }

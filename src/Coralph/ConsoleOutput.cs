@@ -104,7 +104,7 @@ internal static class ConsoleOutput
         }
     }
 
-    private static IAnsiConsole CreateConsole(TextWriter writer, bool isRedirected)
+    internal static IAnsiConsole CreateConsole(TextWriter writer, bool isRedirected)
     {
         var settings = new AnsiConsoleSettings
         {
