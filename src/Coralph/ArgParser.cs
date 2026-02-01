@@ -32,6 +32,8 @@ internal static class ArgParser
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var prModeOption = new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never");
+        var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
+        var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:1-10.0)");
 
         root.AddOption(helpOption);
         root.AddOption(versionOption);
@@ -50,6 +52,8 @@ internal static class ArgParser
         root.AddOption(colorizedOutputOption);
         root.AddOption(streamEventsOption);
         root.AddOption(prModeOption);
+        root.AddOption(dockerSandboxOption);
+        root.AddOption(dockerImageOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -201,6 +205,25 @@ internal static class ArgParser
             }
         }
 
+        var dockerSandbox = result.GetValueForOption(dockerSandboxOption);
+        if (dockerSandbox.HasValue)
+        {
+            options.DockerSandbox = dockerSandbox.Value;
+        }
+
+        var dockerImage = result.GetValueForOption(dockerImageOption);
+        if (dockerImage is not null)
+        {
+            if (string.IsNullOrWhiteSpace(dockerImage))
+            {
+                errorMessages.Add("--docker-image is required");
+            }
+            else
+            {
+                options.DockerImage = dockerImage;
+            }
+        }
+
         if (result.Errors.Count > 0)
         {
             errorMessages.AddRange(result.Errors.Select(e => e.Message));
@@ -256,6 +279,8 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
         root.AddOption(new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never"));
+        root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
+        root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:1-10.0)"));
         return root;
     }
 }

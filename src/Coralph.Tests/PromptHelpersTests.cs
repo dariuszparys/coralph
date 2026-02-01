@@ -352,6 +352,28 @@ public class PromptHelpersTests
     }
 
     [Fact]
+    public void ApplyOverrides_WithDockerSandbox_OverridesValue()
+    {
+        var options = new LoopOptions { DockerSandbox = false };
+        var overrides = new LoopOptionsOverrides { DockerSandbox = true };
+
+        PromptHelpers.ApplyOverrides(options, overrides);
+
+        Assert.True(options.DockerSandbox);
+    }
+
+    [Fact]
+    public void ApplyOverrides_WithDockerImage_OverridesValue()
+    {
+        var options = new LoopOptions { DockerImage = "default" };
+        var overrides = new LoopOptionsOverrides { DockerImage = "ghcr.io/example/custom:latest" };
+
+        PromptHelpers.ApplyOverrides(options, overrides);
+
+        Assert.Equal("ghcr.io/example/custom:latest", options.DockerImage);
+    }
+
+    [Fact]
     public void ApplyOverrides_WithAllValues_OverridesAll()
     {
         var options = new LoopOptions();
@@ -368,7 +390,9 @@ public class PromptHelpersTests
             CliUrl = "http://localhost:8080",
             ShowReasoning = false,
             ColorizedOutput = false,
-            PrModeBypassUsers = new List<string> { "dariuszparys" }
+            PrModeBypassUsers = new List<string> { "dariuszparys" },
+            DockerSandbox = true,
+            DockerImage = "ghcr.io/example/custom:latest"
         };
 
         PromptHelpers.ApplyOverrides(options, overrides);
@@ -385,6 +409,8 @@ public class PromptHelpersTests
         Assert.False(options.ShowReasoning);
         Assert.False(options.ColorizedOutput);
         Assert.Equal(["dariuszparys"], options.PrModeBypassUsers);
+        Assert.True(options.DockerSandbox);
+        Assert.Equal("ghcr.io/example/custom:latest", options.DockerImage);
     }
 
     #endregion

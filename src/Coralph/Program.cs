@@ -91,9 +91,46 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 {
     var ct = CancellationToken.None;
 
-    // Display animated ASCII banner on startup
-    await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
-    ConsoleOutput.WriteLine();
+    var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
+    var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
+    if (opt.DockerSandbox && !inDockerSandbox)
+    {
+        var dockerCheck = await DockerSandbox.CheckDockerAsync(ct);
+        if (!dockerCheck.Success)
+        {
+            ConsoleOutput.WriteErrorLine(dockerCheck.Message ?? "Docker is not available.");
+            return 1;
+        }
+    }
+
+    if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
+    {
+        // Display animated ASCII banner on startup
+        await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+        ConsoleOutput.WriteLine();
+    }
+
+    if (!string.IsNullOrWhiteSpace(combinedPromptFile))
+    {
+        if (!File.Exists(combinedPromptFile))
+        {
+            ConsoleOutput.WriteErrorLine($"Combined prompt file not found: {combinedPromptFile}");
+            return 1;
+        }
+
+        try
+        {
+            var combinedPrompt = await File.ReadAllTextAsync(combinedPromptFile, ct);
+            await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, turn: 1);
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Docker sandbox iteration failed");
+            ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+            return 1;
+        }
+    }
 
     // Detect repository and determine PR mode
     bool prModeActive = false;
@@ -205,7 +242,14 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
             var success = true;
             try
             {
-                output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
+                if (opt.DockerSandbox && !inDockerSandbox)
+                {
+                    output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, prModeActive, ct);
+                }
+                else
+                {
+                    output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
+                }
                 Log.Information("Iteration {Iteration} completed successfully", i);
             }
             catch (Exception ex)

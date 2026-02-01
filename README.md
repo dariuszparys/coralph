@@ -107,6 +107,12 @@ dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 
 # emit structured JSON events (stdout) and keep human output on stderr
 dotnet run --project src/Coralph -- --max-iterations 5 --stream-events true 1>events.jsonl 2>coralph.log
+
+# run loop inside Docker for isolation (requires Docker)
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
+
+# override Docker image for sandbox runs
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:1-10.0
 ```
 
 ## Documentation
@@ -173,6 +179,21 @@ Event types include:
 - system: `compaction_start`, `compaction_end`, `retry`, `session_usage`, `usage`
 
 Consumers should treat unknown fields as optional to allow forward compatibility.
+
+### Docker Sandbox Mode
+
+Enable Docker sandboxing to run each loop iteration in an isolated container.
+Coralph checks that Docker is installed and running before starting the loop.
+
+```bash
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
+```
+
+You can override the image (default: `mcr.microsoft.com/devcontainers/dotnet:1-10.0`):
+
+```bash
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:1-10.0
+```
 
 ### Custom Tools
 

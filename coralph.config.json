@@ -12,6 +12,8 @@
     "PrMode": "Auto",
     "PrModeBypassUsers": [
       "dariuszparys"
-    ]
+    ],
+    "DockerSandbox": false,
+    "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:1-10.0"
   }
 }

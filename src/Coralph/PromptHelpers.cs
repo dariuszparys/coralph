@@ -164,6 +164,8 @@ internal static class PromptHelpers
         if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;
         if (overrides.PrMode is { } prMode) target.PrMode = prMode;
         if (overrides.PrModeBypassUsers is { } bypassUsers) target.PrModeBypassUsers = new List<string>(bypassUsers);
+        if (overrides.DockerSandbox is { } dockerSandbox) target.DockerSandbox = dockerSandbox;
+        if (!string.IsNullOrWhiteSpace(overrides.DockerImage)) target.DockerImage = overrides.DockerImage;
     }
 
     private static string TrimMarkdownWrapper(string value)

@@ -699,3 +699,14 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - The prompt.md file controls assistant behavior - missing push instruction meant assistant only committed locally
   - Direct Push Mode and PR Mode now have symmetric commit+push workflows
   - Clear instructions prevent silent failures like local-only commits
+
+## 2026-02-01 - #55
+
+- Added optional Docker sandbox flag to run each loop iteration inside a container with a combined-prompt handoff.
+- Added Docker availability checks and sandbox runner that mounts repo + executable and streams output back.
+- Updated CLI/config defaults and documentation for Docker sandbox usage.
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/PromptHelpers.cs, src/Coralph/Program.cs, src/Coralph/DockerSandbox.cs, src/Coralph.Tests/ArgParserTests.cs, src/Coralph.Tests/PromptHelpersTests.cs, coralph.config.json, README.md
+- **Learnings:**
+  - Passing a combined prompt file into the sandbox avoids nested loop rehydration while keeping iteration behavior intact.
+  - Mounting the repo plus the Coralph assembly keeps Docker runs portable without relying on in-container builds.
+  - Disabling event streaming inside the container prevents mixed stdout/stderr output while preserving host logs.

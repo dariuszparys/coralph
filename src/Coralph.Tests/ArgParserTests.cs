@@ -212,6 +212,36 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithDockerSandbox_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-sandbox", "true"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.True(overrides.DockerSandbox);
+    }
+
+    [Fact]
+    public void Parse_WithDockerImage_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-image", "ghcr.io/example/custom:latest"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("ghcr.io/example/custom:latest", overrides.DockerImage);
+    }
+
+    [Fact]
+    public void Parse_WithEmptyDockerImage_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-image", ""]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--docker-image", err);
+    }
+
+    [Fact]
     public void Parse_WithMultipleOptions_SetsAllOverrides()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse([
