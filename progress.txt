@@ -758,3 +758,14 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - The assistant will follow the prompt exactly, so missing steps will be skipped
   - Consistency in issue closure behavior requires clear documentation
   - Comment-before-close pattern provides audit trail and context for users
+
+## 2026-02-01 - #59
+
+- Documented pre-commit hook for dotnet format in CONTRIBUTING.md
+- Added comprehensive section explaining what the hook does, how to enable/disable it, and what to expect
+- The pre-commit hook already existed in .githooks/pre-commit and runs `dotnet format --verify-no-changes` plus large file checks
+- Files changed: CONTRIBUTING.md
+- **Learnings:**
+  - The pre-commit hook feature was already implemented but only documented in AGENTS.md (developer docs)
+  - Adding clear user-facing documentation in CONTRIBUTING.md helps contributors discover and use the opt-in hook
+  - Explaining the opt-in nature prevents confusion about why Git doesn't use the hook by default

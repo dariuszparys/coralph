@@ -55,6 +55,46 @@ dotnet build
 dotnet test
 ```
 
+## Pre-Commit Hook (Optional)
+
+Coralph includes a pre-commit hook that automatically runs code formatting and validation checks before each commit. This helps maintain consistent code style across the repository.
+
+### What the Hook Does
+
+The pre-commit hook (`.githooks/pre-commit`) performs two checks:
+
+1. **Code formatting**: Runs `dotnet format --verify-no-changes` to ensure all staged files are properly formatted
+2. **Large file detection**: Prevents commits of files larger than 1MB (to avoid accidental binary commits)
+
+### How to Enable
+
+The hook is **opt-in** to avoid disrupting your workflow. To enable it:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This configures Git to use the custom hooks in `.githooks/` instead of `.git/hooks/`.
+
+### What to Expect
+
+Once enabled, every `git commit` will:
+- Run `dotnet format --verify-no-changes` on all staged files
+- Check staged file sizes
+- **Abort the commit** if formatting issues or large files are detected
+
+If the hook blocks your commit:
+- For formatting issues: Run `dotnet format` to auto-format your code, then try committing again
+- For large files: Consider using Git LFS or reducing the file size
+
+### Disabling the Hook
+
+To disable the hook:
+
+```bash
+git config --unset core.hooksPath
+```
+
 ## Audit Notes
 
 This repository enforces strict PR-based development:
