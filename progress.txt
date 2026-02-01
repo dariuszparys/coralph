@@ -797,3 +797,19 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Using temp files in bash scripts avoids awk multiline variable issues
   - macOS grep doesn't support -P (Perl regex), use sed -E instead for portability
 
+
+---
+## 2026-02-01 - #63
+
+- Implemented local changelog generation with pipeline enforcement to comply with branch protection
+- Created `just changelog v1.0.0` recipe that generates CHANGELOG.md entries from git history
+- Updated `just tag v1.0.0` to validate changelog entry exists before creating tag
+- Modified release workflow to validate (not generate) CHANGELOG.md entry and fail if missing
+- Removed automated commit/push from release workflow (was attempting to push to protected main branch)
+- Updated README documentation with the new local changelog generation workflow
+- Files changed: justfile, .github/workflows/release.yml, README.md
+- **Learnings:**
+  - Local changelog generation prevents branch protection violations in the release pipeline
+  - Pipeline validation ensures releases are always documented before they're published
+  - The two-step process (changelog PR → tag) provides clear audit trail and human review opportunity
+  - Conventional commit categorization (feat/fix/chore) enables automated changelog structure
