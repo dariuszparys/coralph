@@ -113,6 +113,23 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
 
 # override Docker image for sandbox runs
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:10.0
+
+# note: Docker sandbox requires the GitHub Copilot CLI inside the image
+# (Node.js 24+ and `npm i -g @github/copilot`), or pass --cli-path/--cli-url.
+
+# reuse host Copilot CLI auth inside the sandbox
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --copilot-config-path ~/.copilot
+
+# build a custom image with Copilot CLI preinstalled
+docker build -f Dockerfile.copilot -t coralph-dotnet-copilot:10.0 .
+
+# use the custom image for sandbox runs
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image coralph-dotnet-copilot:10.0
+
+# or set it once in coralph.config.json:
+# {
+#   "LoopOptions": { "DockerImage": "coralph-dotnet-copilot:10.0" }
+# }
 ```
 
 ## Documentation

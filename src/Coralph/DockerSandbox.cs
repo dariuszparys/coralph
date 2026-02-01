@@ -31,6 +31,39 @@ internal static class DockerSandbox
         return new DockerCheckResult(true, null);
     }
 
+    internal static async Task<DockerCheckResult> CheckCopilotCliAsync(string dockerImage, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dockerImage))
+        {
+            return new DockerCheckResult(false, "Docker image is required for sandboxed Copilot runs.");
+        }
+
+        var args = new StringBuilder();
+        args.Append("run --rm --pull=missing --entrypoint ");
+        args.Append(Quote("sh"));
+        args.Append(' ');
+        args.Append(Quote(dockerImage));
+        args.Append(" -lc ");
+        args.Append(Quote("copilot --version"));
+
+        var result = await RunDockerAsync(args.ToString(), ct);
+        if (result.ExitCode == 0)
+        {
+            return new DockerCheckResult(true, null);
+        }
+
+        var details = string.IsNullOrWhiteSpace(result.Error) ? result.Output.Trim() : result.Error.Trim();
+        var message = "GitHub Copilot CLI was not found or could not start inside the Docker image. " +
+                      "Install it in the image (Node.js 24+ and `npm i -g @github/copilot`), " +
+                      "or pass --cli-path to a CLI available in the container, or --cli-url to an existing Copilot CLI server.";
+        if (!string.IsNullOrWhiteSpace(details))
+        {
+            message = $"{message}{Environment.NewLine}{details}";
+        }
+
+        return new DockerCheckResult(false, message);
+    }
+
     internal static async Task<string> RunIterationAsync(LoopOptions opt, string combinedPrompt, int iteration, bool prModeActive, CancellationToken ct)
     {
         var repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
@@ -88,6 +121,21 @@ internal static class DockerSandbox
 
     private static string BuildDockerRunArguments(LoopOptions opt, string repoRoot, string combinedPromptPath, bool prModeActive, DockerLaunchInfo launchInfo)
     {
+        if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
+        {
+            AddCopilotConfigMounts(launchInfo.Mounts, opt.CopilotConfigPath);
+        }
+
+        var combinedPromptContainerPath = MapPathToContainer(repoRoot, combinedPromptPath, "Combined prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true);
+        var promptContainerPath = MapPathToContainer(repoRoot, opt.PromptFile, "Prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true);
+        var progressContainerPath = MapPathToContainer(repoRoot, opt.ProgressFile, "Progress file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: false);
+        var issuesContainerPath = MapPathToContainer(repoRoot, opt.IssuesFile, "Issues file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true);
+        string? cliContainerPath = null;
+        if (!string.IsNullOrWhiteSpace(opt.CliPath))
+        {
+            cliContainerPath = MapPathToContainer(repoRoot, opt.CliPath, "Copilot CLI", launchInfo.Mounts, allowOutsideRepo: true, readOnly: true);
+        }
+
         var output = new StringBuilder();
         output.Append("run --rm");
         output.Append(" --pull=missing");
@@ -104,7 +152,7 @@ internal static class DockerSandbox
         output.Append(" -e ");
         output.Append("DOTNET_ROLL_FORWARD_TO_PRERELEASE=1");
         output.Append(" -e ");
-        output.Append(Quote($"{CombinedPromptEnv}={MapPathToContainer(repoRoot, combinedPromptPath, "Combined prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true)}"));
+        output.Append(Quote($"{CombinedPromptEnv}={combinedPromptContainerPath}"));
 
         output.Append(' ');
         output.Append(Quote(opt.DockerImage));
@@ -117,11 +165,11 @@ internal static class DockerSandbox
         }
         output.Append(" --max-iterations 1");
         output.Append(" --prompt-file ");
-        output.Append(Quote(MapPathToContainer(repoRoot, opt.PromptFile, "Prompt file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true)));
+        output.Append(Quote(promptContainerPath));
         output.Append(" --progress-file ");
-        output.Append(Quote(MapPathToContainer(repoRoot, opt.ProgressFile, "Progress file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: false)));
+        output.Append(Quote(progressContainerPath));
         output.Append(" --issues-file ");
-        output.Append(Quote(MapPathToContainer(repoRoot, opt.IssuesFile, "Issues file", launchInfo.Mounts, allowOutsideRepo: false, readOnly: true)));
+        output.Append(Quote(issuesContainerPath));
         output.Append(" --model ");
         output.Append(Quote(opt.Model));
         output.Append(" --show-reasoning ");
@@ -141,10 +189,10 @@ internal static class DockerSandbox
             output.Append(Quote(opt.Repo));
         }
 
-        if (!string.IsNullOrWhiteSpace(opt.CliPath))
+        if (!string.IsNullOrWhiteSpace(cliContainerPath))
         {
             output.Append(" --cli-path ");
-            output.Append(Quote(opt.CliPath));
+            output.Append(Quote(cliContainerPath));
         }
 
         if (!string.IsNullOrWhiteSpace(opt.CliUrl))
@@ -209,9 +257,20 @@ internal static class DockerSandbox
             throw new InvalidOperationException($"Unable to resolve directory for {description}.");
         }
 
-        var containerDirectory = "/coralph-bin";
-        if (!mounts.Any(m => string.Equals(m.HostPath, parentDirectory, StringComparison.Ordinal)))
+        var existingMount = mounts.FirstOrDefault(m => string.Equals(m.HostPath, parentDirectory, StringComparison.Ordinal));
+        var containerDirectory = existingMount?.ContainerPath;
+        if (string.IsNullOrWhiteSpace(containerDirectory))
         {
+            containerDirectory = "/coralph-bin";
+            if (mounts.Any(m => string.Equals(m.ContainerPath, containerDirectory, StringComparison.Ordinal)))
+            {
+                var suffix = 2;
+                while (mounts.Any(m => string.Equals(m.ContainerPath, $"{containerDirectory}-{suffix}", StringComparison.Ordinal)))
+                {
+                    suffix++;
+                }
+                containerDirectory = $"{containerDirectory}-{suffix}";
+            }
             mounts.Add(new DockerMount(parentDirectory, containerDirectory, readOnly));
         }
 
@@ -253,6 +312,32 @@ internal static class DockerSandbox
         {
             Log.Warning(ex, "Failed to delete temporary Docker sandbox file {Path}", path);
         }
+    }
+
+    private static void AddCopilotConfigMounts(List<DockerMount> mounts, string hostPath)
+    {
+        var fullPath = Path.GetFullPath(hostPath);
+        if (!Directory.Exists(fullPath))
+        {
+            throw new InvalidOperationException($"Copilot config directory not found: {fullPath}");
+        }
+
+        AddMountIfMissing(mounts, fullPath, "/home/vscode/.copilot");
+        AddMountIfMissing(mounts, fullPath, "/root/.copilot");
+    }
+
+    private static void AddMountIfMissing(List<DockerMount> mounts, string hostPath, string containerPath)
+    {
+        foreach (var mount in mounts)
+        {
+            if (string.Equals(mount.HostPath, hostPath, StringComparison.Ordinal) &&
+                string.Equals(mount.ContainerPath, containerPath, StringComparison.Ordinal))
+            {
+                return;
+            }
+        }
+
+        mounts.Add(new DockerMount(hostPath, containerPath, readOnly: true));
     }
 
     private static string CombineOutput(string stdout, string stderr)

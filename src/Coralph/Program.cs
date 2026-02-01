@@ -101,6 +101,40 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
             ConsoleOutput.WriteErrorLine(dockerCheck.Message ?? "Docker is not available.");
             return 1;
         }
+
+        if (!string.IsNullOrWhiteSpace(opt.CliPath))
+        {
+            var repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
+            var fullCliPath = Path.IsPathRooted(opt.CliPath)
+                ? Path.GetFullPath(opt.CliPath)
+                : Path.GetFullPath(Path.Combine(repoRoot, opt.CliPath));
+            if (!File.Exists(fullCliPath))
+            {
+                ConsoleOutput.WriteErrorLine($"Copilot CLI not found: {fullCliPath}");
+                return 1;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(opt.CliUrl))
+        {
+            var cliCheck = await DockerSandbox.CheckCopilotCliAsync(opt.DockerImage, ct);
+            if (!cliCheck.Success)
+            {
+                ConsoleOutput.WriteErrorLine(cliCheck.Message ?? "Copilot CLI is not available in the Docker image.");
+                return 1;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
+        {
+            var expanded = ExpandHomePath(opt.CopilotConfigPath);
+            var fullConfigPath = Path.GetFullPath(expanded);
+            if (!Directory.Exists(fullConfigPath))
+            {
+                ConsoleOutput.WriteErrorLine($"Copilot config directory not found: {fullConfigPath}");
+                return 1;
+            }
+            opt.CopilotConfigPath = fullConfigPath;
+        }
     }
 
     if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
@@ -352,6 +386,26 @@ static string ResolveConfigPath(string? configFile)
         : Directory.GetCurrentDirectory();
 
     return Path.Combine(basePath, path);
+}
+
+static string ExpandHomePath(string path)
+{
+    if (string.IsNullOrWhiteSpace(path))
+        return path;
+
+    if (path == "~")
+        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    if (path.StartsWith("~/", StringComparison.Ordinal))
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (string.IsNullOrWhiteSpace(home))
+            return path;
+
+        return Path.Combine(home, path[2..]);
+    }
+
+    return path;
 }
 
 static async Task<Dictionary<int, PrFeedbackData>> FetchPrFeedbackForAllIssuesAsync(string issuesJson, string owner, string repo, CancellationToken ct)

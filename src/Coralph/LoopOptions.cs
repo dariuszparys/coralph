@@ -24,6 +24,7 @@ internal sealed class LoopOptions
 
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
+    public string? CopilotConfigPath { get; set; }
 
     public bool ShowReasoning { get; set; } = true;
     public bool ColorizedOutput { get; set; } = true;
@@ -48,6 +49,7 @@ internal sealed class LoopOptionsOverrides
 
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
+    public string? CopilotConfigPath { get; set; }
 
     public bool? ShowReasoning { get; set; }
     public bool? ColorizedOutput { get; set; }
