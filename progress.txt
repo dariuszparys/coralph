@@ -729,3 +729,9 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - **Learnings:**
   - Using a tag-derived changelog section keeps release notes consistent with documentation.
   - Anchored changelog headers make it easy to link from release notes.
+## [2026-02-01] - Docker sandbox image default
+
+- Updated default Docker sandbox image to the .NET 10 GA tag to avoid missing runtime errors in containers.
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, .devcontainer/devcontainer.json, coralph.config.json, README.md
+- **Learnings:**
+  - The 1-10.0 devcontainers tag can miss the GA runtime; pin to 10.0 for sandbox stability.

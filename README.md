@@ -112,7 +112,7 @@ dotnet run --project src/Coralph -- --max-iterations 5 --stream-events true 1>ev
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
 
 # override Docker image for sandbox runs
-dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:1-10.0
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:10.0
 ```
 
 ## Documentation
@@ -192,10 +192,10 @@ image can run net10.0 apps without installing a GA runtime.
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
 ```
 
-You can override the image (default: `mcr.microsoft.com/devcontainers/dotnet:1-10.0`):
+You can override the image (default: `mcr.microsoft.com/devcontainers/dotnet:10.0`):
 
 ```bash
-dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:1-10.0
+dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:10.0
 ```
 
 ### Custom Tools

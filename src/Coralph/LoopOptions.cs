@@ -31,7 +31,7 @@ internal sealed class LoopOptions
     public PrMode PrMode { get; set; } = PrMode.Auto;
     public List<string> PrModeBypassUsers { get; set; } = new();
     public bool DockerSandbox { get; set; }
-    public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:1-10.0";
+    public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
 }
 
 internal sealed class LoopOptionsOverrides

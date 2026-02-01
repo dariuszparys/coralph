@@ -33,7 +33,7 @@ internal static class ArgParser
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var prModeOption = new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never");
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
-        var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:1-10.0)");
+        var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
 
         root.AddOption(helpOption);
         root.AddOption(versionOption);
@@ -280,7 +280,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
         root.AddOption(new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never"));
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
-        root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:1-10.0)"));
+        root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
         return root;
     }
 }
