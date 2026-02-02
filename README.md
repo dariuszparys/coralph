@@ -152,6 +152,30 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
 
 ## Features
 
+### Azure DevOps and Azure Boards Integration
+Coralph supports fetching work items from Azure Boards as an alternative to GitHub issues:
+- **Azure CLI integration**: Uses `az boards query` with WIQL to fetch work items
+- **Work item transformation**: Converts Azure Boards work items (PBIs, Bugs, Tasks) to GitHub-compatible issue format
+- **Flexible configuration**: Supports organization/project overrides or uses `az devops` defaults
+- **HTML description parsing**: Automatically strips HTML from Azure Boards descriptions
+
+Prerequisites:
+- Azure CLI (`az`) installed and authenticated
+- Azure DevOps CLI extension: `az extension add --name azure-devops`
+- (Optional) Configure defaults: `az devops configure --defaults organization=https://dev.azure.com/<org> project=<project>`
+
+Example workflow:
+```bash
+# Fetch work items from Azure Boards (using az devops defaults)
+coralph --refresh-issues-azdo
+
+# Override organization and project
+coralph --refresh-issues-azdo --azdo-organization https://dev.azure.com/myorg --azdo-project MyProject
+
+# Run the loop
+coralph --max-iterations 10
+```
+
 ### PR Workflow Mode
 Coralph automatically adapts to repositories with branch protection:
 - **Auto-detection**: Checks push permissions at startup via `gh api`

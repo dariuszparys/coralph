@@ -22,6 +22,10 @@ internal sealed class LoopOptions
     public bool RefreshIssues { get; set; }
     public string? Repo { get; set; }
 
+    public bool RefreshIssuesAzdo { get; set; }
+    public string? AzdoOrganization { get; set; }
+    public string? AzdoProject { get; set; }
+
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }
     public string? CopilotConfigPath { get; set; }
@@ -47,6 +51,10 @@ internal sealed class LoopOptionsOverrides
 
     public bool? RefreshIssues { get; set; }
     public string? Repo { get; set; }
+
+    public bool? RefreshIssuesAzdo { get; set; }
+    public string? AzdoOrganization { get; set; }
+    public string? AzdoProject { get; set; }
 
     public string? CliPath { get; set; }
     public string? CliUrl { get; set; }

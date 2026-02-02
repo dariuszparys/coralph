@@ -157,6 +157,9 @@ internal static class PromptHelpers
         if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
         if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
         if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
+        if (overrides.RefreshIssuesAzdo is { } refreshAzdo) target.RefreshIssuesAzdo = refreshAzdo;
+        if (!string.IsNullOrWhiteSpace(overrides.AzdoOrganization)) target.AzdoOrganization = overrides.AzdoOrganization;
+        if (!string.IsNullOrWhiteSpace(overrides.AzdoProject)) target.AzdoProject = overrides.AzdoProject;
         if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
         if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
         if (!string.IsNullOrWhiteSpace(overrides.CopilotConfigPath)) target.CopilotConfigPath = overrides.CopilotConfigPath;

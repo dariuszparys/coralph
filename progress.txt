@@ -813,3 +813,19 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Pipeline validation ensures releases are always documented before they're published
   - The two-step process (changelog PR → tag) provides clear audit trail and human review opportunity
   - Conventional commit categorization (feat/fix/chore) enables automated changelog structure
+
+---
+## 2026-02-02 - #64
+
+- Implemented Azure DevOps and Azure Boards integration with `--refresh-issues-azdo` flag
+- Created AzBoards.cs to fetch work items via `az boards query` and transform them to GitHub-compatible issue format
+- Added CLI flags: --refresh-issues-azdo, --azdo-organization, --azdo-project
+- Updated README with Azure Boards integration documentation and prerequisites
+- Work items are transformed from Azure Boards format (HTML descriptions, tags) to GitHub issue format
+- Organization and project can be specified via flags or use az devops configured defaults
+- Files changed: src/Coralph/AzBoards.cs (new), src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/PromptHelpers.cs, src/Coralph/Program.cs, coralph.config.json, README.md
+- **Learnings:**
+  - Azure CLI `az boards query` uses WIQL (Work Item Query Language) to filter work items
+  - Azure Boards descriptions are HTML-formatted and need stripping for plain text display
+  - Transformation layer enables Azure Boards work items to work seamlessly with existing loop logic
+  - System.CommandLine help rendering may not show all options but functionality works correctly

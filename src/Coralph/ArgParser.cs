@@ -24,6 +24,9 @@ internal static class ArgParser
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
         var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
         var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
+        var refreshIssuesAzdoOption = new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`");
+        var azdoOrganizationOption = new Option<string?>("--azdo-organization", "Azure DevOps organization URL (uses az devops defaults if not set)");
+        var azdoProjectOption = new Option<string?>("--azdo-project", "Azure DevOps project name (uses az devops defaults if not set)");
         var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var copilotConfigPathOption = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
@@ -46,6 +49,9 @@ internal static class ArgParser
         root.AddOption(issuesFileOption);
         root.AddOption(refreshIssuesOption);
         root.AddOption(repoOption);
+        root.AddOption(refreshIssuesAzdoOption);
+        root.AddOption(azdoOrganizationOption);
+        root.AddOption(azdoProjectOption);
         root.AddOption(cliPathOption);
         root.AddOption(cliUrlOption);
         root.AddOption(copilotConfigPathOption);
@@ -146,6 +152,23 @@ internal static class ArgParser
             {
                 options.Repo = repo;
             }
+        }
+
+        if (result.GetValueForOption(refreshIssuesAzdoOption))
+        {
+            options.RefreshIssuesAzdo = true;
+        }
+
+        var azdoOrganization = result.GetValueForOption(azdoOrganizationOption);
+        if (azdoOrganization is not null)
+        {
+            options.AzdoOrganization = azdoOrganization;
+        }
+
+        var azdoProject = result.GetValueForOption(azdoProjectOption);
+        if (azdoProject is not null)
+        {
+            options.AzdoProject = azdoProject;
         }
 
         var showReasoning = result.GetValueForOption(showReasoningOption);
