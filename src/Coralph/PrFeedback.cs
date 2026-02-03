@@ -19,6 +19,20 @@ internal record PrFeedbackData(
 
 internal static class PrFeedback
 {
+    private const string ReviewThreadsQuery =
+        "query($owner:String!, $repo:String!, $prNumber:Int!) {" +
+        " repository(owner:$owner, name:$repo) {" +
+        "  pullRequest(number:$prNumber) {" +
+        "   reviewThreads(first:100) {" +
+        "    nodes {" +
+        "     isResolved " +
+        "     comments(first:50) { nodes { author { login } body path line } }" +
+        "    }" +
+        "   }" +
+        "  }" +
+        " }" +
+        "}";
+
     internal static async Task<List<int>> FindOpenPrsForIssueAsync(int issueNumber, string owner, string repo, CancellationToken ct)
     {
         try
@@ -115,39 +129,95 @@ internal static class PrFeedback
                 }
             }
 
-            // Fetch review threads for unresolved code-level comments
-            var threadsJson = await RunGhApiAsync($"repos/{owner}/{repo}/pulls/{prNumber}/comments", ct);
+            // Fetch review threads (GraphQL exposes isResolved, REST does not)
+            var threadsJson = await RunGhApiAsync(
+                [
+                    "graphql",
+                    "-f", $"query={ReviewThreadsQuery}",
+                    "-f", $"owner={owner}",
+                    "-f", $"repo={repo}",
+                    "-F", $"prNumber={prNumber}"
+                ],
+                ct);
             if (!string.IsNullOrWhiteSpace(threadsJson))
             {
                 using var threadsDoc = JsonDocument.Parse(threadsJson);
-                foreach (var thread in threadsDoc.RootElement.EnumerateArray())
+                if (threadsDoc.RootElement.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("repository", out var repository) &&
+                    repository.TryGetProperty("pullRequest", out var pullRequest) &&
+                    pullRequest.TryGetProperty("reviewThreads", out var reviewThreads) &&
+                    reviewThreads.TryGetProperty("nodes", out var threadNodes) &&
+                    threadNodes.ValueKind == JsonValueKind.Array)
                 {
-                    var body = thread.TryGetProperty("body", out var bodyProp) ? bodyProp.GetString() : null;
-                    if (string.IsNullOrWhiteSpace(body))
-                        continue;
-
-                    var author = thread.TryGetProperty("user", out var userProp) &&
-                                userProp.TryGetProperty("login", out var loginProp)
-                        ? loginProp.GetString() ?? "unknown"
-                        : "unknown";
-
-                    var path = thread.TryGetProperty("path", out var pathProp) ? pathProp.GetString() : null;
-                    var line = thread.TryGetProperty("line", out var lineProp) && lineProp.TryGetInt32(out var l) ? l : (int?)null;
-
-                    // Include unresolved threads or @coralph mentions
-                    var hasMention = body.Contains("@coralph", StringComparison.OrdinalIgnoreCase);
-                    var isResolved = thread.TryGetProperty("in_reply_to_id", out var replyProp) && replyProp.ValueKind != JsonValueKind.Null;
-
-                    if (hasMention || !isResolved)
+                    foreach (var thread in threadNodes.EnumerateArray())
                     {
-                        feedback.Add(new PrFeedbackComment(
-                            Type: hasMention ? "mention" : "unresolved_thread",
-                            Author: author,
-                            Body: body,
-                            Path: path,
-                            Line: line,
-                            IsResolved: isResolved
-                        ));
+                        var isResolved = thread.TryGetProperty("isResolved", out var resolvedProp) &&
+                                         resolvedProp.ValueKind == JsonValueKind.True;
+
+                        if (!thread.TryGetProperty("comments", out var threadComments) ||
+                            !threadComments.TryGetProperty("nodes", out var commentNodes) ||
+                            commentNodes.ValueKind != JsonValueKind.Array)
+                        {
+                            continue;
+                        }
+
+                        PrFeedbackComment? firstComment = null;
+                        var addedMention = false;
+
+                        foreach (var comment in commentNodes.EnumerateArray())
+                        {
+                            var body = comment.TryGetProperty("body", out var bodyProp) && bodyProp.ValueKind == JsonValueKind.String
+                                ? bodyProp.GetString()
+                                : null;
+                            if (string.IsNullOrWhiteSpace(body))
+                            {
+                                continue;
+                            }
+
+                            var author = comment.TryGetProperty("author", out var authorProp) &&
+                                         authorProp.TryGetProperty("login", out var loginProp) &&
+                                         loginProp.ValueKind == JsonValueKind.String
+                                ? loginProp.GetString() ?? "unknown"
+                                : "unknown";
+
+                            var path = comment.TryGetProperty("path", out var pathProp) && pathProp.ValueKind == JsonValueKind.String
+                                ? pathProp.GetString()
+                                : null;
+
+                            int? line = null;
+                            if (comment.TryGetProperty("line", out var lineProp) &&
+                                lineProp.ValueKind == JsonValueKind.Number &&
+                                lineProp.TryGetInt32(out var parsedLine))
+                            {
+                                line = parsedLine;
+                            }
+
+                            firstComment ??= new PrFeedbackComment(
+                                Type: "unresolved_thread",
+                                Author: author,
+                                Body: body,
+                                Path: path,
+                                Line: line,
+                                IsResolved: isResolved);
+
+                            if (body.Contains("@coralph", StringComparison.OrdinalIgnoreCase))
+                            {
+                                feedback.Add(new PrFeedbackComment(
+                                    Type: "mention",
+                                    Author: author,
+                                    Body: body,
+                                    Path: path,
+                                    Line: line,
+                                    IsResolved: isResolved
+                                ));
+                                addedMention = true;
+                            }
+                        }
+
+                        if (!isResolved && !addedMention && firstComment is not null)
+                        {
+                            feedback.Add(firstComment);
+                        }
                     }
                 }
             }
@@ -184,13 +254,23 @@ internal static class PrFeedback
 
     private static async Task<string> RunGhApiAsync(string endpoint, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo("gh", $"api {endpoint}")
+        return await RunGhApiAsync([endpoint], ct);
+    }
+
+    private static async Task<string> RunGhApiAsync(IReadOnlyList<string> args, CancellationToken ct)
+    {
+        var psi = new ProcessStartInfo("gh")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        psi.ArgumentList.Add("api");
+        foreach (var arg in args)
+        {
+            psi.ArgumentList.Add(arg);
+        }
 
         using var process = Process.Start(psi);
         if (process is null)

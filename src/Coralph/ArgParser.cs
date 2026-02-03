@@ -324,6 +324,9 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
         root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
         root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
+        root.AddOption(new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`"));
+        root.AddOption(new Option<string?>("--azdo-organization", "Azure DevOps organization URL (uses az devops defaults if not set)"));
+        root.AddOption(new Option<string?>("--azdo-project", "Azure DevOps project name (uses az devops defaults if not set)"));
         root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox"));

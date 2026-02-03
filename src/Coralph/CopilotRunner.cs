@@ -40,7 +40,6 @@ internal static class CopilotRunner
                 var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 var output = new StringBuilder();
 
-                string? lastToolName = null;
                 bool inReasoningMode = false;
                 bool inAssistantMode = false;
                 string? activeAssistantMessageId = null;
@@ -265,7 +264,6 @@ internal static class CopilotRunner
                                 inReasoningMode = false;
                                 inAssistantMode = false;
                             }
-                            lastToolName = toolStart.Data.ToolName;
                             ConsoleOutput.WriteToolStart(toolStart.Data.ToolName);
                             break;
                         case ToolExecutionProgressEvent toolProgress:
@@ -307,17 +305,16 @@ internal static class CopilotRunner
                             var toolOutput = toolComplete.Data.Result?.Content;
                             if (!string.IsNullOrWhiteSpace(toolOutput))
                             {
-                                if (IsIgnorableToolOutput(lastToolName, toolOutput))
+                                var resolvedToolName = completeToolName ?? "unknown";
+                                if (IsIgnorableToolOutput(resolvedToolName, toolOutput))
                                 {
-                                    lastToolName = null;
                                     toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
                                     toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
                                     break;
                                 }
                                 var display = SummarizeToolOutput(toolOutput);
-                                ConsoleOutput.WriteToolComplete(lastToolName ?? "unknown", display);
+                                ConsoleOutput.WriteToolComplete(resolvedToolName, display);
                             }
-                            lastToolName = null;
                             toolNamesByCallId.Remove(toolComplete.Data.ToolCallId);
                             toolParentByCallId.Remove(toolComplete.Data.ToolCallId);
                             break;

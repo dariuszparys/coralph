@@ -288,5 +288,8 @@ public class ArgParserTests
         Assert.Contains("Coralph", output);
         Assert.Contains("--max-iterations", output);
         Assert.Contains("--model", output);
+        Assert.Contains("--refresh-issues-azdo", output);
+        Assert.Contains("--azdo-organization", output);
+        Assert.Contains("--azdo-project", output);
     }
 }
