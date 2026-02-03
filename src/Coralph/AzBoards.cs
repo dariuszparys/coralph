@@ -14,7 +14,7 @@ internal static class AzBoards
                    "ORDER BY [System.ChangedDate] DESC";
 
         // Build az boards query command
-        var args = $"boards query --wiql \"{wiql}\" --output json";
+        var args = $"boards query --wiql \"{wiql}\" --fields System.Id System.Title System.Description System.State System.WorkItemType System.Tags --output json";
         if (!string.IsNullOrWhiteSpace(organization))
         {
             args += $" --organization {organization}";

@@ -73,6 +73,28 @@ public class GitPermissionsTests
     }
 
     [Fact]
+    public void ParseGitHubUrl_HttpsUrlWithDots_ReturnsOwnerAndRepo()
+    {
+        var url = "https://github.com/my-org/my.repo.git";
+
+        var (owner, repo) = GitPermissions.ParseGitHubUrl(url);
+
+        Assert.Equal("my-org", owner);
+        Assert.Equal("my.repo", repo);
+    }
+
+    [Fact]
+    public void ParseGitHubUrl_SshUrlWithDots_ReturnsOwnerAndRepo()
+    {
+        var url = "git@github.com:my-org/my.repo.git";
+
+        var (owner, repo) = GitPermissions.ParseGitHubUrl(url);
+
+        Assert.Equal("my-org", owner);
+        Assert.Equal("my.repo", repo);
+    }
+
+    [Fact]
     public void ParseGitHubUrl_InvalidUrl_ReturnsNulls()
     {
         var url = "https://gitlab.com/owner/repo.git";

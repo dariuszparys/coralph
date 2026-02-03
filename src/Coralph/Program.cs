@@ -362,10 +362,26 @@ static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
 
     using var process = Process.Start(psi);
     if (process is null)
+    {
+        Log.Warning("Failed to start git for arguments: {Arguments}", arguments);
         return string.Empty;
+    }
 
-    var output = await process.StandardOutput.ReadToEndAsync(ct);
+    var stdoutTask = process.StandardOutput.ReadToEndAsync(ct);
+    var stderrTask = process.StandardError.ReadToEndAsync(ct);
     await process.WaitForExitAsync(ct);
+
+    var output = await stdoutTask;
+    var error = await stderrTask;
+
+    if (process.ExitCode != 0)
+    {
+        var trimmedError = error?.Trim();
+        Log.Warning("git {Arguments} failed with exit code {ExitCode}: {Error}", arguments, process.ExitCode,
+            string.IsNullOrWhiteSpace(trimmedError) ? "(no error output)" : trimmedError);
+        return string.Empty;
+    }
+
     return output.Trim();
 }
 
