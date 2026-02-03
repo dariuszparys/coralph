@@ -108,6 +108,12 @@ dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 # emit structured JSON events (stdout) and keep human output on stderr
 dotnet run --project src/Coralph -- --max-iterations 5 --stream-events true 1>events.jsonl 2>coralph.log
 
+# restrict tool permissions (deny takes precedence)
+dotnet run --project src/Coralph -- --max-iterations 5 --tool-deny bash,read_file
+
+# allow only specific tool/permission kinds (everything else denied)
+dotnet run --project src/Coralph -- --max-iterations 5 --tool-allow list_open_issues,search_progress
+
 # run loop inside Docker for isolation (requires Docker)
 dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true
 
@@ -138,7 +144,11 @@ dotnet run --project src/Coralph -- --max-iterations 5 --docker-sandbox true --d
 
 # or set it once in coralph.config.json:
 # {
-#   "LoopOptions": { "DockerImage": "coralph-dotnet-copilot:10.0" }
+#   "LoopOptions": {
+#     "DockerImage": "coralph-dotnet-copilot:10.0",
+#     "ToolAllow": [ "list_open_issues", "get_progress_summary", "search_progress" ],
+#     "ToolDeny": [ "bash" ]
+#   }
 # }
 ```
 
@@ -240,6 +250,13 @@ Built-in domain-specific tools available to the assistant:
 - `list_open_issues`: Query issues from issues.json
 - `get_progress_summary`: Retrieve recent progress entries
 - `search_progress`: Search progress.txt for specific terms
+
+### Tool Permission Policy
+
+Control Copilot permission requests with `--tool-allow` and `--tool-deny`.
+Rules match permission kinds and tool names. Deny rules win, and an allow list
+denies everything else. Prefix matches are supported via `*` (for example,
+`read_*`).
 
 ## How It Works
 
