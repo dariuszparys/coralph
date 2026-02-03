@@ -103,7 +103,14 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         try
         {
             var models = await CopilotModelDiscovery.ListModelsAsync(opt, ct);
-            CopilotModelDiscovery.WriteModels(models);
+            if (opt.ListModelsJson)
+            {
+                CopilotModelDiscovery.WriteModelsJson(models);
+            }
+            else
+            {
+                CopilotModelDiscovery.WriteModels(models);
+            }
             return 0;
         }
         catch (Exception ex)

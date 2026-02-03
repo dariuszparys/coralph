@@ -105,6 +105,9 @@ dotnet run --project src/Coralph -- --version
 # list available Copilot models and exit
 dotnet run --project src/Coralph -- --list-models
 
+# list available Copilot models as JSON and exit
+dotnet run --project src/Coralph -- --list-models-json
+
 # customize streaming output
 dotnet run --project src/Coralph -- --max-iterations 5 --show-reasoning false
 

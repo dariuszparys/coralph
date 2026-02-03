@@ -41,6 +41,7 @@ internal static class ArgParser
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
         var listModelsOption = new Option<bool>("--list-models", "List available Copilot models and exit");
+        var listModelsJsonOption = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
 
         toolAllowOption.AllowMultipleArgumentsPerToken = true;
         toolDenyOption.AllowMultipleArgumentsPerToken = true;
@@ -71,6 +72,7 @@ internal static class ArgParser
         root.AddOption(dockerSandboxOption);
         root.AddOption(dockerImageOption);
         root.AddOption(listModelsOption);
+        root.AddOption(listModelsJsonOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -292,6 +294,12 @@ internal static class ArgParser
             options.ListModels = true;
         }
 
+        if (result.GetValueForOption(listModelsJsonOption))
+        {
+            options.ListModelsJson = true;
+            options.ListModels = true;
+        }
+
         if (result.Errors.Count > 0)
         {
             errorMessages.AddRange(result.Errors.Select(e => e.Message));
@@ -364,6 +372,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
         root.AddOption(new Option<bool>("--list-models", "List available Copilot models and exit"));
+        root.AddOption(new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit"));
         return root;
     }
 
