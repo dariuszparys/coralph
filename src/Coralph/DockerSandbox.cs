@@ -64,7 +64,7 @@ internal static class DockerSandbox
         return new DockerCheckResult(false, message);
     }
 
-    internal static async Task<string> RunIterationAsync(LoopOptions opt, string combinedPrompt, int iteration, bool prModeActive, CancellationToken ct)
+    internal static async Task<string> RunIterationAsync(LoopOptions opt, string combinedPrompt, int iteration, CancellationToken ct)
     {
         var repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
         var combinedPromptPath = Path.Combine(repoRoot, $".coralph-combined-prompt-{iteration}-{Guid.NewGuid():N}.txt");
@@ -73,7 +73,7 @@ internal static class DockerSandbox
         try
         {
             var launchInfo = ResolveLaunchInfo(repoRoot);
-            var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, prModeActive, launchInfo);
+            var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, launchInfo);
             var result = await RunDockerAsync(args, ct, streamOutput: true);
             var output = CombineOutput(result.Output, result.Error);
             if (result.ExitCode != 0)
@@ -118,7 +118,7 @@ internal static class DockerSandbox
         throw new InvalidOperationException("Unable to resolve Coralph executable path for Docker sandbox.");
     }
 
-    private static string BuildDockerRunArguments(LoopOptions opt, string repoRoot, string combinedPromptPath, bool prModeActive, DockerLaunchInfo launchInfo)
+    private static string BuildDockerRunArguments(LoopOptions opt, string repoRoot, string combinedPromptPath, DockerLaunchInfo launchInfo)
     {
         if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
         {
@@ -177,8 +177,6 @@ internal static class DockerSandbox
         output.Append(" --colorized-output ");
         output.Append(opt.ColorizedOutput.ToString().ToLowerInvariant());
         output.Append(" --stream-events false");
-        output.Append(" --pr-mode ");
-        output.Append(Quote(prModeActive ? PrMode.Always.ToString() : PrMode.Never.ToString()));
         output.Append(" --docker-sandbox false");
         output.Append(" --docker-image ");
         output.Append(Quote(opt.DockerImage));

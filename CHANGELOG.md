@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <a id="unreleased"></a>
 ## [Unreleased]
+### Removed
+- remove PR workflow mode and branch protection checks
 
 <a id="v1-0-8"></a>
 ## [1.0.8] - 2026-02-01
@@ -22,8 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - add structured logging with Serilog (#46)
 - reach Level 3 agent readiness
 - add devcontainer support for .NET 10 development
-- allow PR mode bypass users
-- add PR workflow mode with feedback handling
 - add CI validation for copilot-instructions.md (#49)
 - enable automatic release notes generation (#48)
 - add --version flag to display assembly version

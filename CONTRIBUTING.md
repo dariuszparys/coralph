@@ -2,31 +2,18 @@
 
 Thank you for your interest in contributing to Coralph! This document outlines our contribution workflow and guidelines.
 
-## PR-Based Workflow
+## Direct Push Workflow
 
-**All contributions must be made through pull requests.** Direct pushes to the `main` branch are not permitted.
-
-### Branch Protection Rules
-
-Our `main` branch has the following protections enabled:
-
-| Rule | Status | Description |
-|------|--------|-------------|
-| Required status checks | ✅ Enabled | CI must pass (`build-and-test`) |
-| Required PR reviews | ✅ Enabled | At least 1 approval required |
-| Enforce for admins | ✅ Enabled | No bypass for repository admins |
-| Force pushes | ❌ Disabled | History cannot be rewritten |
-| Branch deletion | ❌ Disabled | Main branch cannot be deleted |
+Coralph uses a direct push workflow. Changes are pushed straight to `main`
+without mandatory reviews or policy gates.
 
 ### Contribution Process
 
 1. **Create an issue** describing the bug or feature
-2. **Fork the repository** or create a feature branch
-3. **Make your changes** following our coding standards
-4. **Run the tests** locally: `dotnet test`
-5. **Open a pull request** targeting `main`
-6. **Address review feedback** if requested
-7. **Merge** once approved and CI passes
+2. **Make your changes** locally (on `main` or a short-lived branch)
+3. **Run the tests** locally: `dotnet test`
+4. **Commit** using Conventional Commits
+5. **Push** to `main`
 
 ### Commit Messages
 
@@ -94,13 +81,5 @@ To disable the hook:
 ```bash
 git config --unset core.hooksPath
 ```
-
-## Audit Notes
-
-This repository enforces strict PR-based development:
-
-- **No push exceptions**: No users or apps have bypass permissions
-- **No repository rulesets**: Branch protection is the only rule layer
-- **Admin enforcement**: Even repository admins must go through PRs
 
 If you encounter any issues with the contribution workflow, please open an issue.

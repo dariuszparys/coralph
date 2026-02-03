@@ -341,17 +341,6 @@ public class PromptHelpersTests
     }
 
     [Fact]
-    public void ApplyOverrides_WithPrModeBypassUsers_OverridesValue()
-    {
-        var options = new LoopOptions { PrModeBypassUsers = new List<string> { "existing" } };
-        var overrides = new LoopOptionsOverrides { PrModeBypassUsers = new List<string> { "dariuszparys" } };
-
-        PromptHelpers.ApplyOverrides(options, overrides);
-
-        Assert.Equal(["dariuszparys"], options.PrModeBypassUsers);
-    }
-
-    [Fact]
     public void ApplyOverrides_WithDockerSandbox_OverridesValue()
     {
         var options = new LoopOptions { DockerSandbox = false };
@@ -390,7 +379,6 @@ public class PromptHelpersTests
             CliUrl = "http://localhost:8080",
             ShowReasoning = false,
             ColorizedOutput = false,
-            PrModeBypassUsers = new List<string> { "dariuszparys" },
             DockerSandbox = true,
             DockerImage = "ghcr.io/example/custom:latest"
         };
@@ -408,7 +396,6 @@ public class PromptHelpersTests
         Assert.Equal("http://localhost:8080", options.CliUrl);
         Assert.False(options.ShowReasoning);
         Assert.False(options.ColorizedOutput);
-        Assert.Equal(["dariuszparys"], options.PrModeBypassUsers);
         Assert.True(options.DockerSandbox);
         Assert.Equal("ghcr.io/example/custom:latest", options.DockerImage);
     }

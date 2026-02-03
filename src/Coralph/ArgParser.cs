@@ -36,7 +36,6 @@ internal static class ArgParser
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
-        var prModeOption = new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never");
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
 
@@ -61,7 +60,6 @@ internal static class ArgParser
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
         root.AddOption(streamEventsOption);
-        root.AddOption(prModeOption);
         root.AddOption(dockerSandboxOption);
         root.AddOption(dockerImageOption);
 
@@ -241,23 +239,6 @@ internal static class ArgParser
             }
         }
 
-        var prMode = result.GetValueForOption(prModeOption);
-        if (prMode is not null)
-        {
-            if (string.IsNullOrWhiteSpace(prMode))
-            {
-                errorMessages.Add("--pr-mode is required");
-            }
-            else if (Enum.TryParse<PrMode>(prMode, true, out var parsedMode))
-            {
-                options.PrMode = parsedMode;
-            }
-            else
-            {
-                errorMessages.Add("--pr-mode must be one of: Auto, Always, Never");
-            }
-        }
-
         var dockerSandbox = result.GetValueForOption(dockerSandboxOption);
         if (dockerSandbox.HasValue)
         {
@@ -336,7 +317,6 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
-        root.AddOption(new Option<string?>("--pr-mode", "PR mode: Auto (default), Always, or Never"));
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
         return root;

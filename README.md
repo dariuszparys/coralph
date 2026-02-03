@@ -176,25 +176,9 @@ coralph --refresh-issues-azdo --azdo-organization https://dev.azure.com/myorg --
 coralph --max-iterations 10
 ```
 
-### PR Workflow Mode
-Coralph automatically adapts to repositories with branch protection:
-- **Auto-detection**: Checks push permissions at startup via `gh api`
-- **Feature branches**: Creates `coralph/issue-{number}` branches for each issue
-- **PR creation**: Uses `gh pr create --fill --body "Fixes #{number}"` to link PRs to issues
-- **PR feedback handling**: Detects `@coralph` mentions and unresolved review comments, then addresses them
-- **Manual override**: Use `--pr-mode Always|Never|Auto` (default: Auto) or set in config
-
-Example workflow in PR mode:
-```bash
-# Auto-detect (checks if you can push to main)
-dotnet run --project src/Coralph -- --max-iterations 10
-
-# Force PR mode (useful for team policies)
-dotnet run --project src/Coralph -- --max-iterations 10 --pr-mode Always
-
-# Disable PR mode (direct push to main)
-dotnet run --project src/Coralph -- --max-iterations 10 --pr-mode Never
-```
+### Direct Push Workflow
+Coralph operates directly on the current branch (typically `main`). It commits and
+pushes changes without creating separate review branches or running repository policy checks.
 
 ### Streaming Output Improvements
 
@@ -351,7 +335,7 @@ just publish-local osx-arm64
 
 ### Creating a release
 
-Coralph follows a **local changelog generation** workflow to comply with branch protection rules:
+Coralph follows a **local changelog generation** workflow to keep releases deterministic and reviewable:
 
 1. **Update CHANGELOG.md locally**:
 
@@ -362,7 +346,7 @@ Coralph follows a **local changelog generation** workflow to comply with branch 
    # Review the changes
    git diff CHANGELOG.md
    
-   # Commit and push to main (via PR if branch protection is enabled)
+   # Commit and push to main
    git add CHANGELOG.md
    git commit -m "docs: update changelog for v1.0.0"
    git push
@@ -393,12 +377,11 @@ Coralph follows a **local changelog generation** workflow to comply with branch 
    - Extracts the changelog section for this version as release notes
    - Creates a GitHub Release with the version from the tag
    - Attaches platform-specific binaries to the release
-   - Generates additional release notes from commits and PRs since the last release
+   - Generates additional release notes from commits since the last release
 
 ### Why local changelog generation?
 
 This workflow ensures:
-- **Branch protection compliance**: CHANGELOG.md updates happen via PR with CI checks
 - **No failed releases**: The pipeline validates (not generates) the changelog entry
 - **Clear audit trail**: Changelog commits are separate from release tags
 - **Human review**: Changes can be reviewed before they become part of the release
@@ -439,4 +422,4 @@ Run the validation locally:
 ```
 
 When updating documentation, ensure the validation script passes before
-submitting a PR.
+pushing your changes.

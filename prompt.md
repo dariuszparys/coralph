@@ -17,12 +17,8 @@ headlights. Aim for one small change per task.
 
 Pick the next task. Prioritize tasks in this order:
 
-1. **PR feedback** (if in PR mode and PR_FEEDBACK exists)
-2. Critical bugfixes
-3. Tracer bullets for new features
-
-**PR Feedback**: In PR mode, issues with open PRs that have `@coralph` mentions
-or unresolved review comments should be addressed promptly to unblock merges.
+1. Critical bugfixes
+2. Tracer bullets for new features
 
 Tracer bullets comes from the Pragmatic Programmer. When building systems, you
 want to write code that gets you feedback as quickly as possible. Tracer bullets
@@ -45,28 +41,10 @@ Before starting work:
 
 1. Verify the issue is still OPEN (check with
    `gh issue view <number> --json state`)
-2. **In PR Mode**: Check if there's an open PR for this issue in the PR_FEEDBACK
-   section above
-   - If PR exists WITH feedback (`@coralph` mentions or unresolved comments):
-     Continue - you'll address the feedback
-   - If PR exists WITHOUT feedback: Skip this issue - it's waiting for human
-     review
-   - If NO PR exists: Continue - you'll create one
-3. Check if the work was already done in a previous iteration (review recent
+2. Check if the work was already done in a previous iteration (review recent
    commits and progress.txt)
-4. If already done or issue is closed, skip to the next open issue or output
+3. If already done or issue is closed, skip to the next open issue or output
    "ALL_TASKS_COMPLETE"
-
-# ADDRESSING PR FEEDBACK (PR Mode Only)
-
-If the issue appears in the PR_FEEDBACK section:
-
-1. Checkout the existing branch: `git checkout {prBranch}`
-2. Review each feedback comment - they may reference specific files/lines
-3. Make the requested changes
-4. Commit and push: `git commit -m "fix: address PR feedback" && git push`
-5. The PR will be updated automatically with your changes
-6. Move to the next issue (do NOT close the issue - wait for PR merge)
 
 # EXPLORATION
 
@@ -115,28 +93,8 @@ commit** - ensure all changes including progress.txt are staged and committed:
   - Any patterns discovered
   - Gotchas encountered
 
-**In PR Mode:**
-- Create a branch for the issue if it doesn't exist: `git checkout -b coralph/issue-{number}`
-- If a branch already exists and has an open PR with feedback, checkout that branch
-- Make your changes and commit them to the feature branch
-- Push the branch: `git push -u origin coralph/issue-{number}`
-
-**In Direct Push Mode (default):**
 - Commit your changes to the current branch (typically main)
 - Push the changes: `git push`
-
-# CREATE OR UPDATE PULL REQUEST
-
-**In PR Mode Only:**
-
-If this is a NEW issue (no existing PR):
-- Create a PR using: `gh pr create --fill --body "Fixes #{number}"`
-- The "Fixes #{number}" in the body ensures the PR auto-closes the issue when merged
-
-If addressing PR FEEDBACK (issue already has an open PR):
-- Push your changes to the existing branch
-- Optionally reply to resolved comments: `gh pr review {pr_number} --comment --body "Addressed: {summary}"`
-- DO NOT create a new PR
 
 # CLOSE THE ISSUE
 
@@ -146,11 +104,7 @@ Use `gh issue comment <number> --body "Summary of changes"` to document:
 - Key files changed
 - Any important decisions or gotchas
 
-**Direct Push Mode (default):**
 After commenting, close the issue using `gh issue close <number>`.
-
-**PR Mode:**
-After commenting, DO NOT close the issue directly. The PR will auto-close it when merged (via "Fixes #{number}" in the PR body).
 
 If the issue is not complete, leave a comment explaining what was done and what remains.
 

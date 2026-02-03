@@ -1,12 +1,5 @@
 namespace Coralph;
 
-internal enum PrMode
-{
-    Auto,
-    Always,
-    Never
-}
-
 internal sealed class LoopOptions
 {
     internal const string ConfigurationSectionName = "LoopOptions";
@@ -34,8 +27,6 @@ internal sealed class LoopOptions
     public bool ShowReasoning { get; set; } = true;
     public bool ColorizedOutput { get; set; } = true;
     public bool StreamEvents { get; set; }
-    public PrMode PrMode { get; set; } = PrMode.Auto;
-    public List<string> PrModeBypassUsers { get; set; } = new();
     public bool DockerSandbox { get; set; }
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
 }
@@ -64,8 +55,6 @@ internal sealed class LoopOptionsOverrides
     public bool? ShowReasoning { get; set; }
     public bool? ColorizedOutput { get; set; }
     public bool? StreamEvents { get; set; }
-    public PrMode? PrMode { get; set; }
-    public List<string>? PrModeBypassUsers { get; set; }
     public bool? DockerSandbox { get; set; }
     public string? DockerImage { get; set; }
 }
