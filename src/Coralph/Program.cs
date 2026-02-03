@@ -205,73 +205,105 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         return 0;
     }
 
-    for (var i = 1; i <= opt.MaxIterations; i++)
+    var useDockerPerIteration = opt.DockerSandbox && !inDockerSandbox;
+    CopilotSessionRunner? sessionRunner = null;
+
+    try
     {
-        eventStream?.Emit("turn_start", turn: i, fields: new Dictionary<string, object?>
+        if (!useDockerPerIteration)
         {
-            ["maxIterations"] = opt.MaxIterations
-        });
-
-        using (LogContext.PushProperty("Iteration", i))
-        {
-            Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
-            ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
-
-            // Reload progress and issues before each iteration so assistant sees updates it made
-            progress = File.Exists(opt.ProgressFile)
-                ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
-                : string.Empty;
-            issues = File.Exists(opt.IssuesFile)
-                ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
-                : "[]";
-
-            var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress);
-
-            string output;
-            string? turnError = null;
-            var success = true;
             try
             {
-                if (opt.DockerSandbox && !inDockerSandbox)
-                {
-                    output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, ct);
-                }
-                else
-                {
-                    output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
-                }
-                Log.Information("Iteration {Iteration} completed successfully", i);
+                sessionRunner = await CopilotSessionRunner.CreateAsync(opt, eventStream);
             }
             catch (Exception ex)
             {
-                success = false;
-                turnError = $"{ex.GetType().Name}: {ex.Message}";
-                output = $"ERROR: {turnError}";
-                Log.Error(ex, "Iteration {Iteration} failed with error", i);
-                ConsoleOutput.WriteErrorLine(output);
                 emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
+                Log.Error(ex, "Failed to start Copilot session");
+                ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+                return 1;
             }
+        }
 
-            // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
-            // The assistant writes clean, formatted summaries with learnings instead of raw output
-
-            var hasTerminalSignal = PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal);
-            eventStream?.Emit("turn_end", turn: i, fields: new Dictionary<string, object?>
+        for (var i = 1; i <= opt.MaxIterations; i++)
+        {
+            eventStream?.Emit("turn_start", turn: i, fields: new Dictionary<string, object?>
             {
-                ["success"] = success,
-                ["output"] = output,
-                ["error"] = turnError,
-                ["terminalSignal"] = hasTerminalSignal ? terminalSignal : null
+                ["maxIterations"] = opt.MaxIterations
             });
 
-            if (hasTerminalSignal)
+            using (LogContext.PushProperty("Iteration", i))
             {
-                Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
-                ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
-                await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
-                break;
-            }
-        } // end LogContext scope
+                Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
+                ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
+
+                // Reload progress and issues before each iteration so assistant sees updates it made
+                progress = File.Exists(opt.ProgressFile)
+                    ? await File.ReadAllTextAsync(opt.ProgressFile, ct)
+                    : string.Empty;
+                issues = File.Exists(opt.IssuesFile)
+                    ? await File.ReadAllTextAsync(opt.IssuesFile, ct)
+                    : "[]";
+
+                var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress);
+
+                string output;
+                string? turnError = null;
+                var success = true;
+                try
+                {
+                    if (useDockerPerIteration)
+                    {
+                        output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, ct);
+                    }
+                    else if (sessionRunner is not null)
+                    {
+                        output = await sessionRunner.RunTurnAsync(combinedPrompt, ct, i);
+                    }
+                    else
+                    {
+                        output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
+                    }
+                    Log.Information("Iteration {Iteration} completed successfully", i);
+                }
+                catch (Exception ex)
+                {
+                    success = false;
+                    turnError = $"{ex.GetType().Name}: {ex.Message}";
+                    output = $"ERROR: {turnError}";
+                    Log.Error(ex, "Iteration {Iteration} failed with error", i);
+                    ConsoleOutput.WriteErrorLine(output);
+                    emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
+                }
+
+                // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
+                // The assistant writes clean, formatted summaries with learnings instead of raw output
+
+                var hasTerminalSignal = PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal);
+                eventStream?.Emit("turn_end", turn: i, fields: new Dictionary<string, object?>
+                {
+                    ["success"] = success,
+                    ["output"] = output,
+                    ["error"] = turnError,
+                    ["terminalSignal"] = hasTerminalSignal ? terminalSignal : null
+                });
+
+                if (hasTerminalSignal)
+                {
+                    Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
+                    ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
+                    await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+                    break;
+                }
+            } // end LogContext scope
+        }
+    }
+    finally
+    {
+        if (sessionRunner is not null)
+        {
+            await sessionRunner.DisposeAsync();
+        }
     }
 
     Log.Information("Coralph loop finished");
