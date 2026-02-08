@@ -838,3 +838,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
 - **Learnings:**
   - gh issue list includes comment bodies, so task extraction can rely on issues.json comments when refreshed
   - Merging list items with headings preserves detailed tasks while keeping large-issue safeguards in place
+
+## 2026-02-08 - #67
+
+- Added 19 comprehensive unit tests for TaskBacklog.cs domain logic (now 25 total tests)
+- Tests cover edge cases: null/empty inputs, closed issues, malformed JSON, deduplication, markdown formatting, metadata filtering, length validation, status normalization, stable key generation, truncation, fallback behavior
+- Files changed: src/Coralph.Tests/TaskBacklogTests.cs, generated_tasks.json
+- **Learnings:**
+  - TaskBacklog requires >= 3 list items OR long body (>= 1500 chars) OR headings/comments to use list-based tasks
+  - List items have min 12 chars (after cleaning) and max 200 chars, with metadata filtering ("Note:", "Example:", URLs)
+  - Deduplication uses case-insensitive slugification (Slugify method) for stable keys
+  - Status normalization maps "completed"/"complete" -> "done", "in-progress"/"inprogress" -> "in_progress"
+  - When all extraction methods fail, fallback to single task with issue title and truncated body
