@@ -21,7 +21,7 @@
       "issueTitle": "feat: Implement critical .NET \u0026 C# improvements (testing, modernization, performance)",
       "title": "Alternatives considered",
       "description": "Most improvements are upgrades rather than alternatives; the only alternatives considered are retaining the existing legacy approach, which leads to tech debt and limited test coverage. For async code, the alternative is continuing without ConfigureAwait(false) (not recommended). For storage and event streaming, fallba",
-      "status": "open",
+      "status": "done",
       "origin": "heading",
       "order": 2
     }
