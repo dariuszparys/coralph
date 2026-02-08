@@ -56,6 +56,38 @@ public class TaskBacklogTests
     }
 
     [Fact]
+    public void BuildBacklogJson_WithHeadingsListsAndComments_PrefersListItems()
+    {
+        var issuesJson = """
+            [
+              {
+                "number": 67,
+                "title": "Modernization work",
+                "body": "### Problem statement\nContext.\n\n### Proposed solution\n1. Add unit tests for TaskBacklog.cs\n2. Migrate to GeneratedRegex\n\n### Alternatives considered\nLegacy.",
+                "comments": [
+                  { "body": "Remaining work:\n- Add PermissionPolicy tests\n- Add ConfigureAwait(false) to async code" }
+                ],
+                "state": "open"
+              }
+            ]
+            """;
+
+        var backlogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+
+        using var doc = JsonDocument.Parse(backlogJson);
+        var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+        var titles = tasks.Select(t => t.GetProperty("title").GetString()).ToArray();
+
+        Assert.Contains("Add unit tests for TaskBacklog.cs", titles);
+        Assert.Contains("Migrate to GeneratedRegex", titles);
+        Assert.Contains("Add PermissionPolicy tests", titles);
+        Assert.Contains("Add ConfigureAwait(false) to async code", titles);
+
+        var commentTask = tasks.First(t => t.GetProperty("title").GetString() == "Add PermissionPolicy tests");
+        Assert.Equal("comment", commentTask.GetProperty("origin").GetString());
+    }
+
+    [Fact]
     public void BuildBacklogJson_WithExistingBacklog_PreservesTaskStatus()
     {
         var issuesJson = """

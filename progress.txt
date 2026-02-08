@@ -827,3 +827,14 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - SearchValues.Create provides optimized character searching in .NET 10, faster than IndexOfAny with inline arrays
   - The field keyword eliminates boilerplate backing fields while maintaining the same lazy initialization pattern
   - All 114 tests pass - these modernizations are backward-compatible with existing behavior
+
+## 2026-02-08 - #67
+
+- Expanded task backlog generation to parse actionable list items from issue bodies and comments
+- Added comment-aware task extraction with origin tagging to retain comment-sourced work
+- Prioritized list-based tasks for large issues so detailed improvements are not skipped
+- Added regression coverage for mixed headings, lists, and comment tasks
+- Files changed: src/Coralph/TaskBacklog.cs, src/Coralph.Tests/TaskBacklogTests.cs
+- **Learnings:**
+  - gh issue list includes comment bodies, so task extraction can rely on issues.json comments when refreshed
+  - Merging list items with headings preserves detailed tasks while keeping large-issue safeguards in place

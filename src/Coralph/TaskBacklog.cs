@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -205,9 +206,37 @@ internal static partial class TaskBacklog
             var body = issue.TryGetProperty("body", out var bodyProp) && bodyProp.ValueKind == JsonValueKind.String
                 ? bodyProp.GetString()
                 : string.Empty;
+            var comments = new List<string>();
+            if (issue.TryGetProperty("comments", out var commentsProp) && commentsProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var comment in commentsProp.EnumerateArray())
+                {
+                    if (comment.ValueKind == JsonValueKind.Object &&
+                        comment.TryGetProperty("body", out var commentBodyProp) &&
+                        commentBodyProp.ValueKind == JsonValueKind.String)
+                    {
+                        var commentBody = commentBodyProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(commentBody))
+                        {
+                            comments.Add(commentBody);
+                        }
+
+                        continue;
+                    }
+
+                    if (comment.ValueKind == JsonValueKind.String)
+                    {
+                        var commentBody = comment.GetString();
+                        if (!string.IsNullOrWhiteSpace(commentBody))
+                        {
+                            comments.Add(commentBody);
+                        }
+                    }
+                }
+            }
 
             var cleanTitle = string.IsNullOrWhiteSpace(title) ? $"Issue {number}" : title.Trim();
-            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty));
+            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty, comments));
             syntheticNumber++;
         }
 
@@ -266,9 +295,13 @@ internal static partial class TaskBacklog
 
     private static List<TaskDraft> BuildTaskDrafts(IssueItem issue)
     {
-        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body));
+        var commentChecklist = DedupeAndLimit(ExtractCommentChecklistTasks(issue.Comments));
+        var commentListItems = DedupeAndLimit(ExtractCommentListTasks(issue.Comments));
+        var hasCommentTasks = commentChecklist.Count > 0 || commentListItems.Count > 0;
+
+        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body).Concat(commentChecklist));
         var headings = DedupeAndLimit(ExtractHeadingTasks(issue.Body));
-        var listItems = DedupeAndLimit(ExtractListTasks(issue.Body));
+        var listItems = DedupeAndLimit(ExtractListTasks(issue.Body).Concat(commentListItems));
         var chunks = DedupeAndLimit(ExtractParagraphTasks(issue));
 
         if (checklist.Count > 0 && ShouldExpandChecklistDrivenIssue(issue, checklist.Count))
@@ -279,6 +312,16 @@ internal static partial class TaskBacklog
         if (checklist.Count > 0)
         {
             return checklist;
+        }
+
+        if (listItems.Count > 0 && (hasCommentTasks || headings.Count > 0 || issue.Body.Length >= 1500))
+        {
+            if (listItems.Count < MinimumLargeIssueTaskCount && (headings.Count > 0 || chunks.Count > 0))
+            {
+                return MergeDraftSources(listItems, headings, chunks, [], MinimumLargeIssueTaskCount);
+            }
+
+            return listItems;
         }
 
         if (headings.Count >= 2 || (issue.Body.Length >= 1500 && headings.Count > 0))
@@ -306,7 +349,7 @@ internal static partial class TaskBacklog
         ];
     }
 
-    private static IEnumerable<TaskDraft> ExtractChecklistTasks(string body)
+    private static IEnumerable<TaskDraft> ExtractChecklistTasks(string body, string origin = "checklist")
     {
         foreach (var line in SplitLines(body))
         {
@@ -326,8 +369,24 @@ internal static partial class TaskBacklog
             yield return new TaskDraft(
                 Title: title,
                 Description: title,
-                Origin: "checklist",
+                Origin: origin,
                 Status: doneFlag.Trim().Length == 0 ? "open" : "done");
+        }
+    }
+
+    private static IEnumerable<TaskDraft> ExtractCommentChecklistTasks(IEnumerable<string> comments)
+    {
+        foreach (var comment in comments)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                continue;
+            }
+
+            foreach (var draft in ExtractChecklistTasks(comment, "comment"))
+            {
+                yield return draft;
+            }
         }
     }
 
@@ -372,7 +431,7 @@ internal static partial class TaskBacklog
         }
     }
 
-    private static IEnumerable<TaskDraft> ExtractListTasks(string body)
+    private static IEnumerable<TaskDraft> ExtractListTasks(string body, string origin = "list")
     {
         foreach (var line in SplitLines(body))
         {
@@ -401,8 +460,24 @@ internal static partial class TaskBacklog
             yield return new TaskDraft(
                 Title: text,
                 Description: text,
-                Origin: "list",
+                Origin: origin,
                 Status: "open");
+        }
+    }
+
+    private static IEnumerable<TaskDraft> ExtractCommentListTasks(IEnumerable<string> comments)
+    {
+        foreach (var comment in comments)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                continue;
+            }
+
+            foreach (var draft in ExtractListTasks(comment, "comment"))
+            {
+                yield return draft;
+            }
         }
     }
 
@@ -758,7 +833,7 @@ internal static partial class TaskBacklog
         return true;
     }
 
-    private sealed record IssueItem(int Number, string Title, string Body);
+    private sealed record IssueItem(int Number, string Title, string Body, IReadOnlyList<string> Comments);
     private sealed record TaskDraft(string Title, string Description, string Origin, string Status);
 
     private sealed class GeneratedTaskBacklog
