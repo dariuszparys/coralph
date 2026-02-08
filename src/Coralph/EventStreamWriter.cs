@@ -3,7 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace Coralph;
 
-internal sealed class EventStreamWriter
+internal sealed class EventStreamWriter(
+    TextWriter writer,
+    string sessionId,
+    int version = EventStreamWriter.SchemaVersion,
+    bool leaveOpen = true,
+    bool flushEachEvent = false)
 {
     internal const int SchemaVersion = 1;
     private const int FlushBatchSize = 32;
@@ -15,30 +20,19 @@ internal sealed class EventStreamWriter
         "event_error"
     };
 
-    private readonly TextWriter _writer;
+    private readonly TextWriter _writer = writer ?? throw new ArgumentNullException(nameof(writer));
     private readonly object _lock = new();
-    private readonly JsonSerializerOptions _jsonOptions;
-    private readonly bool _flushEachEvent;
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+    private readonly bool _flushEachEvent = flushEachEvent;
     private long _sequence;
     private int _pendingWritesSinceFlush;
 
-    internal EventStreamWriter(TextWriter writer, string sessionId, int version = SchemaVersion, bool leaveOpen = true, bool flushEachEvent = false)
-    {
-        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-        SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
-        Version = version;
-        LeaveOpen = leaveOpen;
-        _flushEachEvent = flushEachEvent;
-
-        _jsonOptions = new JsonSerializerOptions
-        {
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-    }
-
-    internal string SessionId { get; }
-    internal int Version { get; }
-    internal bool LeaveOpen { get; }
+    internal string SessionId { get; } = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
+    internal int Version { get; } = version;
+    internal bool LeaveOpen { get; } = leaveOpen;
 
     internal void WriteSessionHeader(string cwd)
     {

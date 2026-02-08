@@ -889,3 +889,15 @@ I've successfully completed issue #27 by fixing how progress.txt is managed:
   - Avoided applying to await using statements (they return ConfiguredAsyncDisposable, not the resource)
   - This is focused on library-style code - Program.cs main loop can remain without ConfigureAwait as it's the entry point
   - All 162 tests pass - changes are backward-compatible
+
+## 2026-02-08 - #67
+
+- Implemented C# 14 primary constructors to reduce boilerplate across 5 classes
+- Converted PermissionPolicy, EventStreamWriter, CopilotSessionEventRouter, TurnState, and ConsoleOutputWriter to use primary constructors
+- Files changed: src/Coralph/PermissionPolicy.cs, src/Coralph/EventStreamWriter.cs, src/Coralph/CopilotSessionRunner.cs, src/Coralph/ConsoleOutput.cs, generated_tasks.json
+- **Learnings:**
+  - Primary constructor parameters become accessible throughout the class and can initialize fields directly
+  - Field initializers in classes with primary constructors cannot reference other instance fields (must use parameters or static methods)
+  - Primary constructors reduce boilerplate by eliminating explicit constructor declarations
+  - Validation (null checks, exceptions) can be done inline in field initializers for cleaner code
+  - All 162 tests pass - primary constructors are fully backward compatible

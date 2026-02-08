@@ -134,14 +134,9 @@ internal static class ConsoleOutput
         return AnsiConsole.Create(settings);
     }
 
-    private sealed class ConsoleOutputWriter : TextWriter
+    private sealed class ConsoleOutputWriter(bool isError) : TextWriter
     {
-        private readonly bool _isError;
-
-        internal ConsoleOutputWriter(bool isError)
-        {
-            _isError = isError;
-        }
+        private readonly bool _isError = isError;
 
         public override Encoding Encoding => Console.OutputEncoding;
 

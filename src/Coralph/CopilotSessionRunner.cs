@@ -155,28 +155,20 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
     }
 }
 
-internal sealed class CopilotSessionEventRouter
+internal sealed class CopilotSessionEventRouter(
+    LoopOptions opt,
+    EventStreamWriter? eventStream,
+    bool emitSessionEndOnIdle,
+    bool emitSessionEndOnDispose)
 {
-    private readonly LoopOptions _opt;
-    private readonly EventStreamWriter? _eventStream;
-    private readonly bool _emitSessionEndOnIdle;
-    private readonly bool _emitSessionEndOnDispose;
+    private readonly LoopOptions _opt = opt ?? throw new ArgumentNullException(nameof(opt));
+    private readonly EventStreamWriter? _eventStream = eventStream;
+    private readonly bool _emitSessionEndOnIdle = emitSessionEndOnIdle;
+    private readonly bool _emitSessionEndOnDispose = emitSessionEndOnDispose;
 
     private TurnState? _turnState;
     private string? _copilotSessionId;
     private Exception? _pendingSessionError;
-
-    internal CopilotSessionEventRouter(
-        LoopOptions opt,
-        EventStreamWriter? eventStream,
-        bool emitSessionEndOnIdle,
-        bool emitSessionEndOnDispose)
-    {
-        _opt = opt ?? throw new ArgumentNullException(nameof(opt));
-        _eventStream = eventStream;
-        _emitSessionEndOnIdle = emitSessionEndOnIdle;
-        _emitSessionEndOnDispose = emitSessionEndOnDispose;
-    }
 
     internal TurnState StartTurn(int? turn)
     {
@@ -645,14 +637,9 @@ internal sealed class CopilotSessionEventRouter
         }, state: state);
     }
 
-    internal sealed class TurnState
+    internal sealed class TurnState(int? turn)
     {
-        internal TurnState(int? turn)
-        {
-            Turn = turn;
-        }
-
-        internal int? Turn { get; }
+        internal int? Turn { get; } = turn;
         internal TaskCompletionSource Done { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal StringBuilder Output { get; } = new();
         internal bool InReasoningMode { get; set; }
