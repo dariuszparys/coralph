@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.22" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.23" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageReference Include="Serilog" Version="4.2.0" />
