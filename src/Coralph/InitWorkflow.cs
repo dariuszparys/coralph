@@ -877,6 +877,21 @@ internal static class InitWorkflow
             ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
             return 1;
         }
+        catch (InvalidDataException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
+            return 1;
+        }
+        catch (FormatException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
+            return 1;
+        }
+        catch (JsonException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
+            return 1;
+        }
     }
 
     private static List<string> ResolveGitIgnoreEntries(string repoRoot, LoopOptions options)

@@ -141,6 +141,19 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
         Assert.DoesNotContain(outsidePath.Replace('\\', '/'), gitIgnoreContent, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task RunAsync_WithMalformedConfigFile_ReturnsFailureWithoutThrowing()
+    {
+        var repoRoot = CreateTempDirectory("coralph-init-gitignore-malformed-config");
+        await File.WriteAllTextAsync(Path.Combine(repoRoot, "package.json"), """{ "name": "tmp", "version": "1.0.0" }""");
+        await File.WriteAllTextAsync(Path.Combine(repoRoot, "coralph.config.json"), "{ invalid json");
+
+        var exitCode = await RunInitAsync(repoRoot, "coralph.config.json");
+
+        Assert.Equal(1, exitCode);
+        Assert.False(File.Exists(Path.Combine(repoRoot, ".gitignore")));
+    }
+
     public void Dispose()
     {
         Directory.SetCurrentDirectory(_originalWorkingDirectory);

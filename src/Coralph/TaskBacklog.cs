@@ -514,6 +514,7 @@ internal static partial class TaskBacklog
             prdScore += 2;
         }
 
+        var hasSecondaryPrdSignalLabel = false;
         foreach (var label in issue.Labels)
         {
             var normalizedLabel = NormalizePhrase(label);
@@ -527,9 +528,13 @@ internal static partial class TaskBacklog
                     return IssueTaskMode.Prd;
                 }
 
-                prdScore += 2;
-                break;
+                hasSecondaryPrdSignalLabel = true;
             }
+        }
+
+        if (hasSecondaryPrdSignalLabel)
+        {
+            prdScore += 2;
         }
 
         var prdHeadingSignalCount = 0;

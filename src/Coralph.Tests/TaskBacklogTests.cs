@@ -183,6 +183,30 @@ public class TaskBacklogTests
     }
 
     [Fact]
+    public void BuildBacklogJson_WithPrdLabelAfterSecondarySignal_UsesPrdFanout()
+    {
+        var issuesJson = """
+            [
+              {
+                "number": 78,
+                "title": "Checkout planning",
+                "labels": ["design", "prd"],
+                "body": "1. Implement checkout API contracts for cart totals and taxes\n2. Build checkout UI flow for payment and confirmation states\n3. Add end-to-end tests covering happy and failure paths",
+                "state": "open"
+              }
+            ]
+            """;
+
+        var backlogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+
+        using var doc = JsonDocument.Parse(backlogJson);
+        var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+
+        Assert.Equal(3, tasks.Length);
+        Assert.DoesNotContain(tasks, task => task.GetProperty("origin").GetString() == "fallback");
+    }
+
+    [Fact]
     public void BuildBacklogJson_WithLargeNonPrdIssue_UsesModerateFanout()
     {
         var filler = string.Join('\n', Enumerable.Repeat(
