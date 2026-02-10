@@ -205,6 +205,30 @@ internal static class DockerSandbox
             output.Append(Quote(opt.CliUrl));
         }
 
+        if (!string.IsNullOrWhiteSpace(opt.ProviderType))
+        {
+            output.Append(" --provider-type ");
+            output.Append(Quote(opt.ProviderType));
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.ProviderBaseUrl))
+        {
+            output.Append(" --provider-base-url ");
+            output.Append(Quote(opt.ProviderBaseUrl));
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.ProviderWireApi))
+        {
+            output.Append(" --provider-wire-api ");
+            output.Append(Quote(opt.ProviderWireApi));
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.ProviderApiKey))
+        {
+            output.Append(" --provider-api-key ");
+            output.Append(Quote(opt.ProviderApiKey));
+        }
+
         return output.ToString();
     }
 
