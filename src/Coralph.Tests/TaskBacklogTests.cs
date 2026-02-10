@@ -62,7 +62,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 67,
-                "title": "Modernization work",
+                "title": "PRD: Modernization work",
                 "body": "### Problem statement\nContext.\n\n### Proposed solution\n1. Add unit tests for TaskBacklog.cs\n2. Migrate to GeneratedRegex\n\n### Alternatives considered\nLegacy.",
                 "comments": [
                   { "body": "Remaining work:\n- Add PermissionPolicy tests\n- Add ConfigureAwait(false) to async code" }
@@ -133,6 +133,100 @@ public class TaskBacklogTests
 
         Assert.Equal(1, tasks.GetArrayLength());
         Assert.Equal("Fix null reference in parser", tasks[0].GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public void BuildBacklogJson_WithNonPrdListOnlyIssue_FallsBackToSingleTask()
+    {
+        var issuesJson = """
+            [
+              {
+                "number": 76,
+                "title": "bug: init fails in standalone mode",
+                "body": "### Steps to reproduce\n1. Build the binary\n2. Run coralph --init\n\n### Expected behavior\n- It should succeed",
+                "state": "open"
+              }
+            ]
+            """;
+
+        var backlogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+
+        using var doc = JsonDocument.Parse(backlogJson);
+        var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+
+        Assert.Single(tasks);
+        Assert.Equal("bug: init fails in standalone mode", tasks[0].GetProperty("title").GetString());
+        Assert.Equal("fallback", tasks[0].GetProperty("origin").GetString());
+    }
+
+    [Fact]
+    public void BuildBacklogJson_WithTaskModeOverridePrd_UsesPrdFanout()
+    {
+        var issuesJson = """
+            [
+              {
+                "number": 77,
+                "title": "Feature backlog",
+                "body": "<!-- coralph:task-mode=prd -->\n1. Build API layer for onboarding flow\n2. Add UI wiring for onboarding flow\n3. Add end-to-end integration tests for onboarding",
+                "state": "open"
+              }
+            ]
+            """;
+
+        var backlogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+
+        using var doc = JsonDocument.Parse(backlogJson);
+        var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+
+        Assert.Equal(3, tasks.Length);
+        Assert.Equal("Build API layer for onboarding flow", tasks[0].GetProperty("title").GetString());
+    }
+
+    [Fact]
+    public void BuildBacklogJson_WithLargeNonPrdIssue_UsesModerateFanout()
+    {
+        var filler = string.Join('\n', Enumerable.Repeat(
+            "Implementation details for resiliency, rollout safety, and service-level diagnostics across components.", 80));
+
+        var body = """
+            ### Steps to reproduce
+            1. Build the binary
+            2. Run the command
+
+            ### Environment
+            - OS: macOS
+            - Runtime: .NET 10
+
+            ### Implementation slices
+            1. Implement the orchestration API for task selection and execution
+            2. Add storage persistence for generated task transitions and retries
+            3. Add guardrails for terminal signals and completion checks
+
+            ### Validation plan
+            1. Add integration tests for successful iteration and completion
+            2. Add failure-path coverage for invalid signals and stale status transitions
+            """ + "\n\n" + filler;
+
+        var issuesJson = $$"""
+            [
+              {
+                "number": 88,
+                "title": "Feature: Orchestration hardening",
+                "body": {{JsonSerializer.Serialize(body)}},
+                "state": "open"
+              }
+            ]
+            """;
+
+        var backlogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+
+        using var doc = JsonDocument.Parse(backlogJson);
+        var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
+        var titles = tasks.Select(t => t.GetProperty("title").GetString()!).ToArray();
+
+        Assert.InRange(tasks.Length, 3, 8);
+        Assert.DoesNotContain("Steps to reproduce", titles);
+        Assert.DoesNotContain("Environment", titles);
     }
 
     [Fact]
@@ -246,7 +340,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 10,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "1. Add feature A\n2. Add feature B\n3. Add feature A again",
                 "state": "open"
               }
@@ -274,7 +368,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 20,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "1. Add **bold** feature\n2. Add `code` snippet\n3. Add [link](https://example.com) text",
                 "state": "open"
               }
@@ -324,7 +418,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 31,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "1. This task passes the minimum length requirement\n2. Another task that meets the minimum requirement\n3. And one more task that is long enough to pass",
                 "state": "open"
               }
@@ -375,7 +469,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 41,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "1. Implement the feature properly and correctly\n2. Note: This is metadata\n3. Add comprehensive test coverage for everything\n4. Example: Sample code\n5. Deploy to production with monitoring enabled",
                 "state": "open"
               }
@@ -402,7 +496,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 50,
-                "title": "Large Issue",
+                "title": "PRD: Large Issue",
                 "body": {{JsonSerializer.Serialize(items)}},
                 "state": "open"
               }
@@ -476,7 +570,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 99,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "We need multiple tasks here:\n\n1. Implement task A with proper description\n2. Implement task B with proper description\n3. Implement task C with proper description",
                 "state": "open"
               }
@@ -559,7 +653,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 90,
-                "title": "Test Issue",
+                "title": "PRD: Test Issue",
                 "body": "1. Add feature X implementation properly to the system\n2. Add Feature X implementation properly to the system\n3. ADD FEATURE X IMPLEMENTATION PROPERLY TO THE SYSTEM\n4. Add feature Y implementation properly to the system\n5. Add feature Z implementation properly to the system",
                 "state": "open"
               }
@@ -599,7 +693,7 @@ public class TaskBacklogTests
             [
               {
                 "number": 100,
-                "title": "Test",
+                "title": "PRD: Test",
                 "body": "We need:\n\n1. Implement the complete Task A\n2. Implement the complete Task B\n3. Implement the complete Task C",
                 "state": "open"
               }

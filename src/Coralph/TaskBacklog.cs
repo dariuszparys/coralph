@@ -12,6 +12,10 @@ internal static partial class TaskBacklog
     private const int MaxTasksPerIssue = 25;
     private const int LargeIssueBodyThreshold = 3000;
     private const int MinimumLargeIssueTaskCount = 8;
+    private const int LargeNonPrdIssueBodyThreshold = 4500;
+    private const int LargeNonPrdTargetTaskCount = 6;
+    private const int LargeNonPrdMaxTasks = 8;
+    private const int PrdScoreThreshold = 5;
 
     [GeneratedRegex(@"^\s*[-*+]\s*\[(?<done>[ xX])\]\s+(?<text>.+)$")]
     private static partial Regex ChecklistLineRegex();
@@ -33,6 +37,9 @@ internal static partial class TaskBacklog
 
     [GeneratedRegex(@"^\s*(?:[-*+]|(?:\d+\.))\s+")]
     private static partial Regex ListPrefixRegex();
+
+    [GeneratedRegex(@"coralph\s*:\s*task-mode\s*=\s*(?<mode>[a-z_]+)", RegexOptions.IgnoreCase)]
+    private static partial Regex TaskModeOverrideRegex();
 
     private static readonly JsonSerializerOptions SerializeOptions = new()
     {
@@ -70,7 +77,58 @@ internal static partial class TaskBacklog
         "qa",
         "appendix",
         "references",
+        "steps to reproduce",
+        "reproduction steps",
+        "reproduction",
+        "environment",
+        "actual behavior",
+        "expected behavior",
+        "observed behavior",
+        "logs",
+        "stack trace",
+        "screenshots",
+        "additional context",
     };
+
+    private static readonly HashSet<string> NonImplementationSectionTitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "steps to reproduce",
+        "reproduction steps",
+        "reproduction",
+        "environment",
+        "actual behavior",
+        "expected behavior",
+        "observed behavior",
+        "stack trace",
+        "logs",
+        "log output",
+        "screenshots",
+        "additional context",
+        "versions",
+    };
+
+    private static readonly HashSet<string> PrdHeadingSignals = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "goals",
+        "goal",
+        "non goals",
+        "non-goals",
+        "requirements",
+        "acceptance criteria",
+        "functional requirements",
+        "non functional requirements",
+        "success metrics",
+        "user stories",
+        "rollout",
+        "milestones",
+    };
+
+    private enum IssueTaskMode
+    {
+        Default,
+        Prd,
+        LargeGeneric,
+    }
 
     internal static async Task<string> EnsureBacklogAsync(string issuesJson, string backlogFile, CancellationToken ct)
     {
@@ -235,8 +293,37 @@ internal static partial class TaskBacklog
                 }
             }
 
+            var labels = new List<string>();
+            if (issue.TryGetProperty("labels", out var labelsProp) && labelsProp.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var label in labelsProp.EnumerateArray())
+                {
+                    if (label.ValueKind == JsonValueKind.Object &&
+                        label.TryGetProperty("name", out var labelNameProp) &&
+                        labelNameProp.ValueKind == JsonValueKind.String)
+                    {
+                        var labelName = labelNameProp.GetString();
+                        if (!string.IsNullOrWhiteSpace(labelName))
+                        {
+                            labels.Add(labelName.Trim());
+                        }
+
+                        continue;
+                    }
+
+                    if (label.ValueKind == JsonValueKind.String)
+                    {
+                        var labelName = label.GetString();
+                        if (!string.IsNullOrWhiteSpace(labelName))
+                        {
+                            labels.Add(labelName.Trim());
+                        }
+                    }
+                }
+            }
+
             var cleanTitle = string.IsNullOrWhiteSpace(title) ? $"Issue {number}" : title.Trim();
-            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty, comments));
+            issues.Add(new IssueItem(number, cleanTitle, body ?? string.Empty, comments, labels));
             syntheticNumber++;
         }
 
@@ -295,11 +382,61 @@ internal static partial class TaskBacklog
 
     private static List<TaskDraft> BuildTaskDrafts(IssueItem issue)
     {
+        var mode = ClassifyIssueTaskMode(issue);
         var commentChecklist = DedupeAndLimit(ExtractCommentChecklistTasks(issue.Comments));
+        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body).Concat(commentChecklist));
+
+        if (mode == IssueTaskMode.Default)
+        {
+            if (checklist.Count > 0)
+            {
+                return checklist;
+            }
+
+            return
+            [
+                new TaskDraft(
+                    Title: issue.Title,
+                    Description: BuildFallbackDescription(issue.Body),
+                    Origin: "fallback",
+                    Status: "open")
+            ];
+        }
+
+        if (mode == IssueTaskMode.LargeGeneric)
+        {
+            if (checklist.Count > 0)
+            {
+                return checklist;
+            }
+
+            var largeIssueHeadings = DedupeAndLimit(ExtractHeadingTasks(issue.Body));
+            var largeIssueListItems = DedupeAndLimit(ExtractListTasks(issue.Body, excludedSectionTitles: NonImplementationSectionTitles));
+            var largeIssueChunks = DedupeAndLimit(ExtractParagraphTasks(issue));
+            var merged = MergeDraftSources(largeIssueHeadings, largeIssueListItems, largeIssueChunks, [], LargeNonPrdTargetTaskCount);
+
+            if (merged.Count == 0)
+            {
+                return
+                [
+                    new TaskDraft(
+                        Title: issue.Title,
+                        Description: BuildFallbackDescription(issue.Body),
+                        Origin: "fallback",
+                        Status: "open")
+                ];
+            }
+
+            if (merged.Count > LargeNonPrdMaxTasks)
+            {
+                return merged.Take(LargeNonPrdMaxTasks).ToList();
+            }
+
+            return merged;
+        }
+
         var commentListItems = DedupeAndLimit(ExtractCommentListTasks(issue.Comments));
         var hasCommentTasks = commentChecklist.Count > 0 || commentListItems.Count > 0;
-
-        var checklist = DedupeAndLimit(ExtractChecklistTasks(issue.Body).Concat(commentChecklist));
         var headings = DedupeAndLimit(ExtractHeadingTasks(issue.Body));
         var listItems = DedupeAndLimit(ExtractListTasks(issue.Body).Concat(commentListItems));
         var chunks = DedupeAndLimit(ExtractParagraphTasks(issue));
@@ -347,6 +484,120 @@ internal static partial class TaskBacklog
                 Origin: "fallback",
                 Status: "open")
         ];
+    }
+
+    private static IssueTaskMode ClassifyIssueTaskMode(IssueItem issue)
+    {
+        var body = issue.Body ?? string.Empty;
+        var overrideMode = GetTaskModeOverride(body);
+        if (overrideMode is not null)
+        {
+            return overrideMode.Value;
+        }
+
+        var prdScore = 0;
+        var normalizedTitle = NormalizePhrase(issue.Title);
+        if (normalizedTitle.Contains("prd", StringComparison.OrdinalIgnoreCase))
+        {
+            return IssueTaskMode.Prd;
+        }
+
+        if (normalizedTitle.Contains("product requirement", StringComparison.OrdinalIgnoreCase) ||
+            normalizedTitle.Contains("product requirements", StringComparison.OrdinalIgnoreCase))
+        {
+            prdScore += 4;
+        }
+
+        if (normalizedTitle.Contains("rfc", StringComparison.OrdinalIgnoreCase) ||
+            normalizedTitle.Contains("design doc", StringComparison.OrdinalIgnoreCase))
+        {
+            prdScore += 2;
+        }
+
+        foreach (var label in issue.Labels)
+        {
+            var normalizedLabel = NormalizePhrase(label);
+            if (normalizedLabel.Contains("prd", StringComparison.OrdinalIgnoreCase) ||
+                normalizedLabel.Contains("requirements", StringComparison.OrdinalIgnoreCase) ||
+                normalizedLabel.Contains("rfc", StringComparison.OrdinalIgnoreCase) ||
+                normalizedLabel.Contains("design", StringComparison.OrdinalIgnoreCase))
+            {
+                if (normalizedLabel.Contains("prd", StringComparison.OrdinalIgnoreCase))
+                {
+                    return IssueTaskMode.Prd;
+                }
+
+                prdScore += 2;
+                break;
+            }
+        }
+
+        var prdHeadingSignalCount = 0;
+        foreach (var line in SplitLines(body))
+        {
+            var headingMatch = HeadingLineRegex().Match(line);
+            if (!headingMatch.Success)
+            {
+                continue;
+            }
+
+            var normalizedHeading = NormalizePhrase(CleanTaskText(headingMatch.Groups["title"].Value));
+            if (PrdHeadingSignals.Contains(normalizedHeading))
+            {
+                prdHeadingSignalCount++;
+            }
+        }
+
+        if (prdHeadingSignalCount >= 2)
+        {
+            prdScore += 2;
+        }
+
+        if (prdHeadingSignalCount >= 4)
+        {
+            prdScore += 2;
+        }
+
+        if (body.Length >= LargeIssueBodyThreshold && prdHeadingSignalCount >= 2)
+        {
+            prdScore += 1;
+        }
+
+        if (prdScore >= PrdScoreThreshold)
+        {
+            return IssueTaskMode.Prd;
+        }
+
+        if (body.Length >= LargeNonPrdIssueBodyThreshold)
+        {
+            return IssueTaskMode.LargeGeneric;
+        }
+
+        return IssueTaskMode.Default;
+    }
+
+    private static IssueTaskMode? GetTaskModeOverride(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
+        }
+
+        var match = TaskModeOverrideRegex().Match(body);
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        var mode = match.Groups["mode"].Value.Trim().ToLowerInvariant();
+        return mode switch
+        {
+            "prd" => IssueTaskMode.Prd,
+            "default" => IssueTaskMode.Default,
+            "single" => IssueTaskMode.Default,
+            "large" => IssueTaskMode.LargeGeneric,
+            _ => null,
+        };
     }
 
     private static IEnumerable<TaskDraft> ExtractChecklistTasks(string body, string origin = "checklist")
@@ -431,10 +682,21 @@ internal static partial class TaskBacklog
         }
     }
 
-    private static IEnumerable<TaskDraft> ExtractListTasks(string body, string origin = "list")
+    private static IEnumerable<TaskDraft> ExtractListTasks(
+        string body,
+        string origin = "list",
+        IReadOnlySet<string>? excludedSectionTitles = null)
     {
+        var currentSection = string.Empty;
         foreach (var line in SplitLines(body))
         {
+            var headingMatch = HeadingLineRegex().Match(line);
+            if (headingMatch.Success)
+            {
+                currentSection = NormalizePhrase(CleanTaskText(headingMatch.Groups["title"].Value));
+                continue;
+            }
+
             if (ChecklistLineRegex().IsMatch(line))
             {
                 continue;
@@ -453,6 +715,13 @@ internal static partial class TaskBacklog
             }
 
             if (LooksLikeMetadata(text))
+            {
+                continue;
+            }
+
+            if (excludedSectionTitles is not null &&
+                currentSection.Length > 0 &&
+                excludedSectionTitles.Contains(currentSection))
             {
                 continue;
             }
@@ -833,7 +1102,12 @@ internal static partial class TaskBacklog
         return true;
     }
 
-    private sealed record IssueItem(int Number, string Title, string Body, IReadOnlyList<string> Comments);
+    private sealed record IssueItem(
+        int Number,
+        string Title,
+        string Body,
+        IReadOnlyList<string> Comments,
+        IReadOnlyList<string> Labels);
     private sealed record TaskDraft(string Title, string Description, string Origin, string Status);
 
     private sealed class GeneratedTaskBacklog
