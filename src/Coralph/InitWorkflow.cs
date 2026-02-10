@@ -4,6 +4,8 @@ namespace Coralph;
 
 internal static class InitWorkflow
 {
+    private const string CoralphGitIgnoreBlockStart = "# Coralph loop artifacts (managed)";
+    private const string CoralphGitIgnoreBlockEnd = "# End Coralph loop artifacts";
     private const string EmbeddedIssuesSample = """
         [
           {
@@ -365,6 +367,7 @@ internal static class InitWorkflow
         exitCode |= await EnsureConfigFileAsync(repoRoot, configFile);
         exitCode |= await EnsurePromptFileAsync(repoRoot, coralphRoot, projectType.Value, fallbackPrompt);
         exitCode |= await EnsureProgressFileAsync(repoRoot);
+        exitCode |= await EnsureGitIgnoreEntriesAsync(repoRoot, configFile);
 
         if (exitCode == 0)
         {
@@ -830,6 +833,134 @@ internal static class InitWorkflow
             ConsoleOutput.WriteErrorLine($"Failed to write progress.txt: {ex.Message}");
             return 1;
         }
+    }
+
+    private static async Task<int> EnsureGitIgnoreEntriesAsync(string repoRoot, string? configFile)
+    {
+        var gitIgnorePath = Path.Combine(repoRoot, ".gitignore");
+        var gitIgnoreExisted = File.Exists(gitIgnorePath);
+
+        try
+        {
+            var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), configFile);
+            var entries = ResolveGitIgnoreEntries(repoRoot, options);
+            if (entries.Count == 0)
+            {
+                ConsoleOutput.WriteLine("No Coralph loop artifacts qualified for .gitignore update.");
+                return 0;
+            }
+
+            var existingContent = File.Exists(gitIgnorePath)
+                ? await File.ReadAllTextAsync(gitIgnorePath, CancellationToken.None).ConfigureAwait(false)
+                : string.Empty;
+            var mergedContent = MergeManagedGitIgnoreBlock(existingContent, entries);
+
+            if (string.Equals(existingContent, mergedContent, StringComparison.Ordinal))
+            {
+                ConsoleOutput.WriteLine(".gitignore already contains Coralph loop artifact entries, skipping.");
+                return 0;
+            }
+
+            await File.WriteAllTextAsync(gitIgnorePath, mergedContent, CancellationToken.None).ConfigureAwait(false);
+            ConsoleOutput.WriteLine(gitIgnoreExisted
+                ? "Updated .gitignore with Coralph loop artifact entries."
+                : "Created .gitignore with Coralph loop artifact entries.");
+            return 0;
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
+            return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to update .gitignore: {ex.Message}");
+            return 1;
+        }
+    }
+
+    private static List<string> ResolveGitIgnoreEntries(string repoRoot, LoopOptions options)
+    {
+        // Stable order for predictable block content.
+        var candidates = new[]
+        {
+            options.IssuesFile,
+            options.GeneratedTasksFile,
+            options.ProgressFile
+        };
+
+        var entries = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var candidate in candidates)
+        {
+            var normalized = NormalizeGitIgnorePath(repoRoot, candidate);
+            if (normalized is null)
+            {
+                continue;
+            }
+
+            if (seen.Add(normalized))
+            {
+                entries.Add(normalized);
+            }
+        }
+
+        return entries;
+    }
+
+    private static string? NormalizeGitIgnorePath(string repoRoot, string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var fullPath = Path.IsPathRooted(path)
+            ? Path.GetFullPath(path)
+            : Path.GetFullPath(Path.Combine(repoRoot, path));
+        var fullRepoRoot = Path.GetFullPath(repoRoot);
+        var relative = Path.GetRelativePath(fullRepoRoot, fullPath);
+
+        if (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative))
+        {
+            return null;
+        }
+
+        return relative.Replace('\\', '/');
+    }
+
+    private static string MergeManagedGitIgnoreBlock(string existingContent, IReadOnlyList<string> entries)
+    {
+        var newBlock = BuildManagedGitIgnoreBlock(entries);
+        var startIndex = existingContent.IndexOf(CoralphGitIgnoreBlockStart, StringComparison.Ordinal);
+        var endIndex = existingContent.IndexOf(CoralphGitIgnoreBlockEnd, StringComparison.Ordinal);
+
+        if (startIndex >= 0 && endIndex > startIndex)
+        {
+            var endLineIndex = existingContent.IndexOf('\n', endIndex);
+            var replaceEnd = endLineIndex >= 0 ? endLineIndex + 1 : existingContent.Length;
+            return $"{existingContent[..startIndex]}{newBlock}{existingContent[replaceEnd..]}".TrimEnd() + "\n";
+        }
+
+        if (string.IsNullOrWhiteSpace(existingContent))
+        {
+            return newBlock;
+        }
+
+        return $"{existingContent.TrimEnd()}\n\n{newBlock}";
+    }
+
+    private static string BuildManagedGitIgnoreBlock(IReadOnlyList<string> entries)
+    {
+        var lines = new List<string>
+        {
+            CoralphGitIgnoreBlockStart
+        };
+
+        lines.AddRange(entries);
+        lines.Add(CoralphGitIgnoreBlockEnd);
+        return string.Join('\n', lines) + "\n";
     }
 
     private enum ProjectType
