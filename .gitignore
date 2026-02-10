@@ -63,7 +63,7 @@ issues.json
 events.jsonl
 coralph.log
 *.jsonl
-generated_tasks.json
+*generated*
 
 # MSBuild Binary and Structured Log
 *.binlog
