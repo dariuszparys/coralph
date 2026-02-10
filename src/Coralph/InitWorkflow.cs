@@ -4,6 +4,27 @@ namespace Coralph;
 
 internal static class InitWorkflow
 {
+    private const string EmbeddedIssuesSample = """
+        [
+          {
+            "number": 101,
+            "title": "Sample: Add hello command",
+            "body": "Add a new CLI command `hello` that prints `hello` and exits.\n\n- [ ] Implement the command\n- [ ] Add usage docs",
+            "url": "https://example.invalid/issues/101",
+            "labels": [],
+            "comments": []
+          },
+          {
+            "number": 102,
+            "title": "Sample: Fix typo in README",
+            "body": "Fix a typo in the README.\n\n- [ ] Locate the typo\n- [ ] Correct it",
+            "url": "https://example.invalid/issues/102",
+            "labels": [],
+            "comments": []
+          }
+        ]
+        """;
+
     internal static async Task<int> RunAsync(string? configFile)
     {
         ConsoleOutput.WriteLine("Initializing repository for Coralph...");
@@ -152,17 +173,18 @@ internal static class InitWorkflow
         }
 
         var sourcePath = Path.Combine(coralphRoot, "issues.sample.json");
-        if (!File.Exists(sourcePath))
-        {
-            ConsoleOutput.WriteErrorLine($"Missing issues.sample.json at {sourcePath}");
-            return 1;
-        }
-
         try
         {
-            File.Copy(sourcePath, targetPath);
-            ConsoleOutput.WriteLine("Created issues.json");
-            await Task.CompletedTask;
+            if (File.Exists(sourcePath))
+            {
+                File.Copy(sourcePath, targetPath);
+                ConsoleOutput.WriteLine("Created issues.json");
+                await Task.CompletedTask;
+                return 0;
+            }
+
+            await File.WriteAllTextAsync(targetPath, EmbeddedIssuesSample, CancellationToken.None);
+            ConsoleOutput.WriteLine("Created issues.json (embedded sample)");
             return 0;
         }
         catch (IOException ex)

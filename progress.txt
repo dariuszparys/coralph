@@ -1029,3 +1029,10 @@ Model: GPT-5.1-Codex
   - Advanced features belong in dedicated docs, not the main README
   - The "--help" flag is the proper place for CLI option enumeration, not README
 
+## 2026-02-10 - #75
+
+- Added embedded issues.sample.json fallback so --init creates issues.json without build output assets
+- Files changed: src/Coralph/InitWorkflow.cs
+- **Learnings:**
+  - Embedding a minimal issues sample avoids fragile runtime dependency on content files
+  - Keeping fallback logic close to init flow makes standalone binaries more reliable
