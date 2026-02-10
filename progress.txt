@@ -1049,3 +1049,11 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - TargetPath is needed to keep template files in the expected examples/ directory for published binaries
   - Using PWD as a fallback avoids cwd resolution failures during interactive runs
+
+---
+## 2026-02-10 - #73
+
+- Updated onboarding docs to reflect unified --init flow and removed redundant progress file steps
+- Files changed: docs/using-with-other-repos.md, generated_tasks.json
+- **Learnings:**
+  - Keep Quick Start steps minimal since --init already handles all core artifacts

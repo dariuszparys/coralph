@@ -48,14 +48,11 @@ cd /path/to/your/target/repo
 Create the required files in your target repository:
 
 ```bash
-# Create initial configuration
+# Initialize repository artifacts (issues.json, prompt.md, config, progress)
 coralph --init
 
 # Fetch issues from your GitHub repository
 coralph --refresh-issues --repo owner/repo-name
-
-# Create progress tracking file
-touch progress.txt
 ```
 
 ### 4. Customize for Your Tech Stack

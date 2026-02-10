@@ -32,7 +32,7 @@
       "issueTitle": "Revise initialization flow: merge --init-config and scripts into a single --init flag in the executable",
       "title": "Update documentation and onboarding flows to reflect the new unified initialization process",
       "description": "Update documentation and onboarding flows to reflect the new unified initialization process",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 3
     },
