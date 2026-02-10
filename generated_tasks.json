@@ -109,7 +109,7 @@
       "issueTitle": "bug: --init fails when running standalone binary \u2014 assets not found and example prompts inconsistent with master prompt",
       "title": "init succeeds with only the CLI binary present \u2014 no external asset files required",
       "description": "init succeeds with only the CLI binary present \u2014 no external asset files required",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 10
     },

@@ -1058,3 +1058,10 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - A publish-based smoke test confirms init works with only the binary present
   - Keeping init prompts embedded avoids missing-template regressions
+## 2026-02-10 - #75
+
+- Verified --init succeeds with only the standalone binary present and creates issues.json/prompt.md/progress.txt
+- Files changed: progress.txt
+- **Learnings:**
+  - A publish smoke test exercises the true standalone init path
+  - Embedding init assets keeps setup reliable outside the build output directory
