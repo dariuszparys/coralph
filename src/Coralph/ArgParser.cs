@@ -417,6 +417,10 @@ internal static class ArgParser
         root.AddOption(new Option<bool>(new[] { "-v", "--version" }, "Show version"));
         root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
         root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
+        root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)"));
+        root.AddOption(new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)"));
+        root.AddOption(new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)"));
+        root.AddOption(new Option<string?>("--provider-api-key", "Optional: provider API key"));
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
         root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
