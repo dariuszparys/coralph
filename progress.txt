@@ -1010,3 +1010,21 @@ Model: GPT-5.1-Codex
   - Copy-Item with progress output shows file copy status
   - Read-Host for interactive prompts works consistently across platforms
   - Providing both PowerShell and bash scripts maximizes compatibility without forcing users to install PowerShell
+
+---
+## 2026-02-10 - #72
+
+- Consolidated and restructured README for user and developer clarity
+- Reduced README from 558 lines to 167 lines (70% reduction)
+- Created audience-focused sections: "For New Users" and "For Contributors"
+- Removed verbose "Run" section (80+ lines of examples) and replaced with "Common Commands" (5 lines)
+- Consolidated "How It Works" into a simple table
+- Moved advanced features (Docker, Azure Boards, Event Stream, Tool Permissions) into compact "Advanced Features" section
+- Added clear links to docs/architecture.md, docs/using-with-other-repos.md, and CONTRIBUTING.md
+- Removed duplicate Table of Contents (now uses clear horizontal separators)
+- Files changed: README.md, generated_tasks.json, progress.txt
+- **Learnings:**
+  - Audience-focused sections ("For New Users" vs "For Contributors") make READMEs easier to navigate
+  - Tables are more scannable than bullet lists for reference information
+  - Advanced features belong in dedicated docs, not the main README
+  - The "--help" flag is the proper place for CLI option enumeration, not README
