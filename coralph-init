@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# coralph-init: Bootstrap a new repository for use with Coralph
+# Usage: coralph-init [target-directory]
+
+TARGET_DIR="${1:-.}"
+CORALPH_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "🪸 Coralph Init - Setting up your repository for AI-assisted development"
+echo ""
+
+# Navigate to target directory
+cd "$TARGET_DIR"
+TARGET_REPO="$(pwd)"
+
+echo "📁 Target repository: $TARGET_REPO"
+echo ""
+
+# Function to detect project type
+detect_project_type() {
+    if [[ -f "package.json" ]]; then
+        echo "javascript"
+    elif [[ -f "pyproject.toml" ]] || [[ -f "requirements.txt" ]] || [[ -f "setup.py" ]]; then
+        echo "python"
+    elif [[ -f "go.mod" ]]; then
+        echo "go"
+    elif [[ -f "Cargo.toml" ]]; then
+        echo "rust"
+    elif [[ -f "*.sln" ]] || [[ -f "*.csproj" ]]; then
+        echo "dotnet"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to prompt user for project type
+prompt_project_type() {
+    echo "❓ Could not automatically detect project type."
+    echo ""
+    echo "Please select your project type:"
+    echo "  1) JavaScript/TypeScript"
+    echo "  2) Python"
+    echo "  3) Go"
+    echo "  4) Rust"
+    echo "  5) .NET"
+    echo "  6) Other (use TypeScript template)"
+    echo ""
+    printf "Enter number (1-6): "
+    read -r choice
+
+    case $choice in
+        1) echo "javascript" ;;
+        2) echo "python" ;;
+        3) echo "go" ;;
+        4) echo "rust" ;;
+        5) echo "dotnet" ;;
+        6) echo "javascript" ;; # Default to TypeScript for unknown
+        *) echo "javascript" ;; # Default fallback
+    esac
+}
+
+# Detect or prompt for project type
+PROJECT_TYPE=$(detect_project_type)
+
+if [[ "$PROJECT_TYPE" == "unknown" ]]; then
+    PROJECT_TYPE=$(prompt_project_type)
+fi
+
+echo "✅ Detected project type: $PROJECT_TYPE"
+echo ""
+
+# Install core artifacts
+echo "📦 Installing core artifacts..."
+
+# 1. Create issues.json if it doesn't exist
+if [[ ! -f "issues.json" ]]; then
+    echo "  ✓ Creating issues.json"
+    cp "$CORALPH_ROOT/issues.sample.json" "issues.json"
+else
+    echo "  ⊙ issues.json already exists, skipping"
+fi
+
+# 2. Create coralph.config.json if it doesn't exist
+if [[ ! -f "coralph.config.json" ]]; then
+    echo "  ✓ Creating coralph.config.json"
+    cp "$CORALPH_ROOT/coralph.config.json" "coralph.config.json"
+else
+    echo "  ⊙ coralph.config.json already exists, skipping"
+fi
+
+# 3. Create prompt.md based on project type
+if [[ ! -f "prompt.md" ]]; then
+    case $PROJECT_TYPE in
+        javascript)
+            echo "  ✓ Creating prompt.md (JavaScript/TypeScript template)"
+            cp "$CORALPH_ROOT/examples/javascript-prompt.md" "prompt.md"
+            ;;
+        python)
+            echo "  ✓ Creating prompt.md (Python template)"
+            cp "$CORALPH_ROOT/examples/python-prompt.md" "prompt.md"
+            ;;
+        go)
+            echo "  ✓ Creating prompt.md (Go template)"
+            cp "$CORALPH_ROOT/examples/go-prompt.md" "prompt.md"
+            ;;
+        rust)
+            echo "  ✓ Creating prompt.md (Rust template)"
+            cp "$CORALPH_ROOT/examples/rust-prompt.md" "prompt.md"
+            ;;
+        dotnet)
+            echo "  ✓ Creating prompt.md (.NET template)"
+            cp "$CORALPH_ROOT/prompt.md" "prompt.md"
+            ;;
+        *)
+            echo "  ✓ Creating prompt.md (default TypeScript template)"
+            cp "$CORALPH_ROOT/examples/javascript-prompt.md" "prompt.md"
+            ;;
+    esac
+else
+    echo "  ⊙ prompt.md already exists, skipping"
+fi
+
+# 4. Create progress.txt if it doesn't exist
+if [[ ! -f "progress.txt" ]]; then
+    echo "  ✓ Creating progress.txt"
+    touch "progress.txt"
+else
+    echo "  ⊙ progress.txt already exists, skipping"
+fi
+
+echo ""
+echo "✅ Setup complete!"
+echo ""
+echo "📝 Next steps:"
+echo ""
+echo "  1. Review and customize prompt.md for your project"
+echo "  2. Add your issues to issues.json (or use --refresh-issues)"
+echo "  3. Run: coralph --max-iterations 5"
+echo ""
+echo "📚 For more information:"
+echo "  - Documentation: https://github.com/dariuszparys/coralph"
+echo "  - Using with other repos: $CORALPH_ROOT/docs/using-with-other-repos.md"
+echo ""

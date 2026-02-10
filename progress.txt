@@ -931,3 +931,17 @@ Model: GPT-5.1-Codex
 - Files changed: None (administrative task - added summary comment and closed issue)
 - Blockers/notes: Remaining low-priority tasks (integration tests, PipeReader, LRU cache, ArrayPool, extension properties, telemetry) can be tackled in separate issues when requirements become clear or performance needs arise
 
+
+---
+## 2026-02-10 - #69
+
+- Created coralph-init script to automate project setup for new repositories
+- Script auto-detects tech stack (JavaScript/TypeScript, Python, Go, Rust, .NET) or prompts user to select
+- Automatically installs core artifacts: issues.json, coralph.config.json, progress.txt, and appropriate prompt.md template
+- Updated README with Quick Start documentation showing automated setup workflow
+- Files changed: coralph-init (new), README.md
+- **Learnings:**
+  - Bash script with project detection provides minimal friction for new users
+  - Template selection based on detected/selected tech stack enables quick onboarding
+  - Fallback to TypeScript template ensures unsupported stacks still get a reasonable starting point
+  - Interactive prompts handle edge cases where auto-detection fails

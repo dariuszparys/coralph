@@ -63,6 +63,36 @@ After downloading:
 
 ## Quick Start
 
+### For New Projects (Automated Setup)
+
+Use the `coralph-init` script to automatically set up your repository:
+
+```bash
+# 1. Download and install Coralph (or build from source)
+chmod +x coralph-linux-x64
+sudo mv coralph-linux-x64 /usr/local/bin/coralph
+
+# 2. Navigate to your repository
+cd your-repo
+
+# 3. Run the initialization script
+/path/to/coralph-init
+
+# 4. (Optional) Fetch your GitHub issues
+coralph --refresh-issues --repo owner/repo-name
+
+# 5. Run the loop
+coralph --max-iterations 10
+```
+
+The `coralph-init` script will:
+- Detect your project type (JavaScript/TypeScript, Python, Go, Rust, .NET)
+- Create `issues.json`, `coralph.config.json`, and `progress.txt`
+- Install an appropriate `prompt.md` template for your tech stack
+- Provide next steps for customization
+
+### Manual Setup
+
 ```bash
 # 1. Download and install (or build from source above)
 chmod +x coralph-linux-x64
@@ -71,10 +101,15 @@ sudo mv coralph-linux-x64 /usr/local/bin/coralph
 # 2. Navigate to your repository
 cd your-repo
 
-# 3. Fetch your GitHub issues
+# 3. Create required files
+cp /path/to/coralph/issues.sample.json issues.json
+cp /path/to/coralph/coralph.config.json .
+cp /path/to/coralph/examples/<your-stack>-prompt.md prompt.md
+
+# 4. Fetch your GitHub issues
 coralph --refresh-issues --repo owner/repo-name
 
-# 4. Run the loop
+# 5. Run the loop
 coralph --max-iterations 10
 ```
 

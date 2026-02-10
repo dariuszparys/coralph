@@ -41,11 +41,11 @@
       },
       "GitHub.Copilot.SDK": {
         "type": "Transitive",
-        "resolved": "0.1.20",
-        "contentHash": "6kVN+LaQ49cz3ILnkP2IC48z7Ip5b1DMG7TyfBpwOmP4sqtWeKgBKI6sPAe2PDGImDmkSrRtEIlexTJxbnX02w==",
+        "resolved": "0.1.23",
+        "contentHash": "3eSWHppb8DwGow+iKCBjJimUX/tpMnU1SgQ2joielRbC6g7c6R0MHDLLNSlEv+nyLBNeslvuYOWDAtKL6N1ELw==",
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.1.1",
-          "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.2.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.2",
           "StreamJsonRpc": "2.24.84"
         }
       },
@@ -70,8 +70,8 @@
       },
       "Microsoft.Extensions.AI.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.1.1",
-        "contentHash": "cgj8iHv4JwUpcPANZ0oLILz146Y1Oa+l280b1c1a3DjwZflH9nmYcrX952YUuqftz2sheAC2TPCGcEa6unKQgQ=="
+        "resolved": "10.2.0",
+        "contentHash": "ONGlIBht0ygEdKc0bCt9XWUiq19/460dAu7fCKzPM34OFJSMQIohEDTJwjCJ8vVp8znNakloc9xFF9+R/eDCYQ=="
       },
       "Microsoft.Extensions.Configuration": {
         "type": "Transitive",
@@ -123,8 +123,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "cjWrLkJXK0rs4zofsK4bSdg+jhDLTaxrkXu4gS6Y7MAlCvRyNNgwY/lJi5RDlQOnSZweHqoyvgvbdvQsRIW+hg=="
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
       },
       "Microsoft.Extensions.FileProviders.Abstractions": {
         "type": "Transitive",
@@ -151,10 +151,10 @@
       },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "arDBqTgFCyS0EvRV7O3MZturChstm50OJ0y9bDJvAcmEPJm0FFpFyjU/JLYyStNGGey081DvnQYlncNX5SJJGA==",
+        "resolved": "10.0.2",
+        "contentHash": "RZkez/JjpnO+MZ6efKkSynN6ZztLpw3WbxNzjLCPBd97wWj1S9ZYPWi0nmT4kWBRa6atHsdM1ydGkUr8GudyDQ==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
         }
       },
       "Microsoft.Extensions.Options": {
@@ -347,7 +347,7 @@
       "coralph": {
         "type": "Project",
         "dependencies": {
-          "GitHub.Copilot.SDK": "[0.1.20, )",
+          "GitHub.Copilot.SDK": "[0.1.23, )",
           "Microsoft.Extensions.Configuration.Json": "[8.0.0, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
           "Serilog": "[4.2.0, )",
