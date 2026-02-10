@@ -1065,3 +1065,10 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - A publish smoke test exercises the true standalone init path
   - Embedding init assets keeps setup reliable outside the build output directory
+## 2026-02-10 - #75
+
+- Compared generated prompt.md against the master prompt workflow to confirm all core sections are present
+- Files changed: progress.txt
+- **Learnings:**
+  - Verifying section presence is a quick guardrail for prompt completeness
+  - Including the master prompt verbatim in generated prompts prevents workflow drift

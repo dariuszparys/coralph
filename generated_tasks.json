@@ -98,7 +98,7 @@
       "issueTitle": "bug: --init fails when running standalone binary \u2014 assets not found and example prompts inconsistent with master prompt",
       "title": "Compare any generated prompt.md with root prompt.md \u2014 note missing workflow sections",
       "description": "Compare any generated prompt.md with root prompt.md \u2014 note missing workflow sections",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 9
     },
