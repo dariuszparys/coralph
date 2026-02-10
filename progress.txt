@@ -256,7 +256,7 @@ Model: GPT-5.1-Codex
   - Keep migration artifacts out of the main branch until the port is ready.
 
 ## 2026-01-26 - #23
-
+ 
 - Added --banner flag to show the Coralph ASCII banner with version/model on demand.
 - Files changed: src/Coralph/ArgParser.cs, src/Coralph/LoopOptions.cs, src/Coralph/Program.cs, README.md, coralph.config.json
 - **Learnings:**
@@ -972,4 +972,11 @@ Model: GPT-5.1-Codex
   - PowerShell $PSScriptRoot behaves inconsistently when scripts are invoked via shebang vs direct pwsh execution
   - Bash is widely available across platforms (macOS, Linux, WSL on Windows) and provides reliable path resolution
   - Pragmatic solution: document manual setup clearly as alternative to automated script
-  - The existing bash script from task #69 already provides cross-platform support for most use cases
+- The existing bash script from task #69 already provides cross-platform support for most use cases
+
+## 2026-02-10 - Docs
+
+- Added an LLM-optimized PowerShell Core (PowerShell 7+) reference doc with install, support, remoting, and policy notes
+- Files changed: docs/powershell.md, progress.txt
+- **Learnings:**
+  - Execution policy is fixed to Unrestricted on non-Windows platforms
