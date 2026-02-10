@@ -43,7 +43,7 @@
       "issueTitle": "Revise initialization flow: merge --init-config and scripts into a single --init flag in the executable",
       "title": "Remove all legacy one-off scripts. All initialization should be handled via the --init flag in the executable",
       "description": "Remove all legacy one-off scripts. All initialization should be handled via the --init flag in the executable",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 4
     },

@@ -1057,3 +1057,11 @@ Model: GPT-5.1-Codex
 - Files changed: docs/using-with-other-repos.md, generated_tasks.json
 - **Learnings:**
   - Keep Quick Start steps minimal since --init already handles all core artifacts
+
+---
+## 2026-02-10 - #73
+
+- Verified legacy init scripts are removed and marked task as complete
+- Files changed: generated_tasks.json
+- **Learnings:**
+  - Keep progress entries explicit even when changes are administrative
