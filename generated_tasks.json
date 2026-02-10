@@ -131,7 +131,7 @@
       "issueTitle": "bug: --init fails when running standalone binary \u2014 assets not found and example prompts inconsistent with master prompt",
       "title": "prompt.md is generated containing the full workflow (issue parsing, task breakdown, selection, execution, commit, close) with language-speci",
       "description": "prompt.md is generated containing the full workflow (issue parsing, task breakdown, selection, execution, commit, close) with language-specific sections adapted",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 12
     },

@@ -1036,3 +1036,11 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Embedding a minimal issues sample avoids fragile runtime dependency on content files
   - Keeping fallback logic close to init flow makes standalone binaries more reliable
+## 2026-02-10 - #75
+
+- Ensured --init can generate full prompt.md content from embedded core + templates when assets are missing
+- Appended the master prompt workflow to all language example templates
+- Files changed: src/Coralph/InitWorkflow.cs, examples/javascript-prompt.md, examples/python-prompt.md, examples/go-prompt.md, examples/rust-prompt.md
+- **Learnings:**
+  - Embedding prompt content provides resilient init behavior for standalone binaries
+  - Keeping templates aligned with the master prompt avoids drift and missing workflow steps
