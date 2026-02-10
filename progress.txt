@@ -1073,3 +1073,14 @@ Model: GPT-5.1-Codex
 - Files changed: src/Coralph/InitWorkflow.cs, generated_tasks.json
 - **Learnings:**
   - Catching IO/permission errors during init provides clearer troubleshooting output
+
+---
+## 2026-02-10 - #73
+
+- Confirmed onboarding text explicitly says --init works with only the Coralph binary; no scripts required.
+- Verified no legacy init scripts remain; only historical mentions in progress log.
+- Marked remaining generated tasks (73-006..73-010) as done.
+- Files changed: README.md, generated_tasks.json, progress.txt
+- **Learnings:**
+  - Reinforcing binary-only initialization in docs reduces onboarding confusion.
+  - Verifying script removal in the repo prevents future drift back to legacy flows.
