@@ -102,6 +102,26 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithProviderType_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--provider-type", "openai"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("openai", overrides.ProviderType);
+    }
+
+    [Fact]
+    public void Parse_WithProviderApiKey_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--provider-api-key", "test-key"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("test-key", overrides.ProviderApiKey);
+    }
+
+    [Fact]
     public void Parse_WithEmptyModel_ReturnsError()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--model", ""]);
@@ -298,6 +318,7 @@ public class ArgParserTests
         Assert.Contains("Coralph", output);
         Assert.Contains("--max-iterations", output);
         Assert.Contains("--model", output);
+        Assert.Contains("--provider-type", output);
         Assert.Contains("--generated-tasks-file", output);
         Assert.Contains("--refresh-issues-azdo", output);
         Assert.Contains("--init", output);

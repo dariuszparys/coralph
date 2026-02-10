@@ -7,6 +7,10 @@ internal sealed class LoopOptions
 
     public int MaxIterations { get; set; } = 10;
     public string Model { get; set; } = "GPT-5.1-Codex";
+    public string? ProviderType { get; set; }
+    public string? ProviderBaseUrl { get; set; }
+    public string? ProviderWireApi { get; set; }
+    public string? ProviderApiKey { get; set; }
 
     public string PromptFile { get; set; } = "prompt.md";
     public string ProgressFile { get; set; } = "progress.txt";
@@ -40,6 +44,10 @@ internal sealed class LoopOptionsOverrides
 {
     public int? MaxIterations { get; set; }
     public string? Model { get; set; }
+    public string? ProviderType { get; set; }
+    public string? ProviderBaseUrl { get; set; }
+    public string? ProviderWireApi { get; set; }
+    public string? ProviderApiKey { get; set; }
 
     public string? PromptFile { get; set; }
     public string? ProgressFile { get; set; }

@@ -2,6 +2,10 @@
   "LoopOptions": {
     "MaxIterations": 10,
     "Model": "gpt-5.2-codex",
+    "ProviderType": null,
+    "ProviderBaseUrl": null,
+    "ProviderWireApi": null,
+    "ProviderApiKey": null,
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
     "IssuesFile": "issues.json",

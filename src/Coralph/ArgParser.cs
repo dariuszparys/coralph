@@ -19,6 +19,10 @@ internal static class ArgParser
         var versionOption = new Option<bool>(new[] { "-v", "--version" }, "Show version");
         var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
         var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
+        var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)");
+        var providerBaseUrlOption = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
+        var providerWireApiOption = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
+        var providerApiKeyOption = new Option<string?>("--provider-api-key", "Optional: provider API key");
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
         var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
@@ -51,6 +55,10 @@ internal static class ArgParser
         root.AddOption(versionOption);
         root.AddOption(maxIterationsOption);
         root.AddOption(modelOption);
+        root.AddOption(providerTypeOption);
+        root.AddOption(providerBaseUrlOption);
+        root.AddOption(providerWireApiOption);
+        root.AddOption(providerApiKeyOption);
         root.AddOption(promptFileOption);
         root.AddOption(progressFileOption);
         root.AddOption(issuesFileOption);
@@ -105,6 +113,58 @@ internal static class ArgParser
             else
             {
                 options.Model = model;
+            }
+        }
+
+        var providerType = result.GetValueForOption(providerTypeOption);
+        if (providerType is not null)
+        {
+            if (string.IsNullOrWhiteSpace(providerType))
+            {
+                errorMessages.Add("--provider-type is required");
+            }
+            else
+            {
+                options.ProviderType = providerType;
+            }
+        }
+
+        var providerBaseUrl = result.GetValueForOption(providerBaseUrlOption);
+        if (providerBaseUrl is not null)
+        {
+            if (string.IsNullOrWhiteSpace(providerBaseUrl))
+            {
+                errorMessages.Add("--provider-base-url is required");
+            }
+            else
+            {
+                options.ProviderBaseUrl = providerBaseUrl;
+            }
+        }
+
+        var providerWireApi = result.GetValueForOption(providerWireApiOption);
+        if (providerWireApi is not null)
+        {
+            if (string.IsNullOrWhiteSpace(providerWireApi))
+            {
+                errorMessages.Add("--provider-wire-api is required");
+            }
+            else
+            {
+                options.ProviderWireApi = providerWireApi;
+            }
+        }
+
+        var providerApiKey = result.GetValueForOption(providerApiKeyOption);
+        if (providerApiKey is not null)
+        {
+            if (string.IsNullOrWhiteSpace(providerApiKey))
+            {
+                errorMessages.Add("--provider-api-key is required");
+            }
+            else
+            {
+                options.ProviderApiKey = providerApiKey;
             }
         }
 
