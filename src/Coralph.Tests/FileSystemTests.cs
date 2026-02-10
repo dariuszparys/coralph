@@ -35,14 +35,14 @@ public sealed class FileSystemTests
 
         public void AddFile(string path, string content)
         {
-            _files[path] = new FileEntry(content, DateTime.UtcNow, content.Length);
+            _files[Normalize(path)] = new FileEntry(content, DateTime.UtcNow, content.Length);
         }
 
-        public bool Exists(string path) => _files.ContainsKey(path);
+        public bool Exists(string path) => _files.ContainsKey(Normalize(path));
 
         public Task<string> ReadAllTextAsync(string path, CancellationToken ct = default)
         {
-            if (!_files.TryGetValue(path, out var entry))
+            if (!_files.TryGetValue(Normalize(path), out var entry))
             {
                 throw new FileNotFoundException($"File not found: {path}");
             }
@@ -51,19 +51,21 @@ public sealed class FileSystemTests
 
         public Task WriteAllTextAsync(string path, string contents, CancellationToken ct = default)
         {
-            _files[path] = new FileEntry(contents, DateTime.UtcNow, contents.Length);
+            _files[Normalize(path)] = new FileEntry(contents, DateTime.UtcNow, contents.Length);
             return Task.CompletedTask;
         }
 
         public DateTime GetLastWriteTimeUtc(string path)
         {
-            return _files.TryGetValue(path, out var entry) ? entry.LastWriteUtc : DateTime.MinValue;
+            return _files.TryGetValue(Normalize(path), out var entry) ? entry.LastWriteUtc : DateTime.MinValue;
         }
 
         public long GetFileLength(string path)
         {
-            return _files.TryGetValue(path, out var entry) ? entry.Length : 0;
+            return _files.TryGetValue(Normalize(path), out var entry) ? entry.Length : 0;
         }
+
+        private static string Normalize(string path) => Path.GetFullPath(path);
 
         private record FileEntry(string Content, DateTime LastWriteUtc, long Length);
     }
