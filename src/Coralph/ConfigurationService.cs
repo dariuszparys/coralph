@@ -57,6 +57,10 @@ internal static class ConfigurationService
     {
         if (overrides.MaxIterations is { } max) target.MaxIterations = max;
         if (!string.IsNullOrWhiteSpace(overrides.Model)) target.Model = overrides.Model;
+        if (!string.IsNullOrWhiteSpace(overrides.ProviderType)) target.ProviderType = overrides.ProviderType;
+        if (!string.IsNullOrWhiteSpace(overrides.ProviderBaseUrl)) target.ProviderBaseUrl = overrides.ProviderBaseUrl;
+        if (!string.IsNullOrWhiteSpace(overrides.ProviderWireApi)) target.ProviderWireApi = overrides.ProviderWireApi;
+        if (!string.IsNullOrWhiteSpace(overrides.ProviderApiKey)) target.ProviderApiKey = overrides.ProviderApiKey;
         if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
         if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
         if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;

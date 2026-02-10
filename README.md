@@ -141,6 +141,13 @@ Control AI tool access:
 ./coralph --tool-allow list_open_issues   # Allow only listed tools
 ```
 
+### OpenAI Provider
+
+Use an OpenAI-compatible provider:
+```bash
+./coralph --provider-type openai --provider-api-key sk-your-key
+```
+
 See `./coralph --help` for all options.
 
 ---
