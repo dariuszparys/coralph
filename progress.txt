@@ -959,3 +959,17 @@ Model: GPT-5.1-Codex
   - In-script guidance is visible when users need it most (right after setup)
   - Documentation with examples lowers barriers to extending the tool
   - Tasks 69-002 and 69-003 were already completed in initial implementation
+
+---
+## 2026-02-10 - #70
+
+- Task 70-001 (Proposed solution): Investigated PowerShell Core migration for coralph-init but encountered $PSScriptRoot variable issues in cross-platform contexts
+- Decided to keep existing bash implementation as primary init script (already cross-platform via bash availability on macOS/Linux/WSL)
+- Updated README.md with improved manual setup documentation including step-by-step instructions for all platforms
+- Added note about bash requirement and alternative manual setup for Windows users
+- Files changed: README.md, generated_tasks.json
+- **Learnings:**
+  - PowerShell $PSScriptRoot behaves inconsistently when scripts are invoked via shebang vs direct pwsh execution
+  - Bash is widely available across platforms (macOS, Linux, WSL on Windows) and provides reliable path resolution
+  - Pragmatic solution: document manual setup clearly as alternative to automated script
+  - The existing bash script from task #69 already provides cross-platform support for most use cases

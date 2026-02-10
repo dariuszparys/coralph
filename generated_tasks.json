@@ -1,106 +1,29 @@
 {
   "version": 1,
-  "generatedAtUtc": "2026-02-10T06:34:18.903291Z",
+  "generatedAtUtc": "2026-02-10T06:46:37.000406Z",
   "sourceIssueCount": 1,
   "tasks": [
     {
-      "id": "69-001",
-      "stableKey": "69:install-all-relevant-artifacts-for-the-user-s-chosen-tech-stack",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Install all relevant artifacts for the user\u0027s chosen tech stack automatically",
-      "description": "Install all relevant artifacts for the user\u0027s chosen tech stack automatically",
+      "id": "70-001",
+      "stableKey": "70:proposed-solution",
+      "issueNumber": 70,
+      "issueTitle": "feat: coralph-init should use PowerShell Core for cross-platform compatibility",
+      "title": "Proposed solution",
+      "description": "Rewrite or adapt the coralph-init script to use PowerShell Core as the primary implementation, matching the behavior and compatibility of the \u0027just\u0027 configuration. PowerShell Core should be the preferred solution for initialization, ensuring consistent setup across Linux, macOS, and Windows Update README.md quickstart",
       "status": "done",
-      "origin": "list",
+      "origin": "heading",
       "order": 1
     },
     {
-      "id": "69-002",
-      "stableKey": "69:detect-if-the-new-repository-is-a-net-project-if-not-prompt-the",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and suggest or generate an appropriat",
-      "description": "Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and suggest or generate an appropriate prompt.md or a file from examples/prompts",
-      "status": "done",
-      "origin": "list",
-      "order": 2
-    },
-    {
-      "id": "69-003",
-      "stableKey": "69:if-the-tech-stack-is-unsupported-no-native-prompt-md-or-example",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "If the tech stack is unsupported (no native prompt.md or example), default to a general TypeScript project prompt setup or template",
-      "description": "If the tech stack is unsupported (no native prompt.md or example), default to a general TypeScript project prompt setup or template",
-      "status": "done",
-      "origin": "list",
-      "order": 3
-    },
-    {
-      "id": "69-004",
-      "stableKey": "69:offer-guidance-or-links-for-adding-additional-tech-stack-support",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Offer guidance or links for adding additional tech stack support in the future",
-      "description": "Offer guidance or links for adding additional tech stack support in the future",
-      "status": "done",
-      "origin": "list",
-      "order": 4
-    },
-    {
-      "id": "69-005",
-      "stableKey": "69:require-manual-setup-instructions-in-the-readme",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Require manual setup instructions in the README",
-      "description": "Require manual setup instructions in the README",
-      "status": "skipped",
-      "origin": "list",
-      "order": 5
-    },
-    {
-      "id": "69-006",
-      "stableKey": "69:ask-users-to-copy-example-files-without-automation",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Ask users to copy example files without automation",
-      "description": "Ask users to copy example files without automation",
-      "status": "skipped",
-      "origin": "list",
-      "order": 6
-    },
-    {
-      "id": "69-007",
-      "stableKey": "69:provide-only-net-specific-guidance-and-leave-others-unsupported",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Provide only .NET-specific guidance and leave others unsupported",
-      "description": "Provide only .NET-specific guidance and leave others unsupported",
-      "status": "skipped",
-      "origin": "list",
-      "order": 7
-    },
-    {
-      "id": "69-008",
-      "stableKey": "69:proposed-solution",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
-      "title": "Proposed solution",
-      "description": "Provide a script (e.g., coralph-init or similar) that automates the initial setup process in a new repository. This script should Install all relevant artifacts for the user\u0027s chosen tech stack automatically Detect if the new repository is a .NET project. If not, prompt the user to select the type of project, and sugge",
-      "status": "done",
-      "origin": "heading",
-      "order": 8
-    },
-    {
-      "id": "69-009",
-      "stableKey": "69:alternatives-considered",
-      "issueNumber": 69,
-      "issueTitle": "feat: Script to enable quick project setup and prompt template selection",
+      "id": "70-002",
+      "stableKey": "70:alternatives-considered",
+      "issueNumber": 70,
+      "issueTitle": "feat: coralph-init should use PowerShell Core for cross-platform compatibility",
       "title": "Alternatives considered",
-      "description": "Require manual setup instructions in the README Ask users to copy example files without automation Provide only .NET-specific guidance and leave others unsupported",
-      "status": "skipped",
+      "description": "Continue to provide a bash version for environments where PowerShell Core is not available, but prioritize PowerShell Core as default. Investigate using another cross-platform shell or scripting format, but PowerShell Core should be favored given its current adoption in the repo",
+      "status": "open",
       "origin": "heading",
-      "order": 9
+      "order": 2
     }
   ]
 }

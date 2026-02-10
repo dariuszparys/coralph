@@ -68,22 +68,25 @@ After downloading:
 Use the `coralph-init` script to automatically set up your repository:
 
 ```bash
-# 1. Download and install Coralph (or build from source)
-chmod +x coralph-linux-x64
-sudo mv coralph-linux-x64 /usr/local/bin/coralph
+# 1. Download Coralph
+# Download from: https://github.com/dariuszparys/coralph/releases
+# Or clone/download this repository
 
 # 2. Navigate to your repository
 cd your-repo
 
 # 3. Run the initialization script
-/path/to/coralph-init
+/path/to/coralph/coralph-init
 
 # 4. (Optional) Fetch your GitHub issues
-coralph --refresh-issues --repo owner/repo-name
+./coralph --refresh-issues --repo owner/repo-name
 
 # 5. Run the loop
-coralph --max-iterations 10
+./coralph --max-iterations 10
 ```
+
+> **Note**: The `coralph-init` script is written in bash and works on macOS and Linux.
+> Windows users can use PowerShell or WSL, or follow the Manual Setup steps below.
 
 The `coralph-init` script will:
 - Detect your project type (JavaScript/TypeScript, Python, Go, Rust, .NET)
@@ -93,24 +96,33 @@ The `coralph-init` script will:
 
 ### Manual Setup
 
+If you prefer to set up files manually or are on Windows without bash:
+
 ```bash
-# 1. Download and install (or build from source above)
-chmod +x coralph-linux-x64
-sudo mv coralph-linux-x64 /usr/local/bin/coralph
+# 1. In your project directory, create these files:
 
-# 2. Navigate to your repository
-cd your-repo
+# issues.json - Copy from issues.sample.json and customize, OR use --refresh-issues
+echo '[]' > issues.json
 
-# 3. Create required files
-cp /path/to/coralph/issues.sample.json issues.json
-cp /path/to/coralph/coralph.config.json .
-cp /path/to/coralph/examples/<your-stack>-prompt.md prompt.md
+# coralph.config.json (optional) - Customize loop options
+# See coralph.config.json in the Coralph repo for an example
 
-# 4. Fetch your GitHub issues
-coralph --refresh-issues --repo owner/repo-name
+# progress.txt - Will store iteration history
+touch progress.txt
 
-# 5. Run the loop
-coralph --max-iterations 10
+# prompt.md - Contains workflow instructions for the AI
+# Copy from examples/<stack>-prompt.md based on your tech stack:
+# - examples/javascript-prompt.md (JavaScript/TypeScript)
+# - examples/python-prompt.md (Python)
+# - examples/go-prompt.md (Go)
+# - examples/rust-prompt.md (Rust)
+# - Or use prompt.md from Coralph repo for .NET projects
+
+# 2. Fetch your GitHub issues (optional but recommended)
+./coralph --refresh-issues --repo owner/repo-name
+
+# 3. Run the loop
+./coralph --max-iterations 10
 ```
 
 ## Run
