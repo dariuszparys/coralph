@@ -21,7 +21,7 @@
       "issueTitle": "feat: add powershell core init script",
       "title": "Proposed solution Rewrite or adapt the coralph-init script to use PowerShell Core as the primary implementation, matchin",
       "description": "Proposed solution Rewrite or adapt the coralph-init script to use PowerShell Core as the primary implementation, matching the behavior and compatibility of the \u0027just\u0027 configuration. PowerShell Core should be the preferred solution for initialization, ensuring consistent setup across Linux, macOS, and Windows",
-      "status": "open",
+      "status": "done",
       "origin": "chunk",
       "order": 2
     },
@@ -32,7 +32,7 @@
       "issueTitle": "feat: add powershell core init script",
       "title": "Update README",
       "description": "Update README.md quickstart session with correct manual setup in case the user doesn\u0027t want to leverage the init script",
-      "status": "open",
+      "status": "done",
       "origin": "chunk",
       "order": 3
     },
@@ -43,7 +43,7 @@
       "issueTitle": "feat: add powershell core init script",
       "title": "Alternatives considered Continue to provide a bash version for environments where PowerShell Core is not available, but",
       "description": "Alternatives considered Continue to provide a bash version for environments where PowerShell Core is not available, but prioritize PowerShell Core as default. Investigate using another cross-platform shell or scripting format, but PowerShell Core should be favored given its current adoption in the repo",
-      "status": "open",
+      "status": "done",
       "origin": "chunk",
       "order": 4
     }
