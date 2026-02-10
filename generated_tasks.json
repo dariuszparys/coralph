@@ -142,7 +142,7 @@
       "issueTitle": "bug: --init fails when running standalone binary \u2014 assets not found and example prompts inconsistent with master prompt",
       "title": "All example prompts share the same core behavior as the master prompt.md",
       "description": "All example prompts share the same core behavior as the master prompt.md",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 13
     },

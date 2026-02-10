@@ -698,7 +698,8 @@ internal static class InitWorkflow
 
     private static bool ContainsCoreWorkflow(string promptContent)
     {
-        return promptContent.Contains("# ISSUES", StringComparison.Ordinal);
+        return promptContent.Contains("# ISSUES", StringComparison.Ordinal)
+            && promptContent.Contains("# TASK BREAKDOWN", StringComparison.Ordinal);
     }
 
     private static string GetEmbeddedPromptTemplate(ProjectType projectType)

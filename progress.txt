@@ -1044,3 +1044,10 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Embedding prompt content provides resilient init behavior for standalone binaries
   - Keeping templates aligned with the master prompt avoids drift and missing workflow steps
+## 2026-02-10 - #75
+
+- Verified language prompt templates now include the master workflow and tightened workflow detection for init templates
+- Files changed: src/Coralph/InitWorkflow.cs
+- **Learnings:**
+  - Checking multiple core sections prevents false positives when validating prompt templates
+  - A lightweight guard keeps init behavior consistent across template sources
