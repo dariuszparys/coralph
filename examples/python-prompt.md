@@ -29,14 +29,6 @@
 └── README.md
 ```
 
-## Feedback loops
-
-Before committing, run:
-
-1. `pytest` - All tests must pass
-2. `flake8 .` - No linting errors
-3. `black . --check` - Code must be formatted
-
 ## Coding standards
 
 - Follow PEP 8 style guidelines
@@ -123,8 +115,9 @@ When the task is completed in this iteration, mark it `done` in
 
 Before committing, run the feedback loops:
 
-- `dotnet build` to run the build
-- `dotnet test` to run the tests
+- `pytest` to run the tests
+- `flake8 .` to check code quality
+- `black . --check` to verify formatting
 
 # PROGRESS
 

@@ -29,15 +29,6 @@
 └── README.md
 ```
 
-## Feedback loops
-
-Before committing, run:
-
-1. `go test ./...` - All tests must pass
-2. `go build ./...` - Build must succeed
-3. `gofmt -l .` - No formatting issues (output should be empty)
-4. `golangci-lint run` - No linting errors (if available)
-
 ## Coding standards
 
 - Follow Effective Go guidelines
@@ -125,8 +116,10 @@ When the task is completed in this iteration, mark it `done` in
 
 Before committing, run the feedback loops:
 
-- `dotnet build` to run the build
-- `dotnet test` to run the tests
+- `go test ./...` to run the tests
+- `go build ./...` to run the build
+- `gofmt -l .` to verify formatting (output should be empty)
+- `golangci-lint run` to run lint checks (if available)
 
 # PROGRESS
 

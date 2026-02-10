@@ -29,14 +29,6 @@
 └── README.md
 ```
 
-## Feedback loops
-
-Before committing, run:
-
-1. `npm test` - All tests must pass
-2. `npm run lint` - No linting errors
-3. `npm run build` - Build must succeed
-
 ## Coding standards
 
 - Use ESLint and Prettier for consistent formatting
@@ -123,8 +115,9 @@ When the task is completed in this iteration, mark it `done` in
 
 Before committing, run the feedback loops:
 
-- `dotnet build` to run the build
-- `dotnet test` to run the tests
+- `npm test` to run the tests
+- `npm run lint` to check code quality
+- `npm run build` to run the build
 
 # PROGRESS
 

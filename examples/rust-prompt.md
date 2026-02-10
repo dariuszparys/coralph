@@ -27,15 +27,6 @@
 └── README.md
 ```
 
-## Feedback loops
-
-Before committing, run:
-
-1. `cargo test` - All tests must pass
-2. `cargo build` - Build must succeed
-3. `cargo fmt --check` - Code must be formatted
-4. `cargo clippy -- -D warnings` - No clippy warnings
-
 ## Coding standards
 
 - Follow Rust API Guidelines
@@ -123,8 +114,10 @@ When the task is completed in this iteration, mark it `done` in
 
 Before committing, run the feedback loops:
 
-- `dotnet build` to run the build
-- `dotnet test` to run the tests
+- `cargo test` to run the tests
+- `cargo build` to run the build
+- `cargo fmt --check` to verify formatting
+- `cargo clippy -- -D warnings` to run lint checks
 
 # PROGRESS
 

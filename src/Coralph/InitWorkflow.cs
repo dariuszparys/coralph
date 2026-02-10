@@ -196,15 +196,7 @@ internal static class InitWorkflow
         ├── .eslintrc.js
         └── README.md
         ```
-        
-        ## Feedback loops
-        
-        Before committing, run:
-        
-        1. `npm test` - All tests must pass
-        2. `npm run lint` - No linting errors
-        3. `npm run build` - Build must succeed
-        
+
         ## Coding standards
         
         - Use ESLint and Prettier for consistent formatting
@@ -247,15 +239,7 @@ internal static class InitWorkflow
         ├── pyproject.toml
         └── README.md
         ```
-        
-        ## Feedback loops
-        
-        Before committing, run:
-        
-        1. `pytest` - All tests must pass
-        2. `flake8 .` - No linting errors
-        3. `black . --check` - Code must be formatted
-        
+
         ## Coding standards
         
         - Follow PEP 8 style guidelines
@@ -298,16 +282,7 @@ internal static class InitWorkflow
         ├── go.sum
         └── README.md
         ```
-        
-        ## Feedback loops
-        
-        Before committing, run:
-        
-        1. `go test ./...` - All tests must pass
-        2. `go build ./...` - Build must succeed
-        3. `gofmt -l .` - No formatting issues (output should be empty)
-        4. `golangci-lint run` - No linting errors (if available)
-        
+
         ## Coding standards
         
         - Follow Effective Go guidelines
@@ -349,16 +324,7 @@ internal static class InitWorkflow
         ├── Cargo.lock
         └── README.md
         ```
-        
-        ## Feedback loops
-        
-        Before committing, run:
-        
-        1. `cargo test` - All tests must pass
-        2. `cargo build` - Build must succeed
-        3. `cargo fmt --check` - Code must be formatted
-        4. `cargo clippy -- -D warnings` - No clippy warnings
-        
+
         ## Coding standards
         
         - Follow Rust API Guidelines
@@ -667,39 +633,164 @@ internal static class InitWorkflow
             return string.IsNullOrWhiteSpace(templateContent) ? corePrompt : templateContent;
         }
 
+        var adaptedCorePrompt = AdaptCorePromptForProjectType(corePrompt, projectType);
+
         if (!string.IsNullOrWhiteSpace(templateContent))
         {
-            if (ContainsCoreWorkflow(templateContent))
+            var cleanedTemplate = RemoveTemplateFeedbackLoopSection(templateContent);
+            if (ContainsCoreWorkflow(cleanedTemplate))
             {
-                return templateContent;
+                return AdaptCorePromptForProjectType(cleanedTemplate, projectType);
             }
 
-            if (string.IsNullOrWhiteSpace(corePrompt))
+            if (string.IsNullOrWhiteSpace(adaptedCorePrompt))
             {
-                return templateContent;
+                return cleanedTemplate;
             }
 
-            return $"{templateContent.TrimEnd()}\n\n{corePrompt.TrimStart()}";
+            return $"{cleanedTemplate.TrimEnd()}\n\n{adaptedCorePrompt.TrimStart()}";
         }
 
-        var embeddedTemplate = GetEmbeddedPromptTemplate(projectType);
+        var embeddedTemplate = RemoveTemplateFeedbackLoopSection(GetEmbeddedPromptTemplate(projectType));
         if (!string.IsNullOrWhiteSpace(embeddedTemplate))
         {
-            if (string.IsNullOrWhiteSpace(corePrompt))
+            if (string.IsNullOrWhiteSpace(adaptedCorePrompt))
             {
                 return embeddedTemplate;
             }
 
-            return $"{embeddedTemplate.TrimEnd()}\n\n{corePrompt.TrimStart()}";
+            return $"{embeddedTemplate.TrimEnd()}\n\n{adaptedCorePrompt.TrimStart()}";
         }
 
-        return corePrompt;
+        return adaptedCorePrompt;
     }
 
     private static bool ContainsCoreWorkflow(string promptContent)
     {
         return promptContent.Contains("# ISSUES", StringComparison.Ordinal)
             && promptContent.Contains("# TASK BREAKDOWN", StringComparison.Ordinal);
+    }
+
+    private static string RemoveTemplateFeedbackLoopSection(string templateContent)
+    {
+        if (string.IsNullOrWhiteSpace(templateContent))
+        {
+            return templateContent;
+        }
+
+        const string feedbackHeading = "## Feedback loops";
+        var sectionStart = FindHeadingStart(templateContent, feedbackHeading);
+        if (sectionStart < 0)
+        {
+            return templateContent;
+        }
+
+        var sectionEnd = FindNextSecondLevelHeading(templateContent, sectionStart + feedbackHeading.Length);
+        if (sectionEnd < 0)
+        {
+            return templateContent[..sectionStart].TrimEnd();
+        }
+
+        return $"{templateContent[..sectionStart].TrimEnd()}\n\n{templateContent[sectionEnd..].TrimStart()}";
+    }
+
+    private static int FindHeadingStart(string content, string heading)
+    {
+        if (content.StartsWith(heading, StringComparison.Ordinal))
+        {
+            return 0;
+        }
+
+        var marker = $"\n{heading}";
+        var markerIndex = content.IndexOf(marker, StringComparison.Ordinal);
+        return markerIndex < 0 ? -1 : markerIndex + 1;
+    }
+
+    private static int FindNextSecondLevelHeading(string content, int searchStart)
+    {
+        var markerIndex = content.IndexOf("\n## ", searchStart, StringComparison.Ordinal);
+        return markerIndex < 0 ? -1 : markerIndex + 1;
+    }
+
+    private static string AdaptCorePromptForProjectType(string promptContent, ProjectType projectType)
+    {
+        if (projectType == ProjectType.DotNet || string.IsNullOrWhiteSpace(promptContent))
+        {
+            return promptContent;
+        }
+
+        var feedbackLoopsSection = GetFeedbackLoopsSection(projectType);
+        if (string.IsNullOrWhiteSpace(feedbackLoopsSection))
+        {
+            return promptContent;
+        }
+
+        const string feedbackHeading = "# FEEDBACK LOOPS";
+        var feedbackStart = promptContent.IndexOf(feedbackHeading, StringComparison.Ordinal);
+        if (feedbackStart < 0)
+        {
+            return promptContent;
+        }
+
+        var progressStart = promptContent.IndexOf("\n# PROGRESS", feedbackStart, StringComparison.Ordinal);
+        if (progressStart < 0)
+        {
+            progressStart = promptContent.IndexOf("# PROGRESS", feedbackStart + feedbackHeading.Length, StringComparison.Ordinal);
+            if (progressStart < 0)
+            {
+                return promptContent;
+            }
+        }
+
+        var prefix = promptContent[..feedbackStart].TrimEnd();
+        var suffix = promptContent[progressStart..].TrimStart();
+        return $"{prefix}\n\n{feedbackLoopsSection.Trim()}\n\n{suffix}";
+    }
+
+    private static string GetFeedbackLoopsSection(ProjectType projectType)
+    {
+        return projectType switch
+        {
+            ProjectType.JavaScript => """
+                # FEEDBACK LOOPS
+                
+                Before committing, run the feedback loops:
+                
+                - `npm test` to run the tests
+                - `npm run lint` to check code quality
+                - `npm run build` to run the build
+                """,
+            ProjectType.Python => """
+                # FEEDBACK LOOPS
+                
+                Before committing, run the feedback loops:
+                
+                - `pytest` to run the tests
+                - `flake8 .` to check code quality
+                - `black . --check` to verify formatting
+                """,
+            ProjectType.Go => """
+                # FEEDBACK LOOPS
+                
+                Before committing, run the feedback loops:
+                
+                - `go test ./...` to run the tests
+                - `go build ./...` to run the build
+                - `gofmt -l .` to verify formatting (output should be empty)
+                - `golangci-lint run` to run lint checks (if available)
+                """,
+            ProjectType.Rust => """
+                # FEEDBACK LOOPS
+                
+                Before committing, run the feedback loops:
+                
+                - `cargo test` to run the tests
+                - `cargo build` to run the build
+                - `cargo fmt --check` to verify formatting
+                - `cargo clippy -- -D warnings` to run lint checks
+                """,
+            _ => string.Empty
+        };
     }
 
     private static string GetEmbeddedPromptTemplate(ProjectType projectType)
