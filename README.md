@@ -141,12 +141,16 @@ Control AI tool access:
 ./coralph --tool-allow list_open_issues   # Allow only listed tools
 ```
 
-### OpenAI Provider
+### OpenAI-Compatible Providers
 
-Use an OpenAI-compatible provider:
+Use an OpenAI-compatible provider with optional base URL and wire API overrides:
 ```bash
-./coralph --provider-type openai --provider-api-key sk-your-key
+./coralph --provider-type openai --provider-api-key sk-your-key \
+	--provider-base-url https://api.your-provider.example/v1 \
+	--provider-wire-api openai
 ```
+
+Do not commit API keys to source control. Use secrets or local configuration for `--provider-api-key` or config overrides.
 
 See `./coralph --help` for all options.
 
