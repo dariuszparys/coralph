@@ -1072,3 +1072,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Verifying section presence is a quick guardrail for prompt completeness
   - Including the master prompt verbatim in generated prompts prevents workflow drift
+
+---
+## 2026-02-10 - #75
+
+- Marked generated task as done after confirming init fixes are already implemented
+- Verified build and test run cleanly
+- Files changed: generated_tasks.json, progress.txt
+- **Learnings:**
+  - Keep generated task status in sync with completed init fixes
+  - A quick build/test run validates the task close-out
