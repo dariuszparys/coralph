@@ -212,6 +212,26 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithWorkingDir_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--working-dir", "/tmp/repo"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("/tmp/repo", overrides.WorkingDir);
+    }
+
+    [Fact]
+    public void Parse_WithEmptyWorkingDir_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--working-dir", ""]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--working-dir", err);
+    }
+
+    [Fact]
     public void Parse_WithShowReasoning_SetsOverride()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--show-reasoning", "false"]);
@@ -322,6 +342,7 @@ public class ArgParserTests
         Assert.Contains("--generated-tasks-file", output);
         Assert.Contains("--refresh-issues-azdo", output);
         Assert.Contains("--init", output);
+        Assert.Contains("--working-dir", output);
         Assert.Contains("--azdo-organization", output);
         Assert.Contains("--azdo-project", output);
     }

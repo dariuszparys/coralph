@@ -42,6 +42,8 @@ internal sealed class LoopOptions
 
 internal sealed class LoopOptionsOverrides
 {
+    public string? WorkingDir { get; set; }
+
     public int? MaxIterations { get; set; }
     public string? Model { get; set; }
     public string? ProviderType { get; set; }

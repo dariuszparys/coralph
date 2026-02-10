@@ -26,6 +26,17 @@ if (overrides is null)
     return showHelp && err is null ? 0 : 2;
 }
 
+if (!string.IsNullOrWhiteSpace(overrides.WorkingDir))
+{
+    if (!WorkingDirectoryContext.TryApply(overrides.WorkingDir, out var repoRoot, out var workingDirError))
+    {
+        ConsoleOutput.WriteErrorLine(workingDirError);
+        return 2;
+    }
+
+    ConsoleOutput.WriteLine($"Using working directory: {repoRoot}");
+}
+
 if (init)
 {
     var initExit = await InitWorkflow.RunAsync(configFile);

@@ -50,6 +50,9 @@ cd your-repo
 
 # 4. Run the loop
 ./coralph --max-iterations 10
+
+# Alternative: run from anywhere by targeting a repository path
+./coralph --working-dir /path/to/your-repo --max-iterations 10
 ```
 
 The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, and a `prompt.md` template for your tech stack (Python, JavaScript, Go, Rust, or .NET) using only the Coralph binary.
@@ -60,6 +63,7 @@ The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, a
 ./coralph --max-iterations 10                    # Run 10 iterations
 ./coralph --refresh-issues --repo owner/name     # Fetch GitHub issues
 ./coralph --init                                 # Initialize repository artifacts
+./coralph --working-dir /path/to/repo --init     # Target a repo without cd
 ./coralph --version                              # Show version
 ./coralph --help                                 # Show all options
 ```

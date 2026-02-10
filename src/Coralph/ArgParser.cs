@@ -17,6 +17,7 @@ internal static class ArgParser
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
         var helpOption = new Option<bool>(new[] { "-h", "--help" }, "Show help");
         var versionOption = new Option<bool>(new[] { "-v", "--version" }, "Show version");
+        var workingDirOption = new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)");
         var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
         var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
         var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)");
@@ -53,6 +54,7 @@ internal static class ArgParser
 
         root.AddOption(helpOption);
         root.AddOption(versionOption);
+        root.AddOption(workingDirOption);
         root.AddOption(maxIterationsOption);
         root.AddOption(modelOption);
         root.AddOption(providerTypeOption);
@@ -89,6 +91,19 @@ internal static class ArgParser
         showVersion = result.GetValueForOption(versionOption);
         init = result.GetValueForOption(initOption);
         configFile = result.GetValueForOption(configOption);
+
+        var workingDir = result.GetValueForOption(workingDirOption);
+        if (workingDir is not null)
+        {
+            if (string.IsNullOrWhiteSpace(workingDir))
+            {
+                errorMessages.Add("--working-dir is required");
+            }
+            else
+            {
+                options.WorkingDir = workingDir;
+            }
+        }
 
         var maxIterations = result.GetValueForOption(maxIterationsOption);
         if (maxIterations is { } parsedMaxIterations)
@@ -415,6 +430,7 @@ internal static class ArgParser
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
         root.AddOption(new Option<bool>(new[] { "-h", "--help" }, "Show help"));
         root.AddOption(new Option<bool>(new[] { "-v", "--version" }, "Show version"));
+        root.AddOption(new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)"));
         root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
         root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
         root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)"));

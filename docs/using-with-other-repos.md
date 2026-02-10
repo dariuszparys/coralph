@@ -43,6 +43,12 @@ dotnet publish src/Coralph -c Release -r linux-x64 --self-contained
 cd /path/to/your/target/repo
 ```
 
+Or run from anywhere with `--working-dir`:
+
+```bash
+coralph --working-dir /path/to/your/target/repo --init
+```
+
 ### 3. Initialize Coralph Files
 
 Create the required files in your target repository:
@@ -125,6 +131,9 @@ coralph --max-iterations 10
 
 # Use custom config
 coralph --config coralph.config.json --max-iterations 5
+
+# Run from any directory
+coralph --working-dir /path/to/your/target/repo --max-iterations 10
 ```
 
 ## Configuration Reference
