@@ -87,7 +87,7 @@
       "issueTitle": "bug: --init fails when running standalone binary \u2014 assets not found and example prompts inconsistent with master prompt",
       "title": "Prompt template not found: /path/to/fresh-repo/examples/javascript-prompt.md",
       "description": "Prompt template not found: /path/to/fresh-repo/examples/javascript-prompt.md",
-      "status": "open",
+      "status": "done",
       "origin": "list",
       "order": 8
     },

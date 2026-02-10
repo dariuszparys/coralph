@@ -1051,3 +1051,10 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Checking multiple core sections prevents false positives when validating prompt templates
   - A lightweight guard keeps init behavior consistent across template sources
+## 2026-02-10 - #75
+
+- Verified standalone publish init run succeeds without missing prompt templates
+- Files changed: progress.txt
+- **Learnings:**
+  - A publish-based smoke test confirms init works with only the binary present
+  - Keeping init prompts embedded avoids missing-template regressions
