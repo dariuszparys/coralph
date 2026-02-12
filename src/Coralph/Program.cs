@@ -1,358 +1,420 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Coralph;
+using Coralph.Ui;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Context;
 
 var (overrides, err, init, configFile, showHelp, showVersion) = ArgParser.Parse(args);
 
-if (showVersion)
-{
-    ConsoleOutput.WriteLine($"Coralph {Banner.GetVersion()}");
-    return 0;
-}
-
-if (overrides is null)
-{
-    if (err is not null)
+var requestedUiMode = ResolveRequestedUiModeFromArgs(args);
+var requestedStreamEvents = ResolveStreamEventsFromArgs(args);
+var initialUiMode = showHelp || showVersion || overrides is null
+    ? UiMode.Classic
+    : UiModeResolver.Resolve(
+        requestedUiMode,
+        requestedStreamEvents,
+        Console.IsInputRedirected,
+        Console.IsOutputRedirected,
+        Console.IsErrorRedirected);
+await ConsoleOutput.ConfigureForModeAsync(
+    initialUiMode,
+    new LoopOptions
     {
-        ConsoleOutput.WriteErrorLine(err);
-        ConsoleOutput.WriteErrorLine();
-    }
+        UiMode = requestedUiMode,
+        StreamEvents = requestedStreamEvents
+    });
 
-    var output = err is null ? ConsoleOutput.OutWriter : ConsoleOutput.ErrorWriter;
-    ArgParser.PrintUsage(output);
-    return showHelp && err is null ? 0 : 2;
-}
-
-if (!string.IsNullOrWhiteSpace(overrides.WorkingDir))
-{
-    if (!WorkingDirectoryContext.TryApply(overrides.WorkingDir, out var repoRoot, out var workingDirError))
-    {
-        ConsoleOutput.WriteErrorLine(workingDirError);
-        return 2;
-    }
-
-    ConsoleOutput.WriteLine($"Using working directory: {repoRoot}");
-}
-
-if (init)
-{
-    var initExit = await InitWorkflow.RunAsync(configFile);
-    return initExit;
-}
-
-var opt = ConfigurationService.LoadOptions(overrides, configFile);
-
-EventStreamWriter? eventStream = null;
-if (opt.StreamEvents)
-{
-    var sessionId = Guid.NewGuid().ToString("N");
-    eventStream = new EventStreamWriter(Console.Out, sessionId);
-    eventStream.WriteSessionHeader(Directory.GetCurrentDirectory());
-
-    var errorConsole = ConsoleOutput.CreateConsole(Console.Error, Console.IsErrorRedirected);
-    ConsoleOutput.Configure(errorConsole, errorConsole);
-}
-
-// Configure structured logging
-Logging.Configure(opt);
-Log.Information("Coralph starting with Model={Model}, MaxIterations={MaxIterations}", opt.Model, opt.MaxIterations);
-
-eventStream?.Emit("agent_start", fields: new Dictionary<string, object?>
-{
-    ["model"] = opt.Model,
-    ["maxIterations"] = opt.MaxIterations,
-    ["version"] = Banner.GetVersion(),
-    ["showReasoning"] = opt.ShowReasoning,
-    ["colorizedOutput"] = opt.ColorizedOutput
-});
-
-var exitCode = 1;
 try
 {
-    exitCode = await RunAsync(opt, eventStream);
-    return exitCode;
+    if (showVersion)
+    {
+        ConsoleOutput.WriteLine($"Coralph {Banner.GetVersion()}");
+        return 0;
+    }
+
+    if (overrides is null)
+    {
+        if (err is not null)
+        {
+            ConsoleOutput.WriteErrorLine(err);
+            ConsoleOutput.WriteErrorLine();
+        }
+
+        var output = err is null ? ConsoleOutput.OutWriter : ConsoleOutput.ErrorWriter;
+        ArgParser.PrintUsage(output);
+        return showHelp && err is null ? 0 : 2;
+    }
+
+    if (!string.IsNullOrWhiteSpace(overrides.WorkingDir))
+    {
+        if (!WorkingDirectoryContext.TryApply(overrides.WorkingDir, out var repoRoot, out var workingDirError))
+        {
+            ConsoleOutput.WriteErrorLine(workingDirError);
+            return 2;
+        }
+
+        ConsoleOutput.WriteLine($"Using working directory: {repoRoot}");
+    }
+
+    if (init)
+    {
+        var initExit = await InitWorkflow.RunAsync(configFile);
+        return initExit;
+    }
+
+    var opt = ConfigurationService.LoadOptions(overrides, configFile);
+    var effectiveUiMode = UiModeResolver.Resolve(opt);
+    await ConsoleOutput.ConfigureForModeAsync(effectiveUiMode, opt);
+
+    EventStreamWriter? eventStream = null;
+    if (opt.StreamEvents)
+    {
+        var sessionId = Guid.NewGuid().ToString("N");
+        eventStream = new EventStreamWriter(Console.Out, sessionId);
+        eventStream.WriteSessionHeader(Directory.GetCurrentDirectory());
+
+        var errorConsole = ConsoleOutput.CreateConsole(Console.Error, Console.IsErrorRedirected);
+        ConsoleOutput.Configure(errorConsole, errorConsole);
+    }
+
+    // Configure structured logging
+    Logging.Configure(opt);
+    Log.Information("Coralph starting with Model={Model}, MaxIterations={MaxIterations}", opt.Model, opt.MaxIterations);
+
+    eventStream?.Emit("agent_start", fields: new Dictionary<string, object?>
+    {
+        ["model"] = opt.Model,
+        ["maxIterations"] = opt.MaxIterations,
+        ["version"] = Banner.GetVersion(),
+        ["showReasoning"] = opt.ShowReasoning,
+        ["colorizedOutput"] = opt.ColorizedOutput
+    });
+
+    var exitCode = 1;
+    try
+    {
+        exitCode = await RunAsync(opt, eventStream);
+        return exitCode;
+    }
+    finally
+    {
+        eventStream?.Emit("agent_end", fields: new Dictionary<string, object?>
+        {
+            ["exitCode"] = exitCode
+        });
+        Logging.Close();
+    }
 }
 finally
 {
-    eventStream?.Emit("agent_end", fields: new Dictionary<string, object?>
-    {
-        ["exitCode"] = exitCode
-    });
-    Logging.Close();
+    await ConsoleOutput.DisposeBackendAsync();
 }
 
 static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 {
-    var ct = CancellationToken.None;
+    using var cts = new CancellationTokenSource();
+    using var stopHandlerScope = ConsoleOutput.PushStopRequestHandler(() =>
+    {
+        if (!cts.IsCancellationRequested)
+        {
+            cts.Cancel();
+        }
+    });
+
+    ConsoleCancelEventHandler cancelKeyPressHandler = (_, e) =>
+    {
+        e.Cancel = true;
+        if (!cts.IsCancellationRequested)
+        {
+            cts.Cancel();
+        }
+    };
+
+    Console.CancelKeyPress += cancelKeyPressHandler;
+
+    var ct = cts.Token;
     var emittedCopilotDiagnostics = false;
     var fileCache = FileContentCache.Shared;
 
-    var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
-    var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
-    if (opt.ListModels)
-    {
-        if (opt.DockerSandbox && !inDockerSandbox)
-        {
-            ConsoleOutput.WriteLine("Note: --list-models runs on the host environment; --docker-sandbox is ignored.");
-        }
-
-        try
-        {
-            var models = await CopilotModelDiscovery.ListModelsAsync(opt, ct);
-            if (opt.ListModelsJson)
-            {
-                CopilotModelDiscovery.WriteModelsJson(models);
-            }
-            else
-            {
-                CopilotModelDiscovery.WriteModels(models);
-            }
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
-            Log.Error(ex, "Failed to list Copilot models");
-            ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
-            return 1;
-        }
-    }
-    if (opt.DockerSandbox && !inDockerSandbox)
-    {
-        var dockerCheck = await DockerSandbox.CheckDockerAsync(ct);
-        if (!dockerCheck.Success)
-        {
-            ConsoleOutput.WriteErrorLine(dockerCheck.Message ?? "Docker is not available.");
-            return 1;
-        }
-
-        if (!string.IsNullOrWhiteSpace(opt.CliPath))
-        {
-            var repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
-            var fullCliPath = Path.IsPathRooted(opt.CliPath)
-                ? Path.GetFullPath(opt.CliPath)
-                : Path.GetFullPath(Path.Combine(repoRoot, opt.CliPath));
-            if (!File.Exists(fullCliPath))
-            {
-                ConsoleOutput.WriteErrorLine($"Copilot CLI not found: {fullCliPath}");
-                return 1;
-            }
-        }
-        else if (string.IsNullOrWhiteSpace(opt.CliUrl))
-        {
-            var cliCheck = await DockerSandbox.CheckCopilotCliAsync(opt.DockerImage, ct);
-            if (!cliCheck.Success)
-            {
-                ConsoleOutput.WriteErrorLine(cliCheck.Message ?? "Copilot CLI is not available in the Docker image.");
-                return 1;
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
-        {
-            var expanded = ExpandHomePath(opt.CopilotConfigPath);
-            var fullConfigPath = Path.GetFullPath(expanded);
-            if (!Directory.Exists(fullConfigPath))
-            {
-                ConsoleOutput.WriteErrorLine($"Copilot config directory not found: {fullConfigPath}");
-                return 1;
-            }
-            opt.CopilotConfigPath = fullConfigPath;
-            TryEnsureCopilotCacheDirectory(fullConfigPath);
-        }
-    }
-
-    if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
-    {
-        // Display animated ASCII banner on startup
-        await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
-        ConsoleOutput.WriteLine();
-    }
-
-    if (!string.IsNullOrWhiteSpace(combinedPromptFile))
-    {
-        if (!File.Exists(combinedPromptFile))
-        {
-            ConsoleOutput.WriteErrorLine($"Combined prompt file not found: {combinedPromptFile}");
-            return 1;
-        }
-
-        try
-        {
-            var combinedPrompt = await File.ReadAllTextAsync(combinedPromptFile, ct);
-            await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, turn: 1);
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
-            Log.Error(ex, "Docker sandbox iteration failed");
-            ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
-            return 1;
-        }
-    }
-
-    if (opt.RefreshIssues)
-    {
-        Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
-        ConsoleOutput.WriteLine("Refreshing issues from GitHub...");
-        var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
-        await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
-        fileCache.Invalidate(opt.IssuesFile);
-    }
-    else if (opt.RefreshIssuesAzdo)
-    {
-        Log.Information("Refreshing work items from Azure Boards (Organization={Organization}, Project={Project})",
-            opt.AzdoOrganization ?? "(default)", opt.AzdoProject ?? "(default)");
-        ConsoleOutput.WriteLine("Refreshing work items from Azure Boards...");
-        var issuesJson = await AzBoards.FetchOpenWorkItemsJsonAsync(opt.AzdoOrganization, opt.AzdoProject, ct);
-        await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
-        fileCache.Invalidate(opt.IssuesFile);
-    }
-
-    var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
-    var issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
-    var issues = issuesRead.Exists ? issuesRead.Content : "[]";
-    var progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
-    var progress = progressRead.Exists ? progressRead.Content : string.Empty;
-    string generatedTasks;
-
-    if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
-    {
-        ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
-        return 1;
-    }
-
-    if (!hasOpenIssues)
-    {
-        Log.Information("No open issues found, exiting");
-        ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
-        return 0;
-    }
-
-    var useDockerPerIteration = opt.DockerSandbox && !inDockerSandbox;
-    CopilotSessionRunner? sessionRunner = null;
-
     try
     {
-        if (!useDockerPerIteration)
+        var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
+        var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
+        if (opt.ListModels)
         {
+            if (opt.DockerSandbox && !inDockerSandbox)
+            {
+                ConsoleOutput.WriteLine("Note: --list-models runs on the host environment; --docker-sandbox is ignored.");
+            }
+
             try
             {
-                sessionRunner = await CopilotSessionRunner.CreateAsync(opt, eventStream);
+                var models = await CopilotModelDiscovery.ListModelsAsync(opt, ct);
+                if (opt.ListModelsJson)
+                {
+                    CopilotModelDiscovery.WriteModelsJson(models);
+                }
+                else
+                {
+                    CopilotModelDiscovery.WriteModels(models);
+                }
+                return 0;
             }
             catch (Exception ex)
             {
                 emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
-                Log.Error(ex, "Failed to start Copilot session");
+                Log.Error(ex, "Failed to list Copilot models");
+                ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+                return 1;
+            }
+        }
+        if (opt.DockerSandbox && !inDockerSandbox)
+        {
+            var dockerCheck = await DockerSandbox.CheckDockerAsync(ct);
+            if (!dockerCheck.Success)
+            {
+                ConsoleOutput.WriteErrorLine(dockerCheck.Message ?? "Docker is not available.");
+                return 1;
+            }
+
+            if (!string.IsNullOrWhiteSpace(opt.CliPath))
+            {
+                var repoRoot = Path.GetFullPath(Directory.GetCurrentDirectory());
+                var fullCliPath = Path.IsPathRooted(opt.CliPath)
+                    ? Path.GetFullPath(opt.CliPath)
+                    : Path.GetFullPath(Path.Combine(repoRoot, opt.CliPath));
+                if (!File.Exists(fullCliPath))
+                {
+                    ConsoleOutput.WriteErrorLine($"Copilot CLI not found: {fullCliPath}");
+                    return 1;
+                }
+            }
+            else if (string.IsNullOrWhiteSpace(opt.CliUrl))
+            {
+                var cliCheck = await DockerSandbox.CheckCopilotCliAsync(opt.DockerImage, ct);
+                if (!cliCheck.Success)
+                {
+                    ConsoleOutput.WriteErrorLine(cliCheck.Message ?? "Copilot CLI is not available in the Docker image.");
+                    return 1;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
+            {
+                var expanded = ExpandHomePath(opt.CopilotConfigPath);
+                var fullConfigPath = Path.GetFullPath(expanded);
+                if (!Directory.Exists(fullConfigPath))
+                {
+                    ConsoleOutput.WriteErrorLine($"Copilot config directory not found: {fullConfigPath}");
+                    return 1;
+                }
+                opt.CopilotConfigPath = fullConfigPath;
+                TryEnsureCopilotCacheDirectory(fullConfigPath);
+            }
+        }
+
+        if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
+        {
+            // Display animated ASCII banner on startup
+            await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+            ConsoleOutput.WriteLine();
+        }
+
+        if (!string.IsNullOrWhiteSpace(combinedPromptFile))
+        {
+            if (!File.Exists(combinedPromptFile))
+            {
+                ConsoleOutput.WriteErrorLine($"Combined prompt file not found: {combinedPromptFile}");
+                return 1;
+            }
+
+            try
+            {
+                var combinedPrompt = await File.ReadAllTextAsync(combinedPromptFile, ct);
+                await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, turn: 1);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
+                Log.Error(ex, "Docker sandbox iteration failed");
                 ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
                 return 1;
             }
         }
 
-        for (var i = 1; i <= opt.MaxIterations; i++)
+        if (opt.RefreshIssues)
         {
-            eventStream?.Emit("turn_start", turn: i, fields: new Dictionary<string, object?>
+            Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
+            ConsoleOutput.WriteLine("Refreshing issues from GitHub...");
+            var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
+            await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+            fileCache.Invalidate(opt.IssuesFile);
+        }
+        else if (opt.RefreshIssuesAzdo)
+        {
+            Log.Information("Refreshing work items from Azure Boards (Organization={Organization}, Project={Project})",
+                opt.AzdoOrganization ?? "(default)", opt.AzdoProject ?? "(default)");
+            ConsoleOutput.WriteLine("Refreshing work items from Azure Boards...");
+            var issuesJson = await AzBoards.FetchOpenWorkItemsJsonAsync(opt.AzdoOrganization, opt.AzdoProject, ct);
+            await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+            fileCache.Invalidate(opt.IssuesFile);
+        }
+
+        var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
+        var issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
+        var issues = issuesRead.Exists ? issuesRead.Content : "[]";
+        var progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
+        var progress = progressRead.Exists ? progressRead.Content : string.Empty;
+        string generatedTasks;
+
+        if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
+        {
+            ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
+            return 1;
+        }
+
+        if (!hasOpenIssues)
+        {
+            Log.Information("No open issues found, exiting");
+            ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+            return 0;
+        }
+
+        var useDockerPerIteration = opt.DockerSandbox && !inDockerSandbox;
+        CopilotSessionRunner? sessionRunner = null;
+
+        try
+        {
+            if (!useDockerPerIteration)
             {
-                ["maxIterations"] = opt.MaxIterations
-            });
-
-            using (LogContext.PushProperty("Iteration", i))
-            {
-                Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
-                ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
-
-                // Reload progress and issues before each iteration so assistant sees updates it made
-                progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
-                progress = progressRead.Exists ? progressRead.Content : string.Empty;
-                issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
-                issues = issuesRead.Exists ? issuesRead.Content : "[]";
-                generatedTasks = await TaskBacklog.EnsureBacklogAsync(issues, opt.GeneratedTasksFile, ct);
-
-                var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks);
-
-                string output;
-                string? turnError = null;
-                var success = true;
                 try
                 {
-                    if (useDockerPerIteration)
-                    {
-                        output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, ct);
-                    }
-                    else if (sessionRunner is not null)
-                    {
-                        output = await sessionRunner.RunTurnAsync(combinedPrompt, ct, i);
-                    }
-                    else
-                    {
-                        output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
-                    }
-                    Log.Information("Iteration {Iteration} completed successfully", i);
+                    sessionRunner = await CopilotSessionRunner.CreateAsync(opt, eventStream);
                 }
                 catch (Exception ex)
                 {
-                    success = false;
-                    turnError = $"{ex.GetType().Name}: {ex.Message}";
-                    output = $"ERROR: {turnError}";
-                    Log.Error(ex, "Iteration {Iteration} failed with error", i);
-                    ConsoleOutput.WriteErrorLine(output);
                     emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
+                    Log.Error(ex, "Failed to start Copilot session");
+                    ConsoleOutput.WriteErrorLine($"ERROR: {ex.GetType().Name}: {ex.Message}");
+                    return 1;
                 }
+            }
 
-                // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
-                // The assistant writes clean, formatted summaries with learnings instead of raw output
-
-                var hasTerminalSignal = PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal);
-                eventStream?.Emit("turn_end", turn: i, fields: new Dictionary<string, object?>
+            for (var i = 1; i <= opt.MaxIterations; i++)
+            {
+                eventStream?.Emit("turn_start", turn: i, fields: new Dictionary<string, object?>
                 {
-                    ["success"] = success,
-                    ["output"] = output,
-                    ["error"] = turnError,
-                    ["terminalSignal"] = hasTerminalSignal ? terminalSignal : null
+                    ["maxIterations"] = opt.MaxIterations
                 });
 
-                if (hasTerminalSignal)
+                using (LogContext.PushProperty("Iteration", i))
                 {
-                    if (string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                    Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
+                    ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
+
+                    // Reload progress and issues before each iteration so assistant sees updates it made
+                    progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
+                    progress = progressRead.Exists ? progressRead.Content : string.Empty;
+                    issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
+                    issues = issuesRead.Exists ? issuesRead.Content : "[]";
+                    generatedTasks = await TaskBacklog.EnsureBacklogAsync(issues, opt.GeneratedTasksFile, ct);
+                    ConsoleOutput.RefreshGeneratedTasks();
+
+                    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks);
+
+                    string output;
+                    string? turnError = null;
+                    var success = true;
+                    try
                     {
-                        try
+                        if (useDockerPerIteration)
                         {
-                            var backlogContent = await File.ReadAllTextAsync(opt.GeneratedTasksFile, ct);
-                            if (TaskBacklog.HasOpenTasks(backlogContent))
-                            {
-                                Log.Warning("COMPLETE signal ignored — open tasks remain in {BacklogFile}", opt.GeneratedTasksFile);
-                                ConsoleOutput.WriteWarningLine("COMPLETE signal ignored — open tasks remain in generated_tasks.json");
-                                continue;
-                            }
+                            output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, ct);
                         }
-                        catch (FileNotFoundException)
+                        else if (sessionRunner is not null)
                         {
-                            // No backlog file means no open tasks — allow COMPLETE
+                            output = await sessionRunner.RunTurnAsync(combinedPrompt, ct, i);
                         }
+                        else
+                        {
+                            output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
+                        }
+                        Log.Information("Iteration {Iteration} completed successfully", i);
+                    }
+                    catch (Exception ex)
+                    {
+                        success = false;
+                        turnError = $"{ex.GetType().Name}: {ex.Message}";
+                        output = $"ERROR: {turnError}";
+                        Log.Error(ex, "Iteration {Iteration} failed with error", i);
+                        ConsoleOutput.WriteErrorLine(output);
+                        emittedCopilotDiagnostics = await TryEmitCopilotDiagnosticsAsync(ex, opt, ct, emittedCopilotDiagnostics);
                     }
 
-                    Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
-                    ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
-                    await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
-                    break;
-                }
-            } // end LogContext scope
+                    // Progress is now managed by the assistant via tools (edit/bash) per prompt.md
+                    // The assistant writes clean, formatted summaries with learnings instead of raw output
+
+                    var hasTerminalSignal = PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal);
+                    eventStream?.Emit("turn_end", turn: i, fields: new Dictionary<string, object?>
+                    {
+                        ["success"] = success,
+                        ["output"] = output,
+                        ["error"] = turnError,
+                        ["terminalSignal"] = hasTerminalSignal ? terminalSignal : null
+                    });
+
+                    if (hasTerminalSignal)
+                    {
+                        if (string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var backlogContent = await File.ReadAllTextAsync(opt.GeneratedTasksFile, ct);
+                                if (TaskBacklog.HasOpenTasks(backlogContent))
+                                {
+                                    Log.Warning("COMPLETE signal ignored — open tasks remain in {BacklogFile}", opt.GeneratedTasksFile);
+                                    ConsoleOutput.WriteWarningLine("COMPLETE signal ignored — open tasks remain in generated_tasks.json");
+                                    continue;
+                                }
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                // No backlog file means no open tasks — allow COMPLETE
+                            }
+                        }
+
+                        Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
+                        ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
+                        await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+                        break;
+                    }
+                } // end LogContext scope
+            }
         }
+        finally
+        {
+            if (sessionRunner is not null)
+            {
+                await sessionRunner.DisposeAsync();
+            }
+        }
+
+        Log.Information("Coralph loop finished");
+        return 0;
+    }
+    catch (OperationCanceledException) when (ct.IsCancellationRequested)
+    {
+        Log.Information("Cancellation requested, stopping Coralph loop");
+        ConsoleOutput.WriteWarningLine("Cancellation requested, stopping.");
+        return 130;
     }
     finally
     {
-        if (sessionRunner is not null)
-        {
-            await sessionRunner.DisposeAsync();
-        }
+        Console.CancelKeyPress -= cancelKeyPressHandler;
     }
-
-    Log.Information("Coralph loop finished");
-    return 0;
 }
 
 static async Task CommitProgressIfNeededAsync(string progressFile, CancellationToken ct)
@@ -445,6 +507,113 @@ static async Task<bool> TryEmitCopilotDiagnosticsAsync(Exception ex, LoopOptions
     }
 
     return true;
+}
+
+static UiMode ResolveRequestedUiModeFromArgs(string[] cliArgs)
+{
+    var mode = UiMode.Auto;
+    for (var i = 0; i < cliArgs.Length; i++)
+    {
+        var arg = cliArgs[i];
+        if (arg.StartsWith("--ui=", StringComparison.Ordinal))
+        {
+            var value = arg["--ui=".Length..];
+            if (UiModeParser.TryParse(value, out var parsed))
+            {
+                mode = parsed;
+            }
+
+            continue;
+        }
+
+        if (!string.Equals(arg, "--ui", StringComparison.Ordinal))
+        {
+            continue;
+        }
+
+        if (i + 1 >= cliArgs.Length)
+        {
+            continue;
+        }
+
+        if (UiModeParser.TryParse(cliArgs[i + 1], out var parsedNext))
+        {
+            mode = parsedNext;
+        }
+    }
+
+    return mode;
+}
+
+static bool ResolveStreamEventsFromArgs(string[] cliArgs)
+{
+    var enabled = false;
+    for (var i = 0; i < cliArgs.Length; i++)
+    {
+        var arg = cliArgs[i];
+        if (arg.StartsWith("--stream-events=", StringComparison.Ordinal))
+        {
+            if (TryParseBoolToken(arg["--stream-events=".Length..], out var parsed))
+            {
+                enabled = parsed;
+            }
+            continue;
+        }
+
+        if (arg.StartsWith("--event-stream=", StringComparison.Ordinal))
+        {
+            if (TryParseBoolToken(arg["--event-stream=".Length..], out var parsed))
+            {
+                enabled = parsed;
+            }
+            continue;
+        }
+
+        if (!string.Equals(arg, "--stream-events", StringComparison.Ordinal) &&
+            !string.Equals(arg, "--event-stream", StringComparison.Ordinal))
+        {
+            continue;
+        }
+
+        if (i + 1 < cliArgs.Length && TryParseBoolToken(cliArgs[i + 1], out var parsedNext))
+        {
+            enabled = parsedNext;
+        }
+        else
+        {
+            enabled = true;
+        }
+    }
+
+    return enabled;
+}
+
+static bool TryParseBoolToken(string? token, out bool value)
+{
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        value = false;
+        return false;
+    }
+
+    if (bool.TryParse(token, out value))
+    {
+        return true;
+    }
+
+    if (string.Equals(token, "1", StringComparison.Ordinal))
+    {
+        value = true;
+        return true;
+    }
+
+    if (string.Equals(token, "0", StringComparison.Ordinal))
+    {
+        value = false;
+        return true;
+    }
+
+    return false;
 }
 
 

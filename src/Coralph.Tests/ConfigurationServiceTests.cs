@@ -1,4 +1,5 @@
 using Coralph;
+using Coralph.Ui;
 
 namespace Coralph.Tests;
 
@@ -95,6 +96,17 @@ public class ConfigurationServiceTests
     }
 
     [Fact]
+    public void ApplyOverrides_WithUiMode_OverridesValue()
+    {
+        var options = new LoopOptions { UiMode = UiMode.Auto };
+        var overrides = new LoopOptionsOverrides { UiMode = UiMode.Classic };
+
+        ConfigurationService.ApplyOverrides(options, overrides);
+
+        Assert.Equal(UiMode.Classic, options.UiMode);
+    }
+
+    [Fact]
     public void ApplyOverrides_WithDockerSandbox_OverridesValue()
     {
         var options = new LoopOptions { DockerSandbox = false };
@@ -134,6 +146,7 @@ public class ConfigurationServiceTests
             CliUrl = "http://localhost:8080",
             ShowReasoning = false,
             ColorizedOutput = false,
+            UiMode = UiMode.Tui,
             DockerSandbox = true,
             DockerImage = "ghcr.io/example/custom:latest"
         };
@@ -152,9 +165,68 @@ public class ConfigurationServiceTests
         Assert.Equal("http://localhost:8080", options.CliUrl);
         Assert.False(options.ShowReasoning);
         Assert.False(options.ColorizedOutput);
+        Assert.Equal(UiMode.Tui, options.UiMode);
         Assert.True(options.DockerSandbox);
         Assert.Equal("ghcr.io/example/custom:latest", options.DockerImage);
     }
 
     #endregion
+
+    [Fact]
+    public void LoadOptions_WithUiModeInConfig_BindsUiMode()
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"coralph-config-{Guid.NewGuid():N}.json");
+        try
+        {
+            var json = """
+                {
+                  "LoopOptions": {
+                    "UiMode": "classic"
+                  }
+                }
+                """;
+            File.WriteAllText(tempPath, json);
+
+            var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), tempPath);
+
+            Assert.Equal(UiMode.Classic, options.UiMode);
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
+    }
+
+    [Fact]
+    public void LoadOptions_WithUiModeOverride_OverrideWinsOverConfig()
+    {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"coralph-config-{Guid.NewGuid():N}.json");
+        try
+        {
+            var json = """
+                {
+                  "LoopOptions": {
+                    "UiMode": "classic"
+                  }
+                }
+                """;
+            File.WriteAllText(tempPath, json);
+
+            var options = ConfigurationService.LoadOptions(
+                new LoopOptionsOverrides { UiMode = UiMode.Tui },
+                tempPath);
+
+            Assert.Equal(UiMode.Tui, options.UiMode);
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
+        }
+    }
 }

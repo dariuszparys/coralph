@@ -49,6 +49,15 @@
           "StreamJsonRpc": "2.24.84"
         }
       },
+      "Hex1b": {
+        "type": "Transitive",
+        "resolved": "0.83.0",
+        "contentHash": "l4ygQRG0uU8lWwRMBqB4zIdBbn4sDEloD1Yc/4sPQhF0D8KB3P3IXuP4GNfhEuJ1p5wC8I93lI6TdyXI6HnHmw==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
+          "QRCoder": "1.7.0"
+        }
+      },
       "MessagePack": {
         "type": "Transitive",
         "resolved": "2.5.198",
@@ -215,6 +224,11 @@
         "resolved": "17.13.22",
         "contentHash": "fC20ITOxlUpGQ0ltAxITQbeFxwuB6OjLT3lByC4+/Gm46o/Mwv9hlIVrBhiUhnqdQzUUvr4EHkdiYe7WOSMLmw=="
       },
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "6.0.0",
+        "contentHash": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A=="
+      },
       "Nerdbank.MessagePack": {
         "type": "Transitive",
         "resolved": "1.0.2",
@@ -243,6 +257,14 @@
         "type": "Transitive",
         "resolved": "1.0.0",
         "contentHash": "q8vTQfDoKa/vCNMT+TvKbzsl+Z/s4k/qaP8WQGvNDIILkxKhP+N3NbFAOiglQljNmAj/ei51wO9jwcAI9jhtHw=="
+      },
+      "QRCoder": {
+        "type": "Transitive",
+        "resolved": "1.7.0",
+        "contentHash": "6R3hQkayihGIDjp3F1nLRDBWG+nqahGyOY2+fH4Rll16Vad67oaUUfHkOiMWKiJFnGh+PIGDfUos+0R9m54O1g==",
+        "dependencies": {
+          "System.Drawing.Common": "6.0.0"
+        }
       },
       "Serilog": {
         "type": "Transitive",
@@ -304,6 +326,14 @@
         "resolved": "2.0.0-beta4.22272.1",
         "contentHash": "1uqED/q2H0kKoLJ4+hI2iPSBSEdTuhfCYADeJrAqERmiGQ2NNacYKRNEQ+gFbU4glgVyK8rxI+ZOe1onEtr/Pg=="
       },
+      "System.Drawing.Common": {
+        "type": "Transitive",
+        "resolved": "6.0.0",
+        "contentHash": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "6.0.0"
+        }
+      },
       "xunit.abstractions": {
         "type": "Transitive",
         "resolved": "2.0.3",
@@ -348,6 +378,7 @@
         "type": "Project",
         "dependencies": {
           "GitHub.Copilot.SDK": "[0.1.23, )",
+          "Hex1b": "[0.83.0, )",
           "Microsoft.Extensions.Configuration.Json": "[8.0.0, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
           "Serilog": "[4.2.0, )",

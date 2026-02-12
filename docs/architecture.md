@@ -27,13 +27,17 @@ flowchart TD
     end
 
     subgraph IO["I/O Layer"]
-        ConsoleOutput["ConsoleOutput.cs<br/>Colored Terminal Output"]
+        ConsoleOutput["ConsoleOutput.cs<br/>Output Facade"]
+        ClassicBackend["ClassicConsoleOutputBackend.cs<br/>Spectre Console Renderer"]
+        TuiBackend["Hex1bConsoleOutputBackend.cs<br/>Hex1b Split-Pane TUI"]
+        UiResolver["UiModeResolver.cs<br/>Mode Selection Logic"]
         CustomTools["CustomTools.cs<br/>AI-Callable Tools"]
         GhIssues["GhIssues.cs<br/>GitHub CLI Integration"]
     end
 
     subgraph External["External Dependencies"]
         CopilotSDK["GitHub.Copilot.SDK<br/>AI Runtime"]
+        Hex1b["Hex1b<br/>TUI Framework"]
         ConfigJson["Microsoft.Extensions.Configuration<br/>JSON Config Loading"]
         SpectreConsole["Spectre.Console<br/>Rich Terminal UI"]
         SystemCommandLine["System.CommandLine<br/>CLI Parsing"]
@@ -58,8 +62,12 @@ flowchart TD
     CopilotRunner --> CopilotSDK
     CopilotRunner --> CustomTools
     CopilotRunner --> ConsoleOutput
-    ConsoleOutput --> SpectreConsole
-    
+    ConsoleOutput --> ClassicBackend
+    ConsoleOutput --> TuiBackend
+    Main --> UiResolver
+    ClassicBackend --> SpectreConsole
+    TuiBackend --> Hex1b
+
     PromptHelpers --> PromptMD
     PromptHelpers --> IssuesJSON
     PromptHelpers --> ProgressTXT
@@ -91,7 +99,10 @@ flowchart TD
 
 | Component | Responsibility |
 |-----------|----------------|
-| **ConsoleOutput.cs** | Provides colored/styled console output with Spectre.Console |
+| **ConsoleOutput.cs** | Facade used by runtime code; routes output to classic or TUI backend |
+| **ClassicConsoleOutputBackend.cs** | Existing Spectre-based line output and styling |
+| **Hex1bConsoleOutputBackend.cs** | Interactive split-pane TUI (transcript + generated tasks) |
+| **UiModeResolver.cs** | Resolves effective mode from `--ui`, `--stream-events`, and redirection state |
 | **CustomTools.cs** | Exposes AI-callable functions (list_open_issues, list_generated_tasks, get_progress_summary, search_progress) |
 | **GhIssues.cs** | Fetches issues from GitHub using `gh` CLI |
 
@@ -103,6 +114,7 @@ sequenceDiagram
     participant CLI as Program.cs
     participant Runner as CopilotRunner
     participant SDK as GitHub.Copilot.SDK
+    participant Output as ConsoleOutput
     participant Tools as CustomTools
     participant Files as File System
 
@@ -120,7 +132,8 @@ sequenceDiagram
             Tools-->>SDK: Return results
         end
         
-        Runner-->>CLI: Output text
+        Runner-->>Output: Structured output events
+        Output-->>CLI: Render (classic or TUI)
         CLI->>Files: Check for COMPLETE marker
     end
     
@@ -131,7 +144,8 @@ sequenceDiagram
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **GitHub.Copilot.SDK** | 0.1.18 | AI runtime for Copilot integration |
+| **GitHub.Copilot.SDK** | 0.1.23 | AI runtime for Copilot integration |
+| **Hex1b** | 0.83.0 | Interactive split-pane TUI rendering |
 | **Microsoft.Extensions.Configuration.Json** | 8.0.0 | Load configuration from JSON files |
 | **Microsoft.Extensions.Options.ConfigurationExtensions** | 8.0.0 | Bind configuration to options classes |
 | **Spectre.Console** | 0.49.1 | Rich terminal output (colors, styling) |
@@ -150,7 +164,9 @@ sequenceDiagram
 ## Key Design Decisions
 
 1. **Streaming Architecture**: Uses event-based streaming from GitHub.Copilot.SDK for real-time output
-2. **Tool Extensibility**: Custom AI tools exposed via `AIFunctionFactory.Create()` pattern
-3. **Configuration Layering**: CLI args override config file, which overrides defaults
-4. **Progress as Learning Journal**: Assistant writes structured summaries with learnings, not raw output
-5. **Early Exit on COMPLETE**: Loop terminates when assistant outputs completion marker
+2. **Pluggable Output Backends**: Runtime logic writes to a single facade; rendering is switched between classic and TUI modes
+3. **Stream Compatibility Guardrail**: `--stream-events` forces classic output to preserve JSONL integrations
+4. **Tool Extensibility**: Custom AI tools exposed via `AIFunctionFactory.Create()` pattern
+5. **Configuration Layering**: CLI args override config file, which overrides defaults
+6. **Progress as Learning Journal**: Assistant writes structured summaries with learnings, not raw output
+7. **Early Exit on COMPLETE**: Loop terminates when assistant outputs completion marker

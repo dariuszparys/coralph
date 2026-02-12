@@ -1,4 +1,5 @@
 using Coralph;
+using Coralph.Ui;
 
 namespace Coralph.Tests;
 
@@ -252,6 +253,26 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithUiMode_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--ui", "tui"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal(UiMode.Tui, overrides.UiMode);
+    }
+
+    [Fact]
+    public void Parse_WithInvalidUiMode_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--ui", "invalid-mode"]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--ui", err);
+    }
+
+    [Fact]
     public void Parse_WithStreamEvents_SetsOverride()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--stream-events", "true"]);
@@ -345,5 +366,6 @@ public class ArgParserTests
         Assert.Contains("--working-dir", output);
         Assert.Contains("--azdo-organization", output);
         Assert.Contains("--azdo-project", output);
+        Assert.Contains("--ui", output);
     }
 }

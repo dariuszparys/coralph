@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Help;
+using Coralph.Ui;
 
 namespace Coralph;
 
@@ -43,6 +44,7 @@ internal static class ArgParser
         var initOption = new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
+        var uiOption = new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)");
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
@@ -80,6 +82,7 @@ internal static class ArgParser
         root.AddOption(initOption);
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
+        root.AddOption(uiOption);
         root.AddOption(streamEventsOption);
         root.AddOption(dockerSandboxOption);
         root.AddOption(dockerImageOption);
@@ -282,6 +285,19 @@ internal static class ArgParser
             options.ColorizedOutput = colorizedOutput.Value;
         }
 
+        var ui = result.GetValueForOption(uiOption);
+        if (ui is not null)
+        {
+            if (!UiModeParser.TryParse(ui, out var uiMode))
+            {
+                errorMessages.Add($"--ui must be one of: {UiModeParser.HelpText}");
+            }
+            else
+            {
+                options.UiMode = uiMode;
+            }
+        }
+
         var streamEvents = result.GetValueForOption(streamEventsOption);
         if (streamEvents.HasValue)
         {
@@ -464,6 +480,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits"));
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
+        root.AddOption(new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)"));
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));

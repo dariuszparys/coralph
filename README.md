@@ -137,6 +137,18 @@ Emit JSONL for integrations:
 ./coralph --stream-events true 1>events.jsonl 2>console.log
 ```
 
+When `--stream-events true` is enabled, Coralph forces classic console output to preserve machine-readable JSONL on stdout.
+
+### UI Modes
+
+Coralph defaults to an interactive TUI in terminals, with automatic fallback to classic output when input/output is redirected.
+
+```bash
+./coralph --ui auto      # Default: TUI for interactive terminals, classic otherwise
+./coralph --ui tui       # Force TUI
+./coralph --ui classic   # Force classic console output
+```
+
 ### Tool Permissions
 
 Control AI tool access:

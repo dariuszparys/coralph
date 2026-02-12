@@ -342,47 +342,80 @@ internal static class InitWorkflow
 
     internal static async Task<int> RunAsync(string? configFile)
     {
-        ConsoleOutput.WriteLine("Initializing repository for Coralph...");
-        var repoRoot = ResolveRepoRoot();
-        if (repoRoot is null)
+        using var cts = new CancellationTokenSource();
+        using var stopHandlerScope = ConsoleOutput.PushStopRequestHandler(() =>
         {
-            ConsoleOutput.WriteErrorLine("Current working directory is unavailable. Run --init from a valid repository path.");
-            return 1;
-        }
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+            }
+        });
 
-        var projectType = ResolveProjectType(repoRoot);
-        if (projectType is null)
+        ConsoleCancelEventHandler cancelKeyPressHandler = (_, e) =>
         {
-            ConsoleOutput.WriteErrorLine("Unable to determine project type. Create prompt.md manually or run from a repository root.");
-            return 1;
-        }
+            e.Cancel = true;
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+            }
+        };
 
-        ConsoleOutput.WriteLine($"Selected project type: {projectType}");
+        Console.CancelKeyPress += cancelKeyPressHandler;
 
-        var coralphRoot = AppContext.BaseDirectory;
-        var fallbackPrompt = await TryReadFileAsync(Path.Combine(coralphRoot, "prompt.md")).ConfigureAwait(false);
-
-        var exitCode = 0;
-        exitCode |= await EnsureIssuesFileAsync(repoRoot, coralphRoot);
-        exitCode |= await EnsureConfigFileAsync(repoRoot, configFile);
-        exitCode |= await EnsurePromptFileAsync(repoRoot, coralphRoot, projectType.Value, fallbackPrompt);
-        exitCode |= await EnsureProgressFileAsync(repoRoot);
-        exitCode |= await EnsureGitIgnoreEntriesAsync(repoRoot, configFile);
-
-        if (exitCode == 0)
+        var ct = cts.Token;
+        try
         {
-            ConsoleOutput.WriteLine("Initialization complete.");
-            ConsoleOutput.WriteLine("Next steps:");
-            ConsoleOutput.WriteLine("  1. Review and customize prompt.md for your project");
-            ConsoleOutput.WriteLine("  2. Add your issues to issues.json (or use --refresh-issues)");
-            ConsoleOutput.WriteLine("  3. Run: coralph --max-iterations 5");
-        }
-        else
-        {
-            ConsoleOutput.WriteErrorLine("Initialization failed. Review the errors above.");
-        }
+            ConsoleOutput.WriteLine("Initializing repository for Coralph...");
+            var repoRoot = ResolveRepoRoot();
+            if (repoRoot is null)
+            {
+                ConsoleOutput.WriteErrorLine("Current working directory is unavailable. Run --init from a valid repository path.");
+                return 1;
+            }
 
-        return exitCode;
+            var projectType = await ResolveProjectTypeAsync(repoRoot, ct).ConfigureAwait(false);
+            if (projectType is null)
+            {
+                ConsoleOutput.WriteErrorLine("Unable to determine project type. Create prompt.md manually or run from a repository root.");
+                return 1;
+            }
+
+            ConsoleOutput.WriteLine($"Selected project type: {projectType}");
+
+            var coralphRoot = AppContext.BaseDirectory;
+            var fallbackPrompt = await TryReadFileAsync(Path.Combine(coralphRoot, "prompt.md")).ConfigureAwait(false);
+
+            var exitCode = 0;
+            exitCode |= await EnsureIssuesFileAsync(repoRoot, coralphRoot);
+            exitCode |= await EnsureConfigFileAsync(repoRoot, configFile);
+            exitCode |= await EnsurePromptFileAsync(repoRoot, coralphRoot, projectType.Value, fallbackPrompt);
+            exitCode |= await EnsureProgressFileAsync(repoRoot);
+            exitCode |= await EnsureGitIgnoreEntriesAsync(repoRoot, configFile);
+
+            if (exitCode == 0)
+            {
+                ConsoleOutput.WriteLine("Initialization complete.");
+                ConsoleOutput.WriteLine("Next steps:");
+                ConsoleOutput.WriteLine("  1. Review and customize prompt.md for your project");
+                ConsoleOutput.WriteLine("  2. Add your issues to issues.json (or use --refresh-issues)");
+                ConsoleOutput.WriteLine("  3. Run: coralph --max-iterations 5");
+            }
+            else
+            {
+                ConsoleOutput.WriteErrorLine("Initialization failed. Review the errors above.");
+            }
+
+            return exitCode;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            ConsoleOutput.WriteWarningLine("Initialization canceled.");
+            return 130;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelKeyPressHandler;
+        }
     }
 
     private static string? ResolveRepoRoot()
@@ -412,7 +445,7 @@ internal static class InitWorkflow
         return null;
     }
 
-    private static ProjectType? ResolveProjectType(string repoRoot)
+    private static async Task<ProjectType?> ResolveProjectTypeAsync(string repoRoot, CancellationToken ct)
     {
         var detected = DetectProjectType(repoRoot);
         if (detected is not null)
@@ -426,29 +459,34 @@ internal static class InitWorkflow
             return ProjectType.JavaScript;
         }
 
-        return PromptProjectType();
+        return await PromptProjectTypeAsync(ct).ConfigureAwait(false);
     }
 
-    private static ProjectType PromptProjectType()
+    private static async Task<ProjectType> PromptProjectTypeAsync(CancellationToken ct)
     {
-        ConsoleOutput.WriteLine("Could not automatically detect project type.");
-        ConsoleOutput.WriteLine("Select your project type:");
-        ConsoleOutput.WriteLine("  1) JavaScript/TypeScript");
-        ConsoleOutput.WriteLine("  2) Python");
-        ConsoleOutput.WriteLine("  3) Go");
-        ConsoleOutput.WriteLine("  4) Rust");
-        ConsoleOutput.WriteLine("  5) .NET");
-        ConsoleOutput.WriteLine("  6) Other (use JavaScript/TypeScript template)");
-        ConsoleOutput.Write("Enter number (1-6): ");
+        var options = new[]
+        {
+            "JavaScript/TypeScript",
+            "Python",
+            "Go",
+            "Rust",
+            ".NET",
+            "Other (use JavaScript/TypeScript template)"
+        };
 
-        var choice = Console.ReadLine()?.Trim();
+        var choice = await ConsoleOutput.PromptSelectionAsync(
+            "Could not automatically detect project type.",
+            options,
+            defaultIndex: 0,
+            ct).ConfigureAwait(false);
+
         return choice switch
         {
-            "1" => ProjectType.JavaScript,
-            "2" => ProjectType.Python,
-            "3" => ProjectType.Go,
-            "4" => ProjectType.Rust,
-            "5" => ProjectType.DotNet,
+            0 => ProjectType.JavaScript,
+            1 => ProjectType.Python,
+            2 => ProjectType.Go,
+            3 => ProjectType.Rust,
+            4 => ProjectType.DotNet,
             _ => ProjectType.JavaScript
         };
     }

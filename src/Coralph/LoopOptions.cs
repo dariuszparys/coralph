@@ -1,3 +1,5 @@
+using Coralph.Ui;
+
 namespace Coralph;
 
 internal sealed class LoopOptions
@@ -33,6 +35,7 @@ internal sealed class LoopOptions
 
     public bool ShowReasoning { get; set; } = true;
     public bool ColorizedOutput { get; set; } = true;
+    public UiMode UiMode { get; set; } = UiMode.Auto;
     public bool StreamEvents { get; set; }
     public bool DockerSandbox { get; set; }
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
@@ -72,6 +75,7 @@ internal sealed class LoopOptionsOverrides
 
     public bool? ShowReasoning { get; set; }
     public bool? ColorizedOutput { get; set; }
+    public UiMode? UiMode { get; set; }
     public bool? StreamEvents { get; set; }
     public bool? DockerSandbox { get; set; }
     public string? DockerImage { get; set; }

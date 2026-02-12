@@ -182,6 +182,7 @@ internal static class DockerSandbox
         output.Append(opt.ShowReasoning.ToString().ToLowerInvariant());
         output.Append(" --colorized-output ");
         output.Append(opt.ColorizedOutput.ToString().ToLowerInvariant());
+        output.Append(" --ui classic");
         output.Append(" --stream-events false");
         output.Append(" --docker-sandbox false");
         output.Append(" --docker-image ");

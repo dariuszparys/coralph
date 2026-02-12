@@ -78,6 +78,7 @@ internal static class ConfigurationService
         if (overrides.ToolDeny is not null) target.ToolDeny = overrides.ToolDeny;
         if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
         if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
+        if (overrides.UiMode is { } uiMode) target.UiMode = uiMode;
         if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;
         if (overrides.DockerSandbox is { } dockerSandbox) target.DockerSandbox = dockerSandbox;
         if (!string.IsNullOrWhiteSpace(overrides.DockerImage)) target.DockerImage = overrides.DockerImage;
