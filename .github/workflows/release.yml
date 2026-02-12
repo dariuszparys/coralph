@@ -122,7 +122,7 @@ jobs:
         mv ./artifacts/coralph-osx-arm64/Coralph ./artifacts/Coralph-osx-arm64
     
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           ./artifacts/Coralph-linux-x64
