@@ -75,6 +75,40 @@ internal static class Banner
         console.MarkupLine($"[dim]v{GetVersion()}[/]");
     }
 
+    internal static async Task DisplayAnimatedInOutputAsync(CancellationToken ct = default)
+    {
+        if (Console.IsOutputRedirected)
+        {
+            foreach (var line in AsciiLines)
+            {
+                ConsoleOutput.WriteLine(line);
+            }
+
+            ConsoleOutput.WriteLine($"v{GetVersion()}");
+            return;
+        }
+
+        for (var lineIndex = 0; lineIndex < AsciiLines.Length; lineIndex++)
+        {
+            var line = AsciiLines[lineIndex];
+            var colorIndex = lineIndex % GradientColors.Length;
+            var color = GradientColors[colorIndex];
+
+            ConsoleOutput.MarkupLine($"[rgb({color.R},{color.G},{color.B})]{Markup.Escape(line)}[/]");
+
+            try
+            {
+                await Task.Delay(50, ct);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
+
+        ConsoleOutput.MarkupLine($"[dim]v{GetVersion()}[/]");
+    }
+
     internal static void Display(IAnsiConsole console)
     {
         if (Console.IsOutputRedirected)

@@ -11,6 +11,9 @@ namespace Coralph.Ui.Tui;
 internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 {
     private static readonly Regex MarkupRegex = new(@"\[[^\]]+\]", RegexOptions.Compiled);
+    private static readonly Hex1bKey[] ExitAnyKeys = Enum.GetValues<Hex1bKey>()
+        .Where(key => key != Hex1bKey.None)
+        .ToArray();
 
     private readonly TuiState _state = new();
     private readonly GeneratedTasksSnapshotReader _tasksReader = new();
@@ -58,6 +61,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     public async ValueTask DisposeAsync()
     {
         _state.CancelPrompt();
+        _state.CancelExitPrompt();
 
         _cts.Cancel();
 
@@ -231,6 +235,27 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         }
     }
 
+    internal async Task WaitForAnyKeyAsync(string message, CancellationToken ct = default)
+    {
+        _state.AppendLine(TranscriptEntryKind.System, message);
+        var waitTask = _state.WaitForAnyKeyAsync(message);
+        RequestInvalidate();
+
+        try
+        {
+            await waitTask.WaitAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            _state.CancelExitPrompt();
+            throw;
+        }
+        finally
+        {
+            RequestInvalidate();
+        }
+    }
+
     private async Task RunUiAsync(CancellationToken ct)
     {
         await using var terminal = Hex1bTerminal.CreateBuilder()
@@ -277,12 +302,15 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             return BuildPromptWidget(ctx, prompt);
         }
 
+        var exitPrompt = _state.GetExitPrompt();
         var transcriptLines = _state.GetTranscriptLines(maxLines: 180);
         var tasksSnapshot = _state.GetTasksSnapshot();
 
         return ctx.VStack(v =>
         [
-            v.InfoBar(["Coralph", "TUI", "Tasks", tasksSnapshot.Tasks.Count.ToString(), "Mode", "Ctrl+C exits"]).FixedHeight(1),
+            exitPrompt is null
+                ? v.InfoBar(["Coralph", "TUI", "Tasks", tasksSnapshot.Tasks.Count.ToString(), "Mode", "Ctrl+C exits"]).FixedHeight(1)
+                : v.InfoBar(["Coralph", "TUI", "Done", "Press any key to exit"]).FixedHeight(1),
             v.Responsive(r =>
             [
                 r.WhenMinWidth(130, w => w.HStack(h =>
@@ -304,6 +332,14 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                 ConsoleOutput.RequestStop();
                 actionCtx.RequestStop();
             }, "Stop Coralph");
+
+            if (exitPrompt is not null)
+            {
+                foreach (var key in ExitAnyKeys)
+                {
+                    bindings.Key(key).Global().Action(HandleExitPromptInput, "Close TUI");
+                }
+            }
         });
     }
 
@@ -409,6 +445,12 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         var marker = isActive ? "*" : " ";
         var issuePrefix = task.IssueNumber > 0 ? $"#{task.IssueNumber} " : string.Empty;
         return $"{marker} [{task.Status}] {task.Id} {issuePrefix}{task.Title}";
+    }
+
+    private void HandleExitPromptInput(InputBindingActionContext actionCtx)
+    {
+        _state.CompleteExitPrompt();
+        actionCtx.RequestStop();
     }
 
     private void RequestInvalidate()

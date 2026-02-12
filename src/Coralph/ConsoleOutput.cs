@@ -122,6 +122,16 @@ internal static class ConsoleOutput
 
     internal static void RefreshGeneratedTasks() => _backend.RefreshGeneratedTasks();
 
+    internal static Task WaitForAnyKeyToExitAsync(string message, CancellationToken ct = default)
+    {
+        if (_backend is Hex1bConsoleOutputBackend tuiBackend)
+        {
+            return tuiBackend.WaitForAnyKeyAsync(message, ct);
+        }
+
+        return Task.CompletedTask;
+    }
+
     internal static Task<int> PromptSelectionAsync(
         string title,
         IReadOnlyList<string> options,

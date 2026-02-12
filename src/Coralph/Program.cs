@@ -217,8 +217,16 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 
         if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
         {
-            // Display animated ASCII banner on startup
-            await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+            if (ConsoleOutput.UsesTui)
+            {
+                await Banner.DisplayAnimatedInOutputAsync(ct);
+            }
+            else
+            {
+                // Display animated ASCII banner on startup
+                await Banner.DisplayAnimatedAsync(ConsoleOutput.Out, ct);
+            }
+
             ConsoleOutput.WriteLine();
         }
 
@@ -280,6 +288,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         {
             Log.Information("No open issues found, exiting");
             ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+            await ConsoleOutput.WaitForAnyKeyToExitAsync("No open issues remain. Press any key to close the TUI.", ct);
             return 0;
         }
 
@@ -389,6 +398,11 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                         Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
                         ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
                         await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+                        if (ShouldWaitForAnyKeyToExit(terminalSignal))
+                        {
+                            await ConsoleOutput.WaitForAnyKeyToExitAsync("No work remaining. Press any key to close the TUI.", ct);
+                        }
+
                         break;
                     }
                 } // end LogContext scope
@@ -432,6 +446,13 @@ static async Task CommitProgressIfNeededAsync(string progressFile, CancellationT
     var commitResult = await RunGitAsync("commit -m \"chore: update progress.txt\"", ct);
     if (!string.IsNullOrWhiteSpace(commitResult))
         ConsoleOutput.WriteLine($"Auto-committed {progressFile}");
+}
+
+static bool ShouldWaitForAnyKeyToExit(string terminalSignal)
+{
+    return string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(terminalSignal, "ALL_TASKS_COMPLETE", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(terminalSignal, "NO_OPEN_ISSUES", StringComparison.OrdinalIgnoreCase);
 }
 
 static async Task<string> RunGitAsync(string arguments, CancellationToken ct)

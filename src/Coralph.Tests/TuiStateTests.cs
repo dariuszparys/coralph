@@ -89,4 +89,21 @@ public class TuiStateTests
             }
         }
     }
+
+    [Fact]
+    public async Task WaitForAnyKeyAsync_CompletesWhenPromptHandled()
+    {
+        var state = new TuiState();
+
+        var waitTask = state.WaitForAnyKeyAsync("No work remains.");
+        var prompt = state.GetExitPrompt();
+
+        Assert.NotNull(prompt);
+        Assert.Equal("No work remains.", prompt.Message);
+
+        state.CompleteExitPrompt();
+
+        await waitTask;
+        Assert.Null(state.GetExitPrompt());
+    }
 }

@@ -24,6 +24,7 @@ internal sealed class TuiState
     private int _transcriptSelectedIndex = -1;
 
     private PromptSelectionRequest? _prompt;
+    private ExitPromptRequest? _exitPrompt;
 
     internal void AppendLine(TranscriptEntryKind kind, string text)
     {
@@ -138,6 +139,14 @@ internal sealed class TuiState
         }
     }
 
+    internal ExitPromptRequest? GetExitPrompt()
+    {
+        lock (_lock)
+        {
+            return _exitPrompt;
+        }
+    }
+
     internal Task<int> RequestPromptSelectionAsync(string title, IReadOnlyList<string> options, int defaultIndex)
     {
         lock (_lock)
@@ -199,6 +208,38 @@ internal sealed class TuiState
         }
     }
 
+    internal Task WaitForAnyKeyAsync(string message)
+    {
+        lock (_lock)
+        {
+            if (_exitPrompt is not null)
+            {
+                return _exitPrompt.Completion.Task;
+            }
+
+            _exitPrompt = new ExitPromptRequest(message);
+            return _exitPrompt.Completion.Task;
+        }
+    }
+
+    internal void CompleteExitPrompt()
+    {
+        lock (_lock)
+        {
+            _exitPrompt?.Completion.TrySetResult();
+            _exitPrompt = null;
+        }
+    }
+
+    internal void CancelExitPrompt()
+    {
+        lock (_lock)
+        {
+            _exitPrompt?.Completion.TrySetCanceled();
+            _exitPrompt = null;
+        }
+    }
+
     private void AddEntry(TranscriptEntryKind kind, string text, bool allowCoalesce)
     {
         lock (_lock)
@@ -254,4 +295,15 @@ internal sealed class PromptSelectionRequest
     internal IReadOnlyList<string> Options { get; }
     internal int SelectedIndex { get; set; }
     internal TaskCompletionSource<int> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+}
+
+internal sealed class ExitPromptRequest
+{
+    internal ExitPromptRequest(string message)
+    {
+        Message = message;
+    }
+
+    internal string Message { get; }
+    internal TaskCompletionSource Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 }
