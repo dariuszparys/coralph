@@ -288,6 +288,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         {
             Log.Information("No open issues found, exiting");
             ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
+            TryCleanupGeneratedTasksFile(opt.GeneratedTasksFile, "no open issues remained");
             await ConsoleOutput.WaitForAnyKeyToExitAsync("No open issues remain. Press any key to close the TUI.", ct);
             return 0;
         }
@@ -297,6 +298,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
 
         try
         {
+            var stoppedByTerminalSignal = false;
             if (!useDockerPerIteration)
             {
                 try
@@ -398,14 +400,27 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                         Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
                         ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
                         await CommitProgressIfNeededAsync(opt.ProgressFile, ct);
+                        if (BacklogCleanup.ShouldDeleteForTerminalSignal(terminalSignal))
+                        {
+                            TryCleanupGeneratedTasksFile(opt.GeneratedTasksFile, $"terminal signal {terminalSignal}");
+                        }
                         if (ShouldWaitForAnyKeyToExit(terminalSignal))
                         {
                             await ConsoleOutput.WaitForAnyKeyToExitAsync("No work remaining. Press any key to close the TUI.", ct);
                         }
 
+                        stoppedByTerminalSignal = true;
                         break;
                     }
                 } // end LogContext scope
+            }
+
+            if (!stoppedByTerminalSignal)
+            {
+                Log.Information(
+                    "Max iterations reached ({MaxIterations}); keeping backlog file {BacklogFile} for resume",
+                    opt.MaxIterations,
+                    opt.GeneratedTasksFile);
             }
         }
         finally
@@ -453,6 +468,24 @@ static bool ShouldWaitForAnyKeyToExit(string terminalSignal)
     return string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase)
            || string.Equals(terminalSignal, "ALL_TASKS_COMPLETE", StringComparison.OrdinalIgnoreCase)
            || string.Equals(terminalSignal, "NO_OPEN_ISSUES", StringComparison.OrdinalIgnoreCase);
+}
+
+static void TryCleanupGeneratedTasksFile(string backlogFile, string reason)
+{
+    if (BacklogCleanup.TryDelete(backlogFile, out var deleteError))
+    {
+        Log.Information("Deleted backlog file {BacklogFile} after {Reason}", backlogFile, reason);
+        ConsoleOutput.RefreshGeneratedTasks();
+        return;
+    }
+
+    if (deleteError is null)
+    {
+        return;
+    }
+
+    Log.Warning(deleteError, "Failed to delete backlog file {BacklogFile} after {Reason}", backlogFile, reason);
+    ConsoleOutput.WriteWarningLine($"Warning: failed to delete generated tasks backlog '{backlogFile}': {deleteError.Message}");
 }
 
 static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
