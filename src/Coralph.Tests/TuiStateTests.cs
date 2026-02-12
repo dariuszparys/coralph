@@ -106,4 +106,38 @@ public class TuiStateTests
         await waitTask;
         Assert.Null(state.GetExitPrompt());
     }
+
+    [Fact]
+    public void TranscriptFollow_DefaultsToLatestIndex()
+    {
+        var state = new TuiState();
+
+        var selected = state.GetTranscriptSelectedIndex(defaultIndex: 5);
+
+        Assert.Equal(5, selected);
+        Assert.True(state.IsTranscriptFollowEnabled());
+    }
+
+    [Fact]
+    public void TranscriptFollow_DisablesWhenSelectionMovesAboveLatest()
+    {
+        var state = new TuiState();
+
+        state.SetTranscriptSelectedIndex(index: 2, latestIndex: 4);
+
+        Assert.False(state.IsTranscriptFollowEnabled());
+        Assert.Equal(2, state.GetTranscriptSelectedIndex(defaultIndex: 5));
+    }
+
+    [Fact]
+    public void TranscriptFollow_ReenablesWhenSelectionReachesLatest()
+    {
+        var state = new TuiState();
+
+        state.SetTranscriptSelectedIndex(index: 2, latestIndex: 4);
+        state.SetTranscriptSelectedIndex(index: 4, latestIndex: 4);
+
+        Assert.True(state.IsTranscriptFollowEnabled());
+        Assert.Equal(5, state.GetTranscriptSelectedIndex(defaultIndex: 5));
+    }
 }

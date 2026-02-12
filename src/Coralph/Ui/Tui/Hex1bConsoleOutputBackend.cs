@@ -309,7 +309,17 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         return ctx.VStack(v =>
         [
             exitPrompt is null
-                ? v.InfoBar(["Coralph", "TUI", "Tasks", tasksSnapshot.Tasks.Count.ToString(), "Mode", "Ctrl+C exits"]).FixedHeight(1)
+                ? v.InfoBar(
+                    [
+                        "Coralph",
+                        "TUI",
+                        "Tasks",
+                        tasksSnapshot.Tasks.Count.ToString(),
+                        "Follow",
+                        _state.IsTranscriptFollowEnabled() ? "ON" : "OFF",
+                        "Mode",
+                        "Ctrl+C exits"
+                    ]).FixedHeight(1)
                 : v.InfoBar(["Coralph", "TUI", "Done", "Press any key to exit"]).FixedHeight(1),
             v.Responsive(r =>
             [
@@ -379,7 +389,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         var transcriptList = (ctx.List(source) with
         {
             InitialSelectedIndex = Math.Clamp(_state.GetTranscriptSelectedIndex(source.Count - 1), 0, source.Count - 1)
-        }).OnSelectionChanged(e => _state.SetTranscriptSelectedIndex(e.SelectedIndex));
+        }).OnSelectionChanged(e => _state.SetTranscriptSelectedIndex(e.SelectedIndex, source.Count - 1));
 
         return ctx.Border(transcriptList.Fill()).Title("Run Transcript");
     }

@@ -22,6 +22,7 @@ internal sealed class TuiState
     private GeneratedTasksSnapshot _tasksSnapshot = GeneratedTasksSnapshot.Missing(TaskBacklog.DefaultBacklogFile);
     private int _taskSelectedIndex = -1;
     private int _transcriptSelectedIndex = -1;
+    private bool _transcriptFollow = true;
 
     private PromptSelectionRequest? _prompt;
     private ExitPromptRequest? _exitPrompt;
@@ -77,15 +78,29 @@ internal sealed class TuiState
     {
         lock (_lock)
         {
+            if (_transcriptFollow)
+            {
+                return defaultIndex;
+            }
+
             return _transcriptSelectedIndex < 0 ? defaultIndex : _transcriptSelectedIndex;
         }
     }
 
-    internal void SetTranscriptSelectedIndex(int index)
+    internal void SetTranscriptSelectedIndex(int index, int latestIndex)
     {
         lock (_lock)
         {
             _transcriptSelectedIndex = index;
+            _transcriptFollow = latestIndex < 0 || index >= latestIndex;
+        }
+    }
+
+    internal bool IsTranscriptFollowEnabled()
+    {
+        lock (_lock)
+        {
+            return _transcriptFollow;
         }
     }
 
