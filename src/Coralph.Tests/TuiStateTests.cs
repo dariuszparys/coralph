@@ -140,4 +140,20 @@ public class TuiStateTests
         Assert.True(state.IsTranscriptFollowEnabled());
         Assert.Equal(5, state.GetTranscriptSelectedIndex(defaultIndex: 5));
     }
+
+    [Fact]
+    public void TranscriptRevision_IncrementsOnTranscriptUpdates()
+    {
+        var state = new TuiState();
+        var initial = state.GetTranscriptRevision();
+
+        state.AppendLine(TranscriptEntryKind.System, "first");
+        var afterFirst = state.GetTranscriptRevision();
+
+        state.AppendChunk(TranscriptEntryKind.System, " second");
+        var afterSecond = state.GetTranscriptRevision();
+
+        Assert.True(afterFirst > initial);
+        Assert.True(afterSecond > afterFirst);
+    }
 }

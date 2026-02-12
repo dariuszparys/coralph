@@ -18,6 +18,7 @@ internal sealed class TuiState
 
     private readonly object _lock = new();
     private readonly List<TranscriptEntry> _transcript = [];
+    private long _transcriptRevision;
 
     private GeneratedTasksSnapshot _tasksSnapshot = GeneratedTasksSnapshot.Missing(TaskBacklog.DefaultBacklogFile);
     private int _taskSelectedIndex = -1;
@@ -101,6 +102,14 @@ internal sealed class TuiState
         lock (_lock)
         {
             return _transcriptFollow;
+        }
+    }
+
+    internal long GetTranscriptRevision()
+    {
+        lock (_lock)
+        {
+            return _transcriptRevision;
         }
     }
 
@@ -269,11 +278,13 @@ internal sealed class TuiState
                         Text = last.Text + text,
                         Timestamp = DateTimeOffset.UtcNow
                     };
+                    _transcriptRevision++;
                     return;
                 }
             }
 
             _transcript.Add(new TranscriptEntry(kind, text, DateTimeOffset.UtcNow));
+            _transcriptRevision++;
             if (_transcript.Count > MaxTranscriptEntries)
             {
                 var removeCount = _transcript.Count - MaxTranscriptEntries;
