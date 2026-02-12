@@ -31,10 +31,21 @@ ci: test
     Write-Host "✅ All checks passed!" -ForegroundColor Green
 
 # Update changelog for upcoming release (usage: just changelog v1.0.0)
+# Refresh unreleased notes (usage: just changelog unreleased)
 changelog version:
     #!{{shebang}}
+    if ("{{version}}" -eq "unreleased") {
+        bash ./.github/scripts/update-changelog.sh --unreleased
+        Write-Host "✅ Updated CHANGELOG.md unreleased section" -ForegroundColor Green
+        Write-Host "📝 Review the changes, then commit and push:" -ForegroundColor Cyan
+        Write-Host "   git add CHANGELOG.md" -ForegroundColor Gray
+        Write-Host "   git commit -m 'docs: refresh changelog unreleased'" -ForegroundColor Gray
+        Write-Host "   git push" -ForegroundColor Gray
+        exit 0
+    }
+
     if (-not "{{version}}".StartsWith("v")) {
-        Write-Host "❌ Version must start with 'v' (e.g., v1.0.0)" -ForegroundColor Red
+        Write-Host "❌ Version must start with 'v' (e.g., v1.0.0) or be 'unreleased'" -ForegroundColor Red
         exit 1
     }
     $cleanVersion = "{{version}}" -replace '^v', ''

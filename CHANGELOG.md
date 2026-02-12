@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+### Added
+- add tui mode with cancellable prompts
+### Fixed
+- restore transcript follow and show keybinds
+- render banner in tui and wait for key on completion
+### Other
+- Make transcript pane auto-follow visible tail
+- Make transcript pane read-only and fix End key conflict
+- tui: auto-follow transcript until user scrolls up
+- Delete generated_tasks backlog after successful completion
+- Fix init config parse handling and PRD label classification
 <a id="v1-1-0"></a>
 ## [1.1.0] - 2026-02-11
 ### Added
@@ -19,13 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - update gitignore
 - update progress.txt
 ### Fixed
+- correct release ranges and backfill entries
 - adapt language prompt feedback loops
 - tighten prompt workflow detection
 - embed prompt templates for init
 - embed issues sample for init
 ### Other
 - Stop tracking generated_tasks.json
-
 <a id="v1-0-11"></a>
 ## [1.0.11] - 2026-02-10
 ### Changed

@@ -91,6 +91,7 @@ dotnet restore && dotnet build && dotnet test
 just ci          # Full CI pipeline (restore, build, test)
 just build       # Build solution
 just test        # Run tests
+just changelog unreleased  # Refresh Unreleased section from latest commits
 just changelog v1.0.0  # Generate changelog
 just tag v1.0.0        # Create release tag
 ```
