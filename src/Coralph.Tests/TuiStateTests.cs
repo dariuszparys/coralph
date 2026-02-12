@@ -108,52 +108,18 @@ public class TuiStateTests
     }
 
     [Fact]
-    public void TranscriptFollow_DefaultsToLatestIndex()
+    public void TranscriptLines_ReturnsMostRecentWhenMaxExceeded()
     {
         var state = new TuiState();
+        for (var i = 0; i < 5; i++)
+        {
+            state.AppendLine(TranscriptEntryKind.System, $"line-{i}");
+        }
 
-        var selected = state.GetTranscriptSelectedIndex(defaultIndex: 5);
+        var lines = state.GetTranscriptLines(maxLines: 2);
 
-        Assert.Equal(5, selected);
-        Assert.True(state.IsTranscriptFollowEnabled());
-    }
-
-    [Fact]
-    public void TranscriptFollow_DisablesWhenSelectionMovesAboveLatest()
-    {
-        var state = new TuiState();
-
-        state.SetTranscriptSelectedIndex(index: 2, latestIndex: 4);
-
-        Assert.False(state.IsTranscriptFollowEnabled());
-        Assert.Equal(2, state.GetTranscriptSelectedIndex(defaultIndex: 5));
-    }
-
-    [Fact]
-    public void TranscriptFollow_ReenablesWhenSelectionReachesLatest()
-    {
-        var state = new TuiState();
-
-        state.SetTranscriptSelectedIndex(index: 2, latestIndex: 4);
-        state.SetTranscriptSelectedIndex(index: 4, latestIndex: 4);
-
-        Assert.True(state.IsTranscriptFollowEnabled());
-        Assert.Equal(5, state.GetTranscriptSelectedIndex(defaultIndex: 5));
-    }
-
-    [Fact]
-    public void TranscriptRevision_IncrementsOnTranscriptUpdates()
-    {
-        var state = new TuiState();
-        var initial = state.GetTranscriptRevision();
-
-        state.AppendLine(TranscriptEntryKind.System, "first");
-        var afterFirst = state.GetTranscriptRevision();
-
-        state.AppendChunk(TranscriptEntryKind.System, " second");
-        var afterSecond = state.GetTranscriptRevision();
-
-        Assert.True(afterFirst > initial);
-        Assert.True(afterSecond > afterFirst);
+        Assert.Equal(2, lines.Count);
+        Assert.Contains("line-3", lines[0]);
+        Assert.Contains("line-4", lines[1]);
     }
 }

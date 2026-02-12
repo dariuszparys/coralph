@@ -18,12 +18,9 @@ internal sealed class TuiState
 
     private readonly object _lock = new();
     private readonly List<TranscriptEntry> _transcript = [];
-    private long _transcriptRevision;
 
     private GeneratedTasksSnapshot _tasksSnapshot = GeneratedTasksSnapshot.Missing(TaskBacklog.DefaultBacklogFile);
     private int _taskSelectedIndex = -1;
-    private int _transcriptSelectedIndex = -1;
-    private bool _transcriptFollow = true;
 
     private PromptSelectionRequest? _prompt;
     private ExitPromptRequest? _exitPrompt;
@@ -72,44 +69,6 @@ internal sealed class TuiState
             }
 
             return lines.TakeLast(maxLines).ToArray();
-        }
-    }
-
-    internal int GetTranscriptSelectedIndex(int defaultIndex)
-    {
-        lock (_lock)
-        {
-            if (_transcriptFollow)
-            {
-                return defaultIndex;
-            }
-
-            return _transcriptSelectedIndex < 0 ? defaultIndex : _transcriptSelectedIndex;
-        }
-    }
-
-    internal void SetTranscriptSelectedIndex(int index, int latestIndex)
-    {
-        lock (_lock)
-        {
-            _transcriptSelectedIndex = index;
-            _transcriptFollow = latestIndex < 0 || index >= latestIndex;
-        }
-    }
-
-    internal bool IsTranscriptFollowEnabled()
-    {
-        lock (_lock)
-        {
-            return _transcriptFollow;
-        }
-    }
-
-    internal long GetTranscriptRevision()
-    {
-        lock (_lock)
-        {
-            return _transcriptRevision;
         }
     }
 
@@ -278,13 +237,11 @@ internal sealed class TuiState
                         Text = last.Text + text,
                         Timestamp = DateTimeOffset.UtcNow
                     };
-                    _transcriptRevision++;
                     return;
                 }
             }
 
             _transcript.Add(new TranscriptEntry(kind, text, DateTimeOffset.UtcNow));
-            _transcriptRevision++;
             if (_transcript.Count > MaxTranscriptEntries)
             {
                 var removeCount = _transcript.Count - MaxTranscriptEntries;

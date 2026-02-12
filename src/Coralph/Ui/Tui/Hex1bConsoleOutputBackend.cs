@@ -315,10 +315,8 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                         "TUI",
                         "Tasks",
                         tasksSnapshot.Tasks.Count.ToString(),
-                        "Follow",
-                        _state.IsTranscriptFollowEnabled() ? "ON" : "OFF",
                         "Keys",
-                        "Arrows scroll, End follows, Ctrl+C exits"
+                        "Ctrl+C exits"
                     ]).FixedHeight(1)
                 : v.InfoBar(["Coralph", "TUI", "Done", "Press any key to exit"]).FixedHeight(1),
             v.Responsive(r =>
@@ -336,12 +334,6 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             ]).FillHeight()
         ]).WithInputBindings(bindings =>
         {
-            bindings.Key(Hex1bKey.End).Global().Action(_ =>
-            {
-                var latestIndex = Math.Max(0, transcriptLines.Count - 1);
-                _state.SetTranscriptSelectedIndex(latestIndex, latestIndex);
-            }, "Follow transcript");
-
             bindings.Ctrl().Key(Hex1bKey.C).Global().Action(actionCtx =>
             {
                 _state.CancelPrompt();
@@ -391,24 +383,8 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         where TParent : Hex1bWidget
     {
         var source = lines.Count == 0 ? ["Waiting for Coralph output..."] : lines;
-        var followEnabled = _state.IsTranscriptFollowEnabled();
-
-        var transcriptList = (ctx.List(source) with
-        {
-            InitialSelectedIndex = Math.Clamp(_state.GetTranscriptSelectedIndex(source.Count - 1), 0, source.Count - 1)
-        }).OnSelectionChanged(e => _state.SetTranscriptSelectedIndex(e.SelectedIndex, source.Count - 1));
-
-        if (!followEnabled)
-        {
-            return ctx.Border(transcriptList.Fill()).Title("Run Transcript");
-        }
-
-        // ListWidget preserves selection state across reconciliation. While follow mode is enabled,
-        // alternate wrappers on transcript updates so the list re-initializes at the latest row.
-        var revision = _state.GetTranscriptRevision();
-        return (revision & 1) == 0
-            ? ctx.Border(transcriptList.Fill()).Title("Run Transcript")
-            : ctx.Border(ctx.WithClipping(transcriptList.Fill())).Title("Run Transcript");
+        var transcriptText = string.Join(Environment.NewLine, source);
+        return ctx.Border(ctx.WithClipping(ctx.Text(transcriptText).Fill())).Title("Run Transcript");
     }
 
     private Hex1bWidget BuildTasksPane<TParent>(WidgetContext<TParent> ctx, GeneratedTasksSnapshot snapshot)
