@@ -30,7 +30,7 @@ jobs:
             artifact: coralph-osx-arm64
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     
     - name: Extract version from tag
       id: version
@@ -69,7 +69,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Need full history for changelog validation
     
