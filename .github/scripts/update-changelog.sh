@@ -275,6 +275,17 @@ update_reference_links() {
   mv "$temp_file" CHANGELOG.md
 }
 
+release_targets_head() {
+  local range_end="$1"
+  local range_sha=""
+  local head_sha=""
+
+  range_sha=$(git rev-parse "$range_end" 2>/dev/null || true)
+  head_sha=$(git rev-parse HEAD)
+
+  [[ -n "$range_sha" && "$range_sha" == "$head_sha" ]]
+}
+
 if [[ -z "$VERSION_ARG" ]]; then
   usage
   exit 1
@@ -363,6 +374,13 @@ append_sections_to_file "$ENTRY_FILE" "true"
 
 remove_existing_release_entry "$VERSION" "$ANCHOR"
 insert_release_entry_after_unreleased "$ENTRY_FILE"
+
+if release_targets_head "$RANGE_END"; then
+  EMPTY_UNRELEASED_BODY_FILE=$(mktemp)
+  : > "$EMPTY_UNRELEASED_BODY_FILE"
+  replace_unreleased_body "$EMPTY_UNRELEASED_BODY_FILE"
+  rm -f "$EMPTY_UNRELEASED_BODY_FILE"
+fi
 
 REPO_SLUG=$(get_repo_slug)
 NEW_UNRELEASED_LINK="[Unreleased]: https://github.com/${REPO_SLUG}/compare/v${VERSION}...HEAD"

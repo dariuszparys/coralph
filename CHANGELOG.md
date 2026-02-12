@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+<a id="v1-1-1"></a>
+## [1.1.1] - 2026-02-12
 ### Added
 - add tui mode with cancellable prompts
 ### Fixed
+- refresh unreleased and harden generation flow
 - restore transcript follow and show keybinds
 - render banner in tui and wait for key on completion
 ### Other
@@ -166,7 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial release.
 
-[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/dariuszparys/coralph/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/dariuszparys/coralph/compare/v1.0.11...v1.1.0
 [1.0.11]: https://github.com/dariuszparys/coralph/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/dariuszparys/coralph/compare/v1.0.9...v1.0.10
