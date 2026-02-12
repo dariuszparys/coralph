@@ -303,7 +303,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         }
 
         var exitPrompt = _state.GetExitPrompt();
-        var transcriptLines = _state.GetTranscriptLines(maxLines: 180);
+        var transcriptLines = _state.GetTranscriptLines(maxLines: CalculateTranscriptVisibleLines());
         var tasksSnapshot = _state.GetTasksSnapshot();
 
         return ctx.VStack(v =>
@@ -454,6 +454,33 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     {
         _state.CompleteExitPrompt();
         actionCtx.RequestStop();
+    }
+
+    private static int CalculateTranscriptVisibleLines()
+    {
+        var width = ReadConsoleDimension(() => Console.WindowWidth, fallback: 120);
+        var height = ReadConsoleDimension(() => Console.WindowHeight, fallback: 40);
+
+        var bodyHeight = Math.Max(1, height - 1); // Info bar.
+        var transcriptPaneHeight = width >= 130
+            ? bodyHeight
+            : Math.Max(1, (bodyHeight * 3) / 5); // FillHeight(3) vs FillHeight(2)
+
+        // Border consumes top and bottom rows.
+        return Math.Max(1, transcriptPaneHeight - 2);
+    }
+
+    private static int ReadConsoleDimension(Func<int> reader, int fallback)
+    {
+        try
+        {
+            var value = reader();
+            return value > 0 ? value : fallback;
+        }
+        catch
+        {
+            return fallback;
+        }
     }
 
     private void RequestInvalidate()
