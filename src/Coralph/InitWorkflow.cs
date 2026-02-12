@@ -937,6 +937,9 @@ internal static class InitWorkflow
         // Stable order for predictable block content.
         var candidates = new[]
         {
+            "Coralph*",
+            "issues.json",
+            TaskBacklog.DefaultBacklogFile,
             options.IssuesFile,
             options.GeneratedTasksFile,
             options.ProgressFile

@@ -25,7 +25,7 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
         var gitIgnorePath = Path.Combine(repoRoot, ".gitignore");
         Assert.True(File.Exists(gitIgnorePath));
         var gitIgnoreContent = await File.ReadAllTextAsync(gitIgnorePath);
-        AssertManagedEntries(gitIgnoreContent, "issues.json", "generated_tasks.json", "progress.txt");
+        AssertManagedEntries(gitIgnoreContent, "Coralph*", "issues.json", "generated_tasks.json", "progress.txt");
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
         var gitIgnoreContent = await File.ReadAllTextAsync(Path.Combine(repoRoot, ".gitignore"));
         Assert.Contains("bin/", gitIgnoreContent, StringComparison.Ordinal);
         Assert.Contains("obj/", gitIgnoreContent, StringComparison.Ordinal);
-        AssertManagedEntries(gitIgnoreContent, "issues.json", "generated_tasks.json", "progress.txt");
+        AssertManagedEntries(gitIgnoreContent, "Coralph*", "issues.json", "generated_tasks.json", "progress.txt");
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
 
         Assert.Equal(0, firstExitCode);
         Assert.Equal(0, secondExitCode);
-        AssertManagedEntries(afterFirstRun, "issues.json", "generated_tasks.json", "progress.txt");
+        AssertManagedEntries(afterFirstRun, "Coralph*", "issues.json", "generated_tasks.json", "progress.txt");
         Assert.Equal(afterFirstRun, afterSecondRun);
         Assert.Contains("bin/", afterFirstRun, StringComparison.Ordinal);
         Assert.Contains("obj/", afterFirstRun, StringComparison.Ordinal);
@@ -94,6 +94,9 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
         var gitIgnoreContent = await File.ReadAllTextAsync(Path.Combine(repoRoot, ".gitignore"));
         AssertManagedEntries(
             gitIgnoreContent,
+            "Coralph*",
+            "issues.json",
+            "generated_tasks.json",
             ".coralph/issues-cache.json",
             ".coralph/backlog/tasks.json",
             "notes/progress.log");
@@ -109,7 +112,7 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
 
         Assert.Equal(0, exitCode);
         var gitIgnoreContent = await File.ReadAllTextAsync(Path.Combine(repoRoot, ".gitignore"));
-        AssertManagedEntries(gitIgnoreContent, "issues.json", "generated_tasks.json", "progress.txt");
+        AssertManagedEntries(gitIgnoreContent, "Coralph*", "issues.json", "generated_tasks.json", "progress.txt");
         Assert.DoesNotContain("prompt.md", gitIgnoreContent, StringComparison.Ordinal);
         Assert.DoesNotContain("coralph.config.json", gitIgnoreContent, StringComparison.Ordinal);
     }
@@ -137,7 +140,7 @@ public sealed class InitWorkflowGitIgnoreTests : IDisposable
 
         Assert.Equal(0, exitCode);
         var gitIgnoreContent = await File.ReadAllTextAsync(Path.Combine(repoRoot, ".gitignore"));
-        AssertManagedEntries(gitIgnoreContent, "issues.json", "progress.txt");
+        AssertManagedEntries(gitIgnoreContent, "Coralph*", "issues.json", "generated_tasks.json", "progress.txt");
         Assert.DoesNotContain(outsidePath.Replace('\\', '/'), gitIgnoreContent, StringComparison.Ordinal);
     }
 

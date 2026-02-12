@@ -271,6 +271,12 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
             fileCache.Invalidate(opt.IssuesFile);
         }
 
+        if (!StartupValidation.TryValidatePromptFile(opt.PromptFile, out var promptValidationError))
+        {
+            ConsoleOutput.WriteErrorLine(promptValidationError ?? "Prompt file validation failed.");
+            return 1;
+        }
+
         var promptTemplate = await File.ReadAllTextAsync(opt.PromptFile, ct);
         var issuesRead = await fileCache.TryReadTextAsync(opt.IssuesFile, ct);
         var issues = issuesRead.Exists ? issuesRead.Content : "[]";
