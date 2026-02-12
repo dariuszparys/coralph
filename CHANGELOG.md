@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+<a id="v1-1-2"></a>
+## [1.1.2] - 2026-02-12
+### Added
+- add TUI generated tasks snapshot reader
 <a id="v1-1-1"></a>
 ## [1.1.1] - 2026-02-12
 ### Added
@@ -169,7 +173,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial release.
 
-[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/dariuszparys/coralph/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/dariuszparys/coralph/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/dariuszparys/coralph/compare/v1.0.11...v1.1.0
 [1.0.11]: https://github.com/dariuszparys/coralph/compare/v1.0.10...v1.0.11
