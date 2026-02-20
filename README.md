@@ -112,6 +112,16 @@ git add CHANGELOG.md && git commit -m "docs: changelog v1.0.0" && git push
 just tag v1.0.0            # Create and push tag (triggers release)
 ```
 
+After a published release, GitHub Actions now bumps `src/Coralph/Coralph.csproj` to the next `-dev` patch version automatically.
+
+To bump development version manually (patch/minor/major):
+
+```bash
+just bump-dev patch
+just bump-dev minor
+just bump-dev major
+```
+
 ---
 
 ## Advanced Features

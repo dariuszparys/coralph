@@ -1,0 +1,71 @@
+name: Bump Development Version
+
+permissions:
+  contents: write
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: Increment strategy (patch, minor, major)
+        required: false
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve target branch
+        id: branch
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            BRANCH="${{ github.event.release.target_commitish }}"
+          else
+            BRANCH="${{ github.event.repository.default_branch }}"
+          fi
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve increment strategy
+        id: increment
+        shell: bash
+        run: |
+          INC="${{ github.event.inputs.increment }}"
+          if [[ -z "$INC" ]]; then
+            INC="patch"
+          fi
+          echo "value=$INC" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Bump development version
+        shell: pwsh
+        run: ./.github/scripts/bump-dev-version.ps1 -Increment "${{ steps.increment.outputs.value }}"
+
+      - name: Commit and push changes
+        shell: bash
+        run: |
+          if git diff --quiet -- src/Coralph/Coralph.csproj; then
+            echo "No version changes detected; skipping commit."
+            exit 0
+          fi
+
+          VERSION=$(grep -oE '<Version>[^<]+' src/Coralph/Coralph.csproj | head -1 | sed 's/<Version>//')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/Coralph/Coralph.csproj
+          git commit -m "chore: bump dev version to ${VERSION}"
+          git push origin HEAD:${{ steps.branch.outputs.branch }}

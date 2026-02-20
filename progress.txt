@@ -1082,3 +1082,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Keep generated task status in sync with completed init fixes
   - A quick build/test run validates the task close-out
+
+## 2026-02-20 - Versioning
+
+- Added automated development-version bumping after published releases
+- Added a reusable PowerShell script to increment semantic versions and update Coralph.csproj version fields
+- Added `just bump-dev [patch|minor|major]` for explicit manual version increments
+- Updated release documentation and aligned current development version to `1.1.3-dev`
+- Files changed: .github/scripts/bump-dev-version.ps1, .github/workflows/bump-dev-version.yml, justfile, README.md, src/Coralph/Coralph.csproj
+- **Learnings:**
+  - In PowerShell, the `param(...)` block must appear before executable statements to avoid parser errors
+  - After invoking external tools from PowerShell recipes, checking `$LASTEXITCODE` ensures failures are surfaced

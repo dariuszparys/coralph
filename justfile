@@ -82,6 +82,19 @@ tag version:
     Write-Host "✅ Created tag {{version}}" -ForegroundColor Green
     Write-Host "✅ Pushed tag {{version}}" -ForegroundColor Green
 
+# Bump development version in Coralph.csproj (usage: just bump-dev [patch|minor|major])
+bump-dev increment='patch':
+    #!{{shebang}}
+    if ("{{increment}}" -notin @("patch", "minor", "major")) {
+        Write-Host "❌ Increment must be one of: patch, minor, major" -ForegroundColor Red
+        exit 1
+    }
+    pwsh ./.github/scripts/bump-dev-version.ps1 -Increment "{{increment}}"
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+    Write-Host "✅ Updated development version in src/Coralph/Coralph.csproj" -ForegroundColor Green
+
 # Publish local build with version from latest git tag (usage: just publish-local osx-arm64)
 publish-local rid:
     #!{{shebang}}
