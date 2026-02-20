@@ -263,6 +263,16 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithDemoMode_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--demo"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.True(overrides.DemoMode);
+    }
+
+    [Fact]
     public void Parse_WithInvalidUiMode_ReturnsError()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--ui", "invalid-mode"]);
@@ -367,5 +377,6 @@ public class ArgParserTests
         Assert.Contains("--azdo-organization", output);
         Assert.Contains("--azdo-project", output);
         Assert.Contains("--ui", output);
+        Assert.Contains("--demo", output);
     }
 }

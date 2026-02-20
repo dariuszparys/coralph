@@ -74,6 +74,7 @@ The init command creates `issues.json`, `progress.txt`, `coralph.config.json`, a
 ./coralph --max-iterations 10                    # Run 10 iterations
 ./coralph --refresh-issues --repo owner/name     # Fetch GitHub issues
 ./coralph --init                                 # Initialize repository artifacts
+./coralph --demo                                 # Launch demo mode with mock UI data
 ./coralph --working-dir /path/to/repo --init     # Target a repo without cd
 ./coralph --version                              # Show version
 ./coralph --help                                 # Show all options
@@ -169,6 +170,7 @@ Coralph defaults to an interactive TUI in terminals, with automatic fallback to 
 ./coralph --ui auto      # Default: TUI for interactive terminals, classic otherwise
 ./coralph --ui tui       # Force TUI
 ./coralph --ui classic   # Force classic console output
+./coralph --demo         # Demo mode with mock data (no backend writes)
 ```
 
 ### Tool Permissions

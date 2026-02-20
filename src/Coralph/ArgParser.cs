@@ -45,6 +45,7 @@ internal static class ArgParser
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
         var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
         var uiOption = new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)");
+        var demoOption = new Option<bool>("--demo", "Run in demo mode with mock UI data");
         var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
         var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
@@ -83,6 +84,7 @@ internal static class ArgParser
         root.AddOption(showReasoningOption);
         root.AddOption(colorizedOutputOption);
         root.AddOption(uiOption);
+        root.AddOption(demoOption);
         root.AddOption(streamEventsOption);
         root.AddOption(dockerSandboxOption);
         root.AddOption(dockerImageOption);
@@ -298,6 +300,11 @@ internal static class ArgParser
             }
         }
 
+        if (result.GetValueForOption(demoOption))
+        {
+            options.DemoMode = true;
+        }
+
         var streamEvents = result.GetValueForOption(streamEventsOption);
         if (streamEvents.HasValue)
         {
@@ -481,6 +488,7 @@ internal static class ArgParser
         root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
         root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
         root.AddOption(new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)"));
+        root.AddOption(new Option<bool>("--demo", "Run in demo mode with mock UI data"));
         root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
         root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));

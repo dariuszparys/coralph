@@ -65,6 +65,11 @@ try
     }
 
     var opt = ConfigurationService.LoadOptions(overrides, configFile);
+    if (opt.DemoMode)
+    {
+        opt.UiMode = UiMode.Tui;
+        opt.StreamEvents = false;
+    }
     var effectiveUiMode = UiModeResolver.Resolve(opt);
     await ConsoleOutput.ConfigureForModeAsync(effectiveUiMode, opt);
 
@@ -142,6 +147,10 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
     {
         var inDockerSandbox = string.Equals(Environment.GetEnvironmentVariable(DockerSandbox.SandboxFlagEnv), "1", StringComparison.Ordinal);
         var combinedPromptFile = Environment.GetEnvironmentVariable(DockerSandbox.CombinedPromptEnv);
+        if (opt.DemoMode)
+        {
+            return await DemoMode.RunAsync(opt, ct);
+        }
         if (opt.ListModels)
         {
             if (opt.DockerSandbox && !inDockerSandbox)

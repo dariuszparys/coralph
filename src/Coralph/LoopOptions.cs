@@ -41,6 +41,7 @@ internal sealed class LoopOptions
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
     public bool ListModels { get; set; }
     public bool ListModelsJson { get; set; }
+    public bool DemoMode { get; set; }
 }
 
 internal sealed class LoopOptionsOverrides
@@ -81,4 +82,5 @@ internal sealed class LoopOptionsOverrides
     public string? DockerImage { get; set; }
     public bool? ListModels { get; set; }
     public bool? ListModelsJson { get; set; }
+    public bool? DemoMode { get; set; }
 }

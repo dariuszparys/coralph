@@ -129,6 +129,17 @@ public class ConfigurationServiceTests
     }
 
     [Fact]
+    public void ApplyOverrides_WithDemoMode_OverridesValue()
+    {
+        var options = new LoopOptions { DemoMode = false };
+        var overrides = new LoopOptionsOverrides { DemoMode = true };
+
+        ConfigurationService.ApplyOverrides(options, overrides);
+
+        Assert.True(options.DemoMode);
+    }
+
+    [Fact]
     public void ApplyOverrides_WithAllValues_OverridesAll()
     {
         var options = new LoopOptions();
@@ -148,7 +159,8 @@ public class ConfigurationServiceTests
             ColorizedOutput = false,
             UiMode = UiMode.Tui,
             DockerSandbox = true,
-            DockerImage = "ghcr.io/example/custom:latest"
+            DockerImage = "ghcr.io/example/custom:latest",
+            DemoMode = true
         };
 
         ConfigurationService.ApplyOverrides(options, overrides);
@@ -168,6 +180,7 @@ public class ConfigurationServiceTests
         Assert.Equal(UiMode.Tui, options.UiMode);
         Assert.True(options.DockerSandbox);
         Assert.Equal("ghcr.io/example/custom:latest", options.DockerImage);
+        Assert.True(options.DemoMode);
     }
 
     #endregion

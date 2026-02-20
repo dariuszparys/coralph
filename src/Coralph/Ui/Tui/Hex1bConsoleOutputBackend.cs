@@ -309,20 +309,24 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         var exitPrompt = _state.GetExitPrompt();
         var transcriptLines = _state.GetTranscriptLines(maxLines: CalculateTranscriptVisibleLines());
         var tasksSnapshot = _state.GetTasksSnapshot();
+        var infoItems = new List<string> { "Coralph", "TUI" };
+        if (_options.DemoMode)
+        {
+            infoItems.Add("DEMO");
+        }
+        infoItems.AddRange(["Tasks", tasksSnapshot.Tasks.Count.ToString(), "Keys", "Ctrl+C exits"]);
+        var doneItems = new List<string> { "Coralph", "TUI" };
+        if (_options.DemoMode)
+        {
+            doneItems.Add("DEMO");
+        }
+        doneItems.AddRange(["Done", "Press any key to exit"]);
 
         return ctx.VStack(v =>
         [
             exitPrompt is null
-                ? v.InfoBar(
-                    [
-                        "Coralph",
-                        "TUI",
-                        "Tasks",
-                        tasksSnapshot.Tasks.Count.ToString(),
-                        "Keys",
-                        "Ctrl+C exits"
-                    ]).FixedHeight(1)
-                : v.InfoBar(["Coralph", "TUI", "Done", "Press any key to exit"]).FixedHeight(1),
+                ? v.InfoBar(infoItems.ToArray()).FixedHeight(1)
+                : v.InfoBar(doneItems.ToArray()).FixedHeight(1),
             v.Responsive(r =>
             [
                 r.WhenMinWidth(130, w => w.HStack(h =>

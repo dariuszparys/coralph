@@ -1111,3 +1111,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Single text blocks with manual wrapping provide predictable TUI layout when widgets lack built-in wrapping
   - Preserving bullet prefixes improves readability for subtask-style descriptions in narrow panes
+
+## 2026-02-20 - #86
+
+- Added demo mode flag with mock tasks/transcript output and a demo banner in the TUI info bar
+- Implemented demo runner that seeds temp generated_tasks.json data and exits cleanly without backend writes
+- Updated CLI/config wiring, tests, and README demo usage documentation
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ConfigurationService.cs, src/Coralph/ArgParser.cs, src/Coralph/Program.cs, src/Coralph/DemoMode.cs, src/Coralph/Ui/Tui/Hex1bConsoleOutputBackend.cs, src/Coralph.Tests/ArgParserTests.cs, src/Coralph.Tests/ConfigurationServiceTests.cs, README.md, generated_tasks.json
+- **Learnings:**
+  - Demo mode is easiest to simulate by reusing ConsoleOutput hooks with mock tasks and transcript lines
+  - TUI InfoBar expects arrays, so build lists need ToArray() before rendering
