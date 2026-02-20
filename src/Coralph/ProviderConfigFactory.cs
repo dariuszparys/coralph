@@ -41,7 +41,7 @@ internal static class ProviderConfigFactory
         return new ProviderConfig
         {
             Type = type,
-            BaseUrl = baseUrl,
+            BaseUrl = baseUrl ?? string.Empty,
             WireApi = wireApi,
             ApiKey = options.ProviderApiKey
         };
