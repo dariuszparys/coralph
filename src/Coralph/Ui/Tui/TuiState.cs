@@ -254,12 +254,12 @@ internal sealed class TuiState
     {
         return kind switch
         {
-            TranscriptEntryKind.System => "SYS",
-            TranscriptEntryKind.Assistant => "AST",
-            TranscriptEntryKind.Reasoning => "RSN",
+            TranscriptEntryKind.System => "SYSTEM",
+            TranscriptEntryKind.Assistant => "AGENT",
+            TranscriptEntryKind.Reasoning => "THINK",
             TranscriptEntryKind.Tool => "TOOL",
-            TranscriptEntryKind.Error => "ERR",
-            TranscriptEntryKind.Warning => "WRN",
+            TranscriptEntryKind.Error => "ERROR",
+            TranscriptEntryKind.Warning => "WARN",
             _ => "LOG"
         };
     }

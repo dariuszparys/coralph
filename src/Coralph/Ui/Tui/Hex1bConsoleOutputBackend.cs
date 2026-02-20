@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using Coralph.Ui;
 using Hex1b;
@@ -183,13 +184,16 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
     public void WriteToolStart(string toolName)
     {
-        _state.AppendLine(TranscriptEntryKind.Tool, $"[start] {toolName}");
+        _state.AppendLine(TranscriptEntryKind.Tool, $"Tool start: {toolName}");
         RequestInvalidate();
     }
 
     public void WriteToolComplete(string toolName, string summary)
     {
-        _state.AppendLine(TranscriptEntryKind.Tool, $"[done] {toolName}: {summary}");
+        var message = string.IsNullOrWhiteSpace(summary)
+            ? $"Tool done: {toolName}"
+            : $"Tool done: {toolName} - {summary}";
+        _state.AppendLine(TranscriptEntryKind.Tool, message);
         RequestInvalidate();
     }
 
@@ -417,37 +421,171 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             ])).Title("Generated Tasks");
         }
 
+        var contentWidth = CalculateTasksPaneContentWidth();
         var activeIndex = snapshot.ActiveTaskIndex();
-        var labels = snapshot.Tasks
-            .Select((task, index) => FormatTaskLabel(task, index == activeIndex))
-            .ToArray();
-
-        var tasksList = (ctx.List(labels) with
+        var activeTask = snapshot.Tasks[activeIndex];
+        var lines = new List<string>
         {
-            InitialSelectedIndex = Math.Clamp(_state.GetTaskSelectedIndex(activeIndex), 0, labels.Length - 1)
-        })
-            .OnSelectionChanged(e => _state.SetTaskSelectedIndex(e.SelectedIndex))
-            .OnItemActivated(e => _state.SetTaskSelectedIndex(e.ActivatedIndex));
+            "Current Task"
+        };
 
-        var selectedIndex = Math.Clamp(_state.GetTaskSelectedIndex(activeIndex), 0, snapshot.Tasks.Count - 1);
-        var selectedTask = snapshot.Tasks[selectedIndex];
-        var detailsText = string.IsNullOrWhiteSpace(selectedTask.Description)
-            ? "No description"
-            : selectedTask.Description.Replace("\r\n", " ").Replace('\n', ' ');
+        lines.AddRange(BuildTaskBlock(activeTask, contentWidth, isActive: true, includeDescription: true));
+        lines.Add(string.Empty);
+        lines.Add("All Tasks");
 
-        return ctx.Border(ctx.VStack(v =>
-        [
-            tasksList.FillHeight(4),
-            v.Text($"Current: {selectedTask.Id} ({selectedTask.Status})"),
-            v.Text(detailsText)
-        ])).Title("Generated Tasks");
+        for (var i = 0; i < snapshot.Tasks.Count; i++)
+        {
+            lines.AddRange(BuildTaskBlock(snapshot.Tasks[i], contentWidth, isActive: i == activeIndex, includeDescription: false));
+            if (i < snapshot.Tasks.Count - 1)
+            {
+                lines.Add(string.Empty);
+            }
+        }
+
+        var tasksText = string.Join(Environment.NewLine, lines);
+        return ctx.Border(ctx.WithClipping(ctx.Text(tasksText).Fill())).Title("Generated Tasks");
     }
 
-    private static string FormatTaskLabel(GeneratedTaskSnapshotItem task, bool isActive)
+    private static IEnumerable<string> BuildTaskBlock(
+        GeneratedTaskSnapshotItem task,
+        int width,
+        bool isActive,
+        bool includeDescription)
     {
-        var marker = isActive ? "*" : " ";
+        var status = string.IsNullOrWhiteSpace(task.Status) ? "open" : task.Status;
         var issuePrefix = task.IssueNumber > 0 ? $"#{task.IssueNumber} " : string.Empty;
-        return $"{marker} [{task.Status}] {task.Id} {issuePrefix}{task.Title}";
+        var marker = isActive ? ">>" : "  ";
+        var header = $"{marker} {task.Id} [{status}] {issuePrefix}{task.Title}".Trim();
+
+        var lines = new List<string>(WrapTextBlock(header, width));
+        if (!includeDescription)
+        {
+            return lines;
+        }
+
+        var description = string.IsNullOrWhiteSpace(task.Description) ? "No description" : task.Description;
+        lines.AddRange(IndentLines(WrapTextBlock(description, Math.Max(10, width - 2)), "  "));
+        return lines;
+    }
+
+    private static IEnumerable<string> WrapTextBlock(string text, int width)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Array.Empty<string>();
+        }
+
+        var lines = new List<string>();
+        foreach (var rawLine in text.Replace("\r\n", "\n").Split('\n'))
+        {
+            var trimmed = rawLine.Trim();
+            if (trimmed.Length == 0)
+            {
+                lines.Add(string.Empty);
+                continue;
+            }
+
+            lines.AddRange(WrapTextLine(trimmed, width));
+        }
+
+        return lines;
+    }
+
+    private static IEnumerable<string> WrapTextLine(string line, int width)
+    {
+        if (line.StartsWith("- ", StringComparison.Ordinal) || line.StartsWith("* ", StringComparison.Ordinal))
+        {
+            var prefix = line[..2];
+            var content = line[2..];
+            return WrapWithPrefix(prefix, content, width);
+        }
+
+        return WrapPlainText(line, width);
+    }
+
+    private static IEnumerable<string> WrapWithPrefix(string prefix, string text, int width)
+    {
+        var availableWidth = Math.Max(1, width - prefix.Length);
+        var wrapped = WrapPlainText(text, availableWidth);
+        var result = new List<string>();
+        var indent = new string(' ', prefix.Length);
+        var index = 0;
+        foreach (var line in wrapped)
+        {
+            result.Add((index++ == 0 ? prefix : indent) + line);
+        }
+
+        return result;
+    }
+
+    private static IEnumerable<string> WrapPlainText(string text, int width)
+    {
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        var lines = new List<string>();
+        var current = new StringBuilder();
+
+        foreach (var word in words)
+        {
+            if (word.Length > width)
+            {
+                if (current.Length > 0)
+                {
+                    lines.Add(current.ToString());
+                    current.Clear();
+                }
+
+                for (var i = 0; i < word.Length; i += width)
+                {
+                    lines.Add(word.Substring(i, Math.Min(width, word.Length - i)));
+                }
+
+                continue;
+            }
+
+            if (current.Length == 0)
+            {
+                current.Append(word);
+                continue;
+            }
+
+            if (current.Length + 1 + word.Length <= width)
+            {
+                current.Append(' ').Append(word);
+            }
+            else
+            {
+                lines.Add(current.ToString());
+                current.Clear();
+                current.Append(word);
+            }
+        }
+
+        if (current.Length > 0)
+        {
+            lines.Add(current.ToString());
+        }
+
+        return lines;
+    }
+
+    private static IEnumerable<string> IndentLines(IEnumerable<string> lines, string indent)
+    {
+        foreach (var line in lines)
+        {
+            yield return string.IsNullOrEmpty(line) ? string.Empty : indent + line;
+        }
+    }
+
+    private static int CalculateTasksPaneContentWidth()
+    {
+        var width = ReadConsoleDimension(() => Console.WindowWidth, fallback: 120);
+        var paneWidth = width >= 130 ? Math.Max(20, (width * 2) / 5) : width;
+        return Math.Max(20, paneWidth - 2);
     }
 
     private void HandleExitPromptInput(InputBindingActionContext actionCtx)

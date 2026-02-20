@@ -1102,3 +1102,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - PackAsTool with ToolCommandName ensures a lowercase CLI entry point for tools.
   - Documenting dnx usage provides a no-install run path alongside global tool installs.
+
+## 2026-02-20 - #84
+
+- Updated TUI task pane to render a current-task block and wrapped task list with preserved subtask bullets
+- Refined TUI transcript labeling and tool start/complete messages for clearer agent/action branding
+- Files changed: src/Coralph/Ui/Tui/Hex1bConsoleOutputBackend.cs, src/Coralph/Ui/Tui/TuiState.cs, generated_tasks.json
+- **Learnings:**
+  - Single text blocks with manual wrapping provide predictable TUI layout when widgets lack built-in wrapping
+  - Preserving bullet prefixes improves readability for subtask-style descriptions in narrow panes
