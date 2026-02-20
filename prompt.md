@@ -107,7 +107,7 @@ commit** - ensure all changes including progress.txt are staged and committed:
 # CLOSE THE ISSUE
 
 **Before closing, ALWAYS add a comment summarizing what was done:**
-Use `gh issue comment <number> --body "Summary of changes"` to document:
+Use `gh issue comment <number> --body-file /tmp/issue-comment.md` (create the file with a heredoc to preserve line breaks) to document:
 - What was implemented or fixed
 - Key files changed
 - Any important decisions or gotchas

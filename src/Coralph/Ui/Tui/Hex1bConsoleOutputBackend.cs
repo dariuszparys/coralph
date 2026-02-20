@@ -459,9 +459,9 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         var status = string.IsNullOrWhiteSpace(task.Status) ? "open" : task.Status;
         var issuePrefix = task.IssueNumber > 0 ? $"#{task.IssueNumber} " : string.Empty;
         var marker = isActive ? ">>" : "  ";
-        var header = $"{marker} {task.Id} [{status}] {issuePrefix}{task.Title}".Trim();
+        var headerText = $"{task.Id} [{status}] {issuePrefix}{task.Title}".Trim();
 
-        var lines = new List<string>(WrapTextBlock(header, width));
+        var lines = new List<string>(WrapWithPrefix($"{marker} ", headerText, width));
         if (!includeDescription)
         {
             return lines;

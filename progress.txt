@@ -1121,3 +1121,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Demo mode is easiest to simulate by reusing ConsoleOutput hooks with mock tasks and transcript lines
   - TUI InfoBar expects arrays, so build lists need ToArray() before rendering
+
+---
+## 2026-02-20 - #87
+
+- Preserved GitHub comment formatting by switching instructions to gh issue comment --body-file with heredoc guidance.
+- Aligned wrapped task headers in the TUI pane to keep long task titles readable.
+- Files changed: prompt.md, src/Coralph/InitWorkflow.cs, src/Coralph/Ui/Tui/Hex1bConsoleOutputBackend.cs, generated_tasks.json, progress.txt
+- **Learnings:**
+  - gh issue comment --body-file avoids newline escaping issues in GitHub Markdown.
+  - Prefix-aware wrapping keeps task titles readable in narrow panes.
