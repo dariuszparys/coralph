@@ -1093,3 +1093,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - In PowerShell, the `param(...)` block must appear before executable statements to avoid parser errors
   - After invoking external tools from PowerShell recipes, checking `$LASTEXITCODE` ensures failures are surfaced
+
+## 2026-02-20 - #83
+
+- Enabled dotnet tool packaging metadata to support global tool installs.
+- Documented dotnet tool install and dnx usage in the installation guide.
+- Files changed: src/Coralph/Coralph.csproj, README.md, generated_tasks.json, progress.txt
+- **Learnings:**
+  - PackAsTool with ToolCommandName ensures a lowercase CLI entry point for tools.
+  - Documenting dnx usage provides a no-install run path alongside global tool installs.

@@ -36,6 +36,17 @@ chmod +x Coralph-*
 dotnet publish src/Coralph -c Release -r linux-x64 --self-contained
 ```
 
+**Install as a .NET tool** (requires .NET SDK 10):
+```bash
+dotnet tool install -g Coralph
+coralph --version
+```
+
+If you use `dnx`, you can run directly from NuGet without installing:
+```bash
+dnx Coralph -- --version
+```
+
 ### Quick Start
 
 ```bash
