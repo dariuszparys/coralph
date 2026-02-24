@@ -38,8 +38,8 @@ internal static class ArgParser
         var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
         var copilotConfigPathOption = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
         var copilotTokenOption = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
-        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow tool/permission kinds (repeatable or comma-separated)");
-        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny tool/permission kinds (repeatable or comma-separated)");
+        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)");
+        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny listed tool/permission kinds; all other tools remain allowed (repeatable or comma-separated)");
         var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
         var initOption = new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits");
         var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
@@ -488,11 +488,11 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
         root.AddOption(new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox"));
         root.AddOption(new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)"));
-        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow tool/permission kinds (repeatable or comma-separated)")
+        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)")
         {
             AllowMultipleArgumentsPerToken = true
         };
-        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny tool/permission kinds (repeatable or comma-separated)")
+        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny listed tool/permission kinds; all other tools remain allowed (repeatable or comma-separated)")
         {
             AllowMultipleArgumentsPerToken = true
         };

@@ -1151,3 +1151,15 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - `SessionConfig.ClientName` property exists in SDK 0.1.26 and is straightforward to wire through LoopOptions
   - All 230 tests pass; no regressions from adding the new option
+
+## 2026-02-24 - #92
+
+- Added XML doc comment to `PermissionPolicy.cs` documenting the default allow-all posture and evaluation order
+- Improved `--tool-allow` and `--tool-deny` help text in `ArgParser.cs` to explain effective behavior
+- Updated README "Tool Permissions" section with clear explanation of default posture and deny-over-allow precedence
+- Tests for default and allow/deny scenarios already existed (20 tests in PermissionPolicyTests.cs); all 230 tests pass
+- Files changed: src/Coralph/PermissionPolicy.cs, src/Coralph/ArgParser.cs, README.md
+- **Learnings:**
+  - Coralph's permission posture is intentionally allow-all by default (opposite of new SDK deny-by-default) to keep unattended loops flowing
+  - Deny-over-allow precedence means a deny list entry always wins even if the same tool is on the allow list
+  - Good XML doc comments on security-critical classes prevent future drift when SDK defaults change again

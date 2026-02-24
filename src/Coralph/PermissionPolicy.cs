@@ -4,6 +4,28 @@ using GitHub.Copilot.SDK;
 
 namespace Coralph;
 
+/// <summary>
+/// Coralph permission policy for Copilot tool requests.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Default posture (empty allow and deny lists): <b>allow-all</b>.
+/// Every tool request is approved unless restricted by a deny or allow list.
+/// This is intentionally permissive so that unattended loop runs do not stall
+/// waiting for approval.
+/// </para>
+/// <para>
+/// Evaluation order:
+/// <list type="number">
+///   <item>If the tool matches a <c>--tool-deny</c> entry → <b>deny</b>.</item>
+///   <item>If a <c>--tool-allow</c> list is provided and the tool does NOT match → <b>deny</b>.</item>
+///   <item>Otherwise → <b>allow</b>.</item>
+/// </list>
+/// </para>
+/// <para>
+/// Deny takes precedence over allow when both lists are non-empty.
+/// </para>
+/// </remarks>
 internal sealed class PermissionPolicy(LoopOptions opt, EventStreamWriter? eventStream)
 {
     private readonly HashSet<string> _allow = NormalizeEntries(opt.ToolAllow);
