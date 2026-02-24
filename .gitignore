@@ -64,6 +64,7 @@ events.jsonl
 coralph.log
 *.jsonl
 *generated*
+!*.cs
 
 # MSBuild Binary and Structured Log
 *.binlog
