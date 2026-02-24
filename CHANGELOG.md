@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+<a id="v1-1-3"></a>
+## [1.1.3] - 2026-02-24
+### Added
+- add --reasoning-effort option wired to SessionConfig.ReasoningEffort
+- add --client-name option and set SessionConfig.ClientName
+- add demo mode
+- add install.sh for global dotnet tool installation
+- improve TUI run output
+- enable dotnet tool packaging
+### Changed
+- update copilot instructions
+- bump actions/checkout from 4 to 6
+- automate development version bumping
+- bump actions/download-artifact from 4 to 7
+- bump actions/upload-artifact from 4 to 6
+- bump softprops/action-gh-release from 1 to 2
+- bump actions/setup-dotnet from 4 to 5
+- bump actions/checkout from 4 to 6
+- update startup and init behavior
+- update dependabot and codeql workflow
+### Fixed
+- resolve CodeQL build-mode warning
+- track GeneratedTasksSnapshot.cs and unblock CI build
+- dotnet build
+- preserve comment formatting and task wrap
+- remove warning from build
+### Other
+- Bump GitHub.Copilot.SDK from 0.1.25 to 0.1.26
+- Bump GitHub.Copilot.SDK from 0.1.23 to 0.1.25
 <a id="v1-1-2"></a>
 ## [1.1.2] - 2026-02-12
 ### Added
@@ -173,7 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial release.
 
-[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/dariuszparys/coralph/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/dariuszparys/coralph/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/dariuszparys/coralph/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/dariuszparys/coralph/compare/v1.0.11...v1.1.0
