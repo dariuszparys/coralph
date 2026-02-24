@@ -181,6 +181,15 @@ Control AI tool access:
 ./coralph --tool-allow list_open_issues   # Allow only listed tools
 ```
 
+### Client Name
+
+Set the client name sent to the Copilot session (defaults to `coralph`):
+```bash
+./coralph --client-name my-automation
+```
+
+This value is passed to `SessionConfig.ClientName` and can also be set via the config file.
+
 ### OpenAI-Compatible Providers
 
 Use an OpenAI-compatible provider with optional base URL and wire API overrides:
