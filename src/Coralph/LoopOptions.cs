@@ -42,6 +42,7 @@ internal sealed class LoopOptions
     public bool ListModels { get; set; }
     public bool ListModelsJson { get; set; }
     public bool DemoMode { get; set; }
+    public string ClientName { get; set; } = "coralph";
 }
 
 internal sealed class LoopOptionsOverrides
@@ -83,4 +84,5 @@ internal sealed class LoopOptionsOverrides
     public bool? ListModels { get; set; }
     public bool? ListModelsJson { get; set; }
     public bool? DemoMode { get; set; }
+    public string? ClientName { get; set; }
 }

@@ -85,5 +85,6 @@ internal static class ConfigurationService
         if (overrides.ListModels is { } listModels) target.ListModels = listModels;
         if (overrides.ListModelsJson is { } listModelsJson) target.ListModelsJson = listModelsJson;
         if (overrides.DemoMode is { } demoMode) target.DemoMode = demoMode;
+        if (!string.IsNullOrWhiteSpace(overrides.ClientName)) target.ClientName = overrides.ClientName;
     }
 }

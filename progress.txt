@@ -1140,3 +1140,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - `GitHub.Copilot.SDK` now marks `CopilotClientOptions.GithubToken` obsolete; `GitHubToken` is the forward-compatible property.
   - Keeping a single canonical file for shared TUI snapshot models avoids duplicate type collisions during build.
+
+## 2026-02-24 - #90
+
+- Added `--client-name` CLI option and `ClientName` config property (default: `coralph`)
+- Wired `ClientName` through `LoopOptions`, `LoopOptionsOverrides`, `ArgParser`, and `ConfigurationService.ApplyOverrides`
+- Set `SessionConfig.ClientName` in both `CopilotRunner.cs` and `CopilotSessionRunner.cs` session creation flows
+- Added `ClientName` to `coralph.config.json` with the default value documented
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/ConfigurationService.cs, src/Coralph/CopilotRunner.cs, src/Coralph/CopilotSessionRunner.cs, coralph.config.json, generated_tasks.json
+- **Learnings:**
+  - `SessionConfig.ClientName` property exists in SDK 0.1.26 and is straightforward to wire through LoopOptions
+  - All 230 tests pass; no regressions from adding the new option

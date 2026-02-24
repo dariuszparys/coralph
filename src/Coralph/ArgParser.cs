@@ -51,6 +51,7 @@ internal static class ArgParser
         var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
         var listModelsOption = new Option<bool>("--list-models", "List available Copilot models and exit");
         var listModelsJsonOption = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
+        var clientNameOption = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
 
         toolAllowOption.AllowMultipleArgumentsPerToken = true;
         toolDenyOption.AllowMultipleArgumentsPerToken = true;
@@ -90,6 +91,7 @@ internal static class ArgParser
         root.AddOption(dockerImageOption);
         root.AddOption(listModelsOption);
         root.AddOption(listModelsJsonOption);
+        root.AddOption(clientNameOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -411,6 +413,19 @@ internal static class ArgParser
         {
             options.ListModelsJson = true;
             options.ListModels = true;
+        }
+
+        var clientName = result.GetValueForOption(clientNameOption);
+        if (clientName is not null)
+        {
+            if (string.IsNullOrWhiteSpace(clientName))
+            {
+                errorMessages.Add("--client-name must not be empty");
+            }
+            else
+            {
+                options.ClientName = clientName;
+            }
         }
 
         if (result.Errors.Count > 0)

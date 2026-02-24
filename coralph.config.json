@@ -1,7 +1,7 @@
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "gpt-5.2-codex",
+    "Model": "claude-sonnet-4.6",
     "ProviderType": null,
     "ProviderBaseUrl": null,
     "ProviderWireApi": null,
@@ -17,6 +17,7 @@
     "CliPath": null,
     "CliUrl": null,
     "DockerSandbox": false,
-    "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0"
+    "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+    "ClientName": "coralph"
   }
 }
