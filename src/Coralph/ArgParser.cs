@@ -52,6 +52,7 @@ internal static class ArgParser
         var listModelsOption = new Option<bool>("--list-models", "List available Copilot models and exit");
         var listModelsJsonOption = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
         var clientNameOption = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
+        var reasoningEffortOption = new Option<string?>("--reasoning-effort", "Reasoning effort hint for the model (e.g. low, medium, high); omit to use model default");
 
         toolAllowOption.AllowMultipleArgumentsPerToken = true;
         toolDenyOption.AllowMultipleArgumentsPerToken = true;
@@ -92,6 +93,7 @@ internal static class ArgParser
         root.AddOption(listModelsOption);
         root.AddOption(listModelsJsonOption);
         root.AddOption(clientNameOption);
+        root.AddOption(reasoningEffortOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -426,6 +428,12 @@ internal static class ArgParser
             {
                 options.ClientName = clientName;
             }
+        }
+
+        var reasoningEffort = result.GetValueForOption(reasoningEffortOption);
+        if (!string.IsNullOrWhiteSpace(reasoningEffort))
+        {
+            options.ReasoningEffort = reasoningEffort.Trim();
         }
 
         if (result.Errors.Count > 0)

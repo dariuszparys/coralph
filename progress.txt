@@ -1163,3 +1163,15 @@ Model: GPT-5.1-Codex
   - Coralph's permission posture is intentionally allow-all by default (opposite of new SDK deny-by-default) to keep unattended loops flowing
   - Deny-over-allow precedence means a deny list entry always wins even if the same tool is on the allow list
   - Good XML doc comments on security-critical classes prevent future drift when SDK defaults change again
+
+## 2026-02-24 - #91
+
+- Added `--reasoning-effort` CLI option and `ReasoningEffort` config property (default: null = use model default)
+- Wired `ReasoningEffort` through `LoopOptions`, `LoopOptionsOverrides`, `ArgParser`, `ConfigurationService.ApplyOverrides`
+- Set `SessionConfig.ReasoningEffort` in both `CopilotRunner.cs` and `CopilotSessionRunner.cs` session creation flows
+- Added `ReasoningEffort: null` to `coralph.config.json` (null means SDK/model default)
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/ConfigurationService.cs, src/Coralph/CopilotRunner.cs, src/Coralph/CopilotSessionRunner.cs, coralph.config.json, generated_tasks.json
+- **Learnings:**
+  - `SessionConfig.ReasoningEffort` is a nullable string property in SDK 0.1.26; null means use model default
+  - Same wiring pattern as `ClientName` works cleanly for any new SessionConfig property
+  - All 230 tests pass; no regressions

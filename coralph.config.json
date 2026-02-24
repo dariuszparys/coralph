@@ -18,6 +18,7 @@
     "CliUrl": null,
     "DockerSandbox": false,
     "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0",
-    "ClientName": "coralph"
+    "ClientName": "coralph",
+    "ReasoningEffort": null
   }
 }

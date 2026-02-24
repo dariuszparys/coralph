@@ -36,7 +36,8 @@ internal static class CopilotRunner
                 Tools = customTools,
                 OnPermissionRequest = permissionPolicy.HandleAsync,
                 Provider = ProviderConfigFactory.Create(opt),
-                ClientName = opt.ClientName
+                ClientName = opt.ClientName,
+                ReasoningEffort = opt.ReasoningEffort
             }))
             {
                 var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);

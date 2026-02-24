@@ -58,7 +58,8 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
                 Tools = customTools,
                 OnPermissionRequest = permissionPolicy.HandleAsync,
                 Provider = ProviderConfigFactory.Create(opt),
-                ClientName = opt.ClientName
+                ClientName = opt.ClientName,
+                ReasoningEffort = opt.ReasoningEffort
             });
 
             var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: true);
