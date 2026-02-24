@@ -1175,3 +1175,16 @@ Model: GPT-5.1-Codex
   - `SessionConfig.ReasoningEffort` is a nullable string property in SDK 0.1.26; null means use model default
   - Same wiring pattern as `ClientName` works cleanly for any new SessionConfig property
   - All 230 tests pass; no regressions
+
+---
+## $(date -u +%Y-%m-%d) - #91
+
+- Documented hook/user-input handler strategy as intentionally out of scope for unattended loop
+- Added code comments in CopilotRunner.cs and CopilotSessionRunner.cs explaining why OnUserInputRequest and OnPreToolUse/OnPostToolUse are not set
+- Added --reasoning-effort flag documentation to README Advanced Features section
+- Added Hooks and User-Input Handlers section to README explaining intentional non-implementation
+- All 230 tests pass; no code behavior changes (doc/comment only for 91-002/003/004)
+- Files changed: src/Coralph/CopilotRunner.cs, src/Coralph/CopilotSessionRunner.cs, README.md, progress.txt
+- **Learnings:**
+  - For headless automation loops, user-input handlers must be explicitly excluded to avoid the loop stalling waiting for input that will never come
+  - Tool-use hooks duplicate what event routing already provides; document rather than implement

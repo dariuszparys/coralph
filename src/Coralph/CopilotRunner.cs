@@ -29,6 +29,9 @@ internal static class CopilotRunner
             var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile, opt.GeneratedTasksFile);
             var permissionPolicy = new PermissionPolicy(opt, eventStream);
 
+            // OnUserInputRequest and OnPreToolUse/OnPostToolUse hooks are intentionally not set.
+            // Coralph runs unattended; models must not prompt for user input during a loop iteration.
+            // Tool-use events are already captured by CopilotSessionEventRouter via session.On().
             await using (var session = await client.CreateSessionAsync(new SessionConfig
             {
                 Model = opt.Model,

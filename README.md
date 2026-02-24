@@ -195,6 +195,22 @@ Set the client name sent to the Copilot session (defaults to `coralph`):
 
 This value is passed to `SessionConfig.ClientName` and can also be set via the config file.
 
+### Reasoning Effort
+
+Control the model's reasoning budget (low, medium, or high). Omit to use the model's default:
+```bash
+./coralph --reasoning-effort high
+```
+
+Passed as `SessionConfig.ReasoningEffort`. Not all models respect this setting.
+
+### Hooks and User-Input Handlers
+
+The Copilot SDK provides `OnPreToolUse`, `OnPostToolUse`, and `OnUserInputRequest` callbacks on `SessionConfig`. Coralph intentionally does not implement them:
+
+- **Tool-use hooks** are unnecessary because `CopilotSessionEventRouter` already captures all tool events via `session.On()`.
+- **User-input handlers** are inappropriate for an unattended loop; models should not prompt for interactive input during an automated run.
+
 ### OpenAI-Compatible Providers
 
 Use an OpenAI-compatible provider with optional base URL and wire API overrides:
