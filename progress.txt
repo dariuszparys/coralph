@@ -1131,3 +1131,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - gh issue comment --body-file avoids newline escaping issues in GitHub Markdown.
   - Prefix-aware wrapping keeps task titles readable in narrow panes.
+
+## 2026-02-24 - Maintenance
+
+- Fixed a compile break caused by duplicate `GeneratedTaskSnapshot*` definitions by removing the extra `TuiTasksSnapshot.cs` file.
+- Updated Copilot SDK client option usage from obsolete `GithubToken` to `GitHubToken` in all client creation paths.
+- Files changed: src/Coralph/Ui/Tui/TuiTasksSnapshot.cs, src/Coralph/CopilotRunner.cs, src/Coralph/CopilotSessionRunner.cs, src/Coralph/CopilotModelDiscovery.cs, progress.txt
+- **Learnings:**
+  - `GitHub.Copilot.SDK` now marks `CopilotClientOptions.GithubToken` obsolete; `GitHubToken` is the forward-compatible property.
+  - Keeping a single canonical file for shared TUI snapshot models avoids duplicate type collisions during build.

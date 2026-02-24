@@ -36,7 +36,7 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
 
         if (!string.IsNullOrWhiteSpace(opt.CliPath)) clientOptions.CliPath = opt.CliPath;
         if (!string.IsNullOrWhiteSpace(opt.CliUrl)) clientOptions.CliUrl = opt.CliUrl;
-        if (!string.IsNullOrWhiteSpace(opt.CopilotToken)) clientOptions.GithubToken = opt.CopilotToken;
+        if (!string.IsNullOrWhiteSpace(opt.CopilotToken)) clientOptions.GitHubToken = opt.CopilotToken;
 
         var client = new CopilotClient(clientOptions);
         var started = false;
