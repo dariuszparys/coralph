@@ -21,6 +21,7 @@ internal sealed class TuiState
 
     private GeneratedTasksSnapshot _tasksSnapshot = GeneratedTasksSnapshot.Missing(TaskBacklog.DefaultBacklogFile);
     private int _taskSelectedIndex = -1;
+    private int _taskListScrollOffset;
 
     private PromptSelectionRequest? _prompt;
     private ExitPromptRequest? _exitPrompt;
@@ -88,6 +89,7 @@ internal sealed class TuiState
             if (snapshot.Tasks.Count == 0)
             {
                 _taskSelectedIndex = -1;
+                _taskListScrollOffset = 0;
                 return;
             }
 
@@ -95,6 +97,12 @@ internal sealed class TuiState
             {
                 _taskSelectedIndex = snapshot.ActiveTaskIndex();
             }
+            else
+            {
+                _taskSelectedIndex = Math.Clamp(_taskSelectedIndex, 0, snapshot.Tasks.Count - 1);
+            }
+
+            EnsureTaskSelectionVisible(1);
         }
     }
 
@@ -110,7 +118,113 @@ internal sealed class TuiState
     {
         lock (_lock)
         {
-            _taskSelectedIndex = index;
+            if (_tasksSnapshot.Tasks.Count == 0)
+            {
+                _taskSelectedIndex = -1;
+                return;
+            }
+
+            _taskSelectedIndex = Math.Clamp(index, 0, _tasksSnapshot.Tasks.Count - 1);
+        }
+    }
+
+    internal int GetTaskListScrollOffset()
+    {
+        lock (_lock)
+        {
+            return _taskListScrollOffset;
+        }
+    }
+
+    internal void SetTaskListScrollOffset(int scrollOffset, int visibleRows = 1)
+    {
+        lock (_lock)
+        {
+            _taskListScrollOffset = CalculateScrollOffset(scrollOffset, visibleRows);
+        }
+    }
+
+    internal void AdjustTaskListScrollOffset(int delta, int visibleRows = 1)
+    {
+        SetTaskListScrollOffset(_taskListScrollOffset + delta, visibleRows);
+    }
+
+    internal void EnsureTaskSelectionVisible(int visibleRows)
+    {
+        lock (_lock)
+        {
+            if (_tasksSnapshot.Tasks.Count == 0)
+            {
+                _taskSelectedIndex = -1;
+                _taskListScrollOffset = 0;
+                return;
+            }
+
+            var visibleTaskRows = Math.Max(1, visibleRows);
+            if (_taskSelectedIndex < 0)
+            {
+                _taskSelectedIndex = _tasksSnapshot.ActiveTaskIndex();
+            }
+
+            _taskSelectedIndex = Math.Clamp(_taskSelectedIndex, 0, _tasksSnapshot.Tasks.Count - 1);
+            _taskListScrollOffset = CalculateScrollOffset(_taskListScrollOffset, visibleTaskRows);
+
+            if (_taskSelectedIndex < _taskListScrollOffset)
+            {
+                _taskListScrollOffset = _taskSelectedIndex;
+            }
+            else if (_taskSelectedIndex >= _taskListScrollOffset + visibleTaskRows)
+            {
+                _taskListScrollOffset = Math.Max(0, _taskSelectedIndex - visibleTaskRows + 1);
+            }
+        }
+    }
+
+    internal void MoveTaskSelection(int delta, int visibleRows)
+    {
+        lock (_lock)
+        {
+            if (_tasksSnapshot.Tasks.Count == 0)
+            {
+                _taskSelectedIndex = -1;
+                _taskListScrollOffset = 0;
+                return;
+            }
+
+            _taskSelectedIndex = Math.Clamp(_taskSelectedIndex + delta, 0, _tasksSnapshot.Tasks.Count - 1);
+            EnsureTaskSelectionVisible(visibleRows);
+        }
+    }
+
+    internal void SelectFirstTask(int visibleRows)
+    {
+        lock (_lock)
+        {
+            if (_tasksSnapshot.Tasks.Count == 0)
+            {
+                _taskSelectedIndex = -1;
+                _taskListScrollOffset = 0;
+                return;
+            }
+
+            _taskSelectedIndex = 0;
+            EnsureTaskSelectionVisible(visibleRows);
+        }
+    }
+
+    internal void SelectLastTask(int visibleRows)
+    {
+        lock (_lock)
+        {
+            if (_tasksSnapshot.Tasks.Count == 0)
+            {
+                _taskSelectedIndex = -1;
+                _taskListScrollOffset = 0;
+                return;
+            }
+
+            _taskSelectedIndex = _tasksSnapshot.Tasks.Count - 1;
+            EnsureTaskSelectionVisible(visibleRows);
         }
     }
 
@@ -262,6 +376,18 @@ internal sealed class TuiState
             TranscriptEntryKind.Warning => "WARN",
             _ => "LOG"
         };
+    }
+
+    private int CalculateScrollOffset(int scrollOffset, int visibleRows)
+    {
+        if (_tasksSnapshot.Tasks.Count == 0)
+        {
+            return 0;
+        }
+
+        var visibleTaskRows = Math.Max(1, visibleRows);
+        var maxOffset = Math.Max(0, _tasksSnapshot.Tasks.Count - visibleTaskRows);
+        return Math.Clamp(scrollOffset, 0, maxOffset);
     }
 }
 

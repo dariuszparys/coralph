@@ -309,12 +309,14 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         var exitPrompt = _state.GetExitPrompt();
         var transcriptLines = _state.GetTranscriptLines(maxLines: CalculateTranscriptVisibleLines());
         var tasksSnapshot = _state.GetTasksSnapshot();
+        var taskListVisibleRows = Math.Max(1, CalculateTaskListVisibleRows(tasksSnapshot.Tasks.Count));
+        _state.EnsureTaskSelectionVisible(taskListVisibleRows);
         var infoItems = new List<string> { "Coralph", "TUI" };
         if (_options.DemoMode)
         {
             infoItems.Add("DEMO");
         }
-        infoItems.AddRange(["Tasks", tasksSnapshot.Tasks.Count.ToString(), "Keys", "Ctrl+C exits"]);
+        infoItems.AddRange(["Tasks", tasksSnapshot.Tasks.Count.ToString(), "Task Nav", "k/j  Ctrl+U/Ctrl+D  gg/G (Home/End)", "Keys", "Ctrl+C exits"]);
         var doneItems = new List<string> { "Coralph", "TUI" };
         if (_options.DemoMode)
         {
@@ -332,12 +334,12 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                 r.WhenMinWidth(130, w => w.HStack(h =>
                 [
                     BuildTranscriptPane(h, transcriptLines).FillWidth(3),
-                    BuildTasksPane(h, tasksSnapshot).FillWidth(2)
+                    BuildTasksPane(h, tasksSnapshot, taskListVisibleRows).FillWidth(2)
                 ]).Fill()),
                 r.Otherwise(w => w.VStack(stack =>
                 [
                     BuildTranscriptPane(stack, transcriptLines).FillHeight(3),
-                    BuildTasksPane(stack, tasksSnapshot).FillHeight(2)
+                    BuildTasksPane(stack, tasksSnapshot, taskListVisibleRows).FillHeight(2)
                 ]).Fill())
             ]).FillHeight()
         ]).WithInputBindings(bindings =>
@@ -348,6 +350,19 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                 ConsoleOutput.RequestStop();
                 actionCtx.RequestStop();
             }, "Stop Coralph");
+
+            if (tasksSnapshot.Tasks.Count > 0)
+            {
+                var listRows = Math.Max(1, taskListVisibleRows);
+                bindings.Key(Hex1bKey.K).Global().Action(_ => HandleTaskSelection(-1, listRows), "Previous task");
+                bindings.Key(Hex1bKey.J).Global().Action(_ => HandleTaskSelection(1, listRows), "Next task");
+                bindings.Ctrl().Key(Hex1bKey.U).Global().Action(_ => HandleTaskSelection(-listRows, listRows), "Previous task page");
+                bindings.Ctrl().Key(Hex1bKey.D).Global().Action(_ => HandleTaskSelection(listRows, listRows), "Next task page");
+                bindings.Key(Hex1bKey.G).Then().Key(Hex1bKey.G).Global().Action(_ => HandleTaskFirst(listRows), "First task");
+                bindings.Key(Hex1bKey.G).Global().Action(_ => HandleTaskLast(listRows), "Last task");
+                bindings.Key(Hex1bKey.Home).Global().Action(_ => HandleTaskFirst(listRows), "First task");
+                bindings.Key(Hex1bKey.End).Global().Action(_ => HandleTaskLast(listRows), "Last task");
+            }
 
             if (exitPrompt is not null)
             {
@@ -395,7 +410,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         return ctx.Border(ctx.WithClipping(ctx.Text(transcriptText).Fill())).Title("Run Transcript");
     }
 
-    private Hex1bWidget BuildTasksPane<TParent>(WidgetContext<TParent> ctx, GeneratedTasksSnapshot snapshot)
+    private Hex1bWidget BuildTasksPane<TParent>(WidgetContext<TParent> ctx, GeneratedTasksSnapshot snapshot, int visibleTaskRows)
         where TParent : Hex1bWidget
     {
         if (!snapshot.Exists)
@@ -426,21 +441,42 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         }
 
         var contentWidth = CalculateTasksPaneContentWidth();
-        var activeIndex = snapshot.ActiveTaskIndex();
-        var activeTask = snapshot.Tasks[activeIndex];
+        var activeTaskIndex = _state.GetTaskSelectedIndex(snapshot.ActiveTaskIndex());
+        if (activeTaskIndex < 0 || activeTaskIndex >= snapshot.Tasks.Count)
+        {
+            activeTaskIndex = snapshot.ActiveTaskIndex();
+            _state.SetTaskSelectedIndex(activeTaskIndex);
+        }
+
+        var activeTask = snapshot.Tasks[activeTaskIndex];
+        var clampedVisibleRows = Math.Max(1, Math.Min(visibleTaskRows, snapshot.Tasks.Count));
+        var scrollOffset = Math.Clamp(
+            _state.GetTaskListScrollOffset(),
+            0,
+            Math.Max(0, snapshot.Tasks.Count - clampedVisibleRows));
         var lines = new List<string>
         {
             "Current Task"
         };
+        var activeTaskLines = BuildTaskBlock(activeTask, contentWidth, isActive: true, includeDescription: true).ToList();
+        var maxCurrentTaskLines = Math.Max(1, CalculateTaskPaneContentHeight() / 3);
+        var visibleCurrentTaskLines = activeTaskLines.Take(maxCurrentTaskLines).ToList();
 
-        lines.AddRange(BuildTaskBlock(activeTask, contentWidth, isActive: true, includeDescription: true));
+        lines.AddRange(visibleCurrentTaskLines);
+        if (activeTaskLines.Count > visibleCurrentTaskLines.Count)
+        {
+            lines.Add("  ...");
+        }
         lines.Add(string.Empty);
         lines.Add("All Tasks");
 
-        for (var i = 0; i < snapshot.Tasks.Count; i++)
+        var startIndex = Math.Max(0, scrollOffset);
+        var endIndex = Math.Min(snapshot.Tasks.Count, startIndex + clampedVisibleRows);
+
+        for (var i = startIndex; i < endIndex; i++)
         {
-            lines.AddRange(BuildTaskBlock(snapshot.Tasks[i], contentWidth, isActive: i == activeIndex, includeDescription: false));
-            if (i < snapshot.Tasks.Count - 1)
+            lines.AddRange(BuildTaskBlock(snapshot.Tasks[i], contentWidth, isActive: i == activeTaskIndex, includeDescription: false));
+            if (i < endIndex - 1)
             {
                 lines.Add(string.Empty);
             }
@@ -448,6 +484,24 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
         var tasksText = string.Join(Environment.NewLine, lines);
         return ctx.Border(ctx.WithClipping(ctx.Text(tasksText).Fill())).Title("Generated Tasks");
+    }
+
+    private void HandleTaskSelection(int delta, int visibleRows)
+    {
+        _state.MoveTaskSelection(delta, visibleRows);
+        RequestInvalidate();
+    }
+
+    private void HandleTaskFirst(int visibleRows)
+    {
+        _state.SelectFirstTask(visibleRows);
+        RequestInvalidate();
+    }
+
+    private void HandleTaskLast(int visibleRows)
+    {
+        _state.SelectLastTask(visibleRows);
+        RequestInvalidate();
     }
 
     private static IEnumerable<string> BuildTaskBlock(
@@ -610,6 +664,31 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
         // Border consumes top and bottom rows.
         return Math.Max(1, transcriptPaneHeight - 2);
+    }
+
+    private static int CalculateTaskListVisibleRows(int taskCount)
+    {
+        if (taskCount <= 0)
+        {
+            return 1;
+        }
+
+        var paneHeight = CalculateTaskPaneContentHeight();
+        var reservedForCurrentTask = Math.Max(1, paneHeight / 3);
+        var availableRows = paneHeight - reservedForCurrentTask - 2;
+        return Math.Clamp(availableRows, 1, taskCount);
+    }
+
+    private static int CalculateTaskPaneContentHeight()
+    {
+        var width = ReadConsoleDimension(() => Console.WindowWidth, fallback: 120);
+        var height = ReadConsoleDimension(() => Console.WindowHeight, fallback: 40);
+        var bodyHeight = Math.Max(1, height - 1); // Info bar.
+        var paneHeight = width >= 130
+            ? bodyHeight
+            : Math.Max(1, (bodyHeight * 2) / 5);
+
+        return Math.Max(1, paneHeight - 2);
     }
 
     private static int ReadConsoleDimension(Func<int> reader, int fallback)

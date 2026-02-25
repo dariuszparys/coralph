@@ -22,21 +22,88 @@ public class TuiStateTests
     public void SetTasksSnapshot_SelectsInProgressFirst()
     {
         var state = new TuiState();
-        var snapshot = new GeneratedTasksSnapshot(
-            Path: "generated_tasks.json",
-            Exists: true,
-            Error: null,
-            Tasks:
-            [
-                new GeneratedTaskSnapshotItem("001", 1, "Open task", "", "open", 1, 1),
-                new GeneratedTaskSnapshotItem("002", 1, "Active task", "", "in_progress", 2, 2),
-                new GeneratedTaskSnapshotItem("003", 1, "Done task", "", "done", 3, 3)
-            ],
-            ReadAtUtc: DateTimeOffset.UtcNow);
-
+        var snapshot = BuildSnapshotWithStatuses(["open", "in_progress", "done"]);
         state.SetTasksSnapshot(snapshot);
 
         Assert.Equal(1, state.GetTaskSelectedIndex(-1));
+    }
+
+    [Fact]
+    public void SetTasksSnapshot_ClampsSelectionAndScrollOnCountChange()
+    {
+        var state = new TuiState();
+        var initial = BuildSnapshotWithStatuses(["open", "open", "in_progress", "open", "open"]);
+        state.SetTasksSnapshot(initial);
+        state.SetTaskSelectedIndex(4);
+        state.SetTaskListScrollOffset(4);
+        state.EnsureTaskSelectionVisible(3);
+
+        var shrunk = BuildSnapshotWithStatuses(["done", "in_progress"]);
+        state.SetTasksSnapshot(shrunk);
+
+        Assert.Equal(1, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(1, state.GetTaskListScrollOffset());
+
+        var expanded = BuildSnapshotWithStatuses(["open", "open", "open", "open", "open", "open", "open"]);
+        state.SetTasksSnapshot(expanded);
+
+        Assert.Equal(1, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(1, state.GetTaskListScrollOffset());
+    }
+
+    [Fact]
+    public void SetTaskListScrollOffset_ClampsForEmptySmallAndLargeCollections()
+    {
+        var state = new TuiState();
+
+        state.SetTasksSnapshot(BuildSnapshotWithStatuses(Array.Empty<string>()));
+        state.SetTaskListScrollOffset(10, visibleRows: 5);
+        Assert.Equal(0, state.GetTaskListScrollOffset());
+        Assert.Equal(-1, state.GetTaskSelectedIndex(-1));
+
+        state.SetTasksSnapshot(BuildSnapshotWithStatuses(["open", "open"]));
+        state.SetTaskListScrollOffset(10, visibleRows: 5);
+        Assert.Equal(0, state.GetTaskListScrollOffset());
+
+        state.SetTasksSnapshot(BuildSnapshotWithStatuses(
+        [
+            "open", "open", "open", "open", "open", "open", "open", "open", "open", "open"
+        ]));
+        state.SetTaskListScrollOffset(10, visibleRows: 5);
+        Assert.Equal(5, state.GetTaskListScrollOffset());
+        state.SetTaskListScrollOffset(-7, visibleRows: 5);
+        Assert.Equal(0, state.GetTaskListScrollOffset());
+    }
+
+    [Fact]
+    public void TaskSelectionNavigation_UsesViewportForScrollOffsets()
+    {
+        var state = new TuiState();
+        state.SetTasksSnapshot(BuildSnapshotWithStatuses(["open", "open", "open", "open", "open", "open", "open", "open", "open", "open"]));
+
+        state.SelectFirstTask(3);
+        Assert.Equal(0, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(0, state.GetTaskListScrollOffset());
+
+        state.MoveTaskSelection(9, 3);
+        Assert.Equal(9, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(7, state.GetTaskListScrollOffset());
+
+        state.MoveTaskSelection(-1, 3);
+        Assert.Equal(8, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(7, state.GetTaskListScrollOffset());
+
+        state.MoveTaskSelection(-2, 3);
+        Assert.Equal(6, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(6, state.GetTaskListScrollOffset());
+
+        state.SelectFirstTask(3);
+        Assert.Equal(0, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(0, state.GetTaskListScrollOffset());
+
+        state.SelectLastTask(3);
+        Assert.Equal(9, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(7, state.GetTaskListScrollOffset());
     }
 
     [Fact]
@@ -121,5 +188,25 @@ public class TuiStateTests
         Assert.Equal(2, lines.Count);
         Assert.Contains("line-3", lines[0]);
         Assert.Contains("line-4", lines[1]);
+    }
+
+    private static GeneratedTasksSnapshot BuildSnapshotWithStatuses(string[] statuses)
+    {
+        return new GeneratedTasksSnapshot(
+            Path: "generated_tasks.json",
+            Exists: true,
+            Error: null,
+            Tasks:
+            [
+                .. statuses.Select((status, index) => new GeneratedTaskSnapshotItem(
+                    ((index + 1).ToString("000")),
+                    index + 1,
+                    $"Task {index + 1}",
+                    $"Description for task {index + 1}",
+                    status,
+                    index + 1,
+                    index + 1))
+            ],
+            ReadAtUtc: DateTimeOffset.UtcNow);
     }
 }
