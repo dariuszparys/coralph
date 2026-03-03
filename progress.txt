@@ -1292,3 +1292,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - A box-drawing header + footer pair gives a clear visual boundary to the dry-run preview output
   - Summary report "without writing to disk" means: all output goes to stdout/console, nothing persisted
+
+## 2026-03-03 - #94 (task 94-007)
+
+- Added hard enforcement in `Program.cs`: when `--dry-run` is active, automatically appends deny patterns to `opt.ToolDeny` before the Copilot session is created
+- Patterns block: `edit*`, `create_file`, `delete_file`, `write*`, `run_in_terminal`, `bash`, `execute*`, `shell`
+- These deny entries feed into the existing `PermissionPolicy` infrastructure, so the SDK will reject any matching tool calls
+- Files changed: src/Coralph/Program.cs, generated_tasks.json
+- **Learnings:**
+  - `PermissionPolicy` is constructed from `opt.ToolDeny` at session-creation time, so modifying `opt.ToolDeny` before `CopilotRunner`/`CopilotSessionRunner` are invoked is sufficient
+  - Prefix wildcards (`edit*`, `write*`, `execute*`) cover variant tool names across SDK versions
+  - Belt-and-suspenders: prompt instruction (soft) + `PermissionPolicy` deny (hard) = robust dry-run safety

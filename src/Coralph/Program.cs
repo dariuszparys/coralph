@@ -73,6 +73,22 @@ try
     if (opt.DryRun)
     {
         opt.StreamEvents = false;
+
+        // Hard-enforce dry-run: deny file-write and shell/git tool kinds so Copilot
+        // cannot actually modify files or run commands even if it ignores the prompt instruction.
+        // These patterns cover common Copilot CLI tool names (exact names vary by SDK version).
+        string[] dryRunDeny =
+        [
+            "edit*",          // edit_file, edit, str_replace_based_edit_tool, …
+            "create_file",    // file creation
+            "delete_file",    // file deletion
+            "write*",         // write_file, write, …
+            "run_in_terminal",// shell execution (git, npm, etc.)
+            "bash",
+            "execute*",       // execute_command, …
+            "shell",
+        ];
+        opt.ToolDeny = [.. opt.ToolDeny, .. dryRunDeny];
     }
     var effectiveUiMode = UiModeResolver.Resolve(opt);
     await ConsoleOutput.ConfigureForModeAsync(effectiveUiMode, opt);
