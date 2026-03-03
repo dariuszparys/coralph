@@ -236,10 +236,10 @@ Use an OpenAI-compatible provider with optional base URL and wire API overrides:
 Or via `coralph.config.json`:
 ```json
 {
-  "provider": {
-    "type": "openrouter",
-    "apiKey": "sk-or-xxxxx",
-    "wireApi": "anthropic/claude-3.5-sonnet"
+  "LoopOptions": {
+    "ProviderType": "openrouter",
+    "ProviderApiKey": "sk-or-xxxxx",
+    "ProviderWireApi": "anthropic/claude-3.5-sonnet"
   }
 }
 ```
