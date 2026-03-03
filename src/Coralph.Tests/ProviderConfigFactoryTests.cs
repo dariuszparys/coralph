@@ -64,4 +64,52 @@ public class ProviderConfigFactoryTests
         Assert.Equal("https://api.openai.com/v1/", config.BaseUrl);
         Assert.Equal("responses", config.WireApi);
     }
+
+    [Fact]
+    public void Create_WithOpenRouterType_DefaultsBaseUrl()
+    {
+        var options = new LoopOptions
+        {
+            ProviderType = "openrouter",
+            ProviderApiKey = "sk-or-test"
+        };
+
+        var config = ProviderConfigFactory.Create(options);
+
+        Assert.NotNull(config);
+        Assert.Equal("openrouter", config.Type);
+        Assert.Equal("https://openrouter.ai/api/v1", config.BaseUrl);
+        Assert.Equal("sk-or-test", config.ApiKey);
+    }
+
+    [Fact]
+    public void Create_WithOpenRouterType_CustomBaseUrlIsPreserved()
+    {
+        var options = new LoopOptions
+        {
+            ProviderType = "openrouter",
+            ProviderBaseUrl = "https://custom.openrouter.ai/v1"
+        };
+
+        var config = ProviderConfigFactory.Create(options);
+
+        Assert.NotNull(config);
+        Assert.Equal("openrouter", config.Type);
+        Assert.Equal("https://custom.openrouter.ai/v1", config.BaseUrl);
+    }
+
+    [Fact]
+    public void Create_WithOpenRouterTypeIsCaseInsensitive()
+    {
+        var options = new LoopOptions
+        {
+            ProviderType = "OpenRouter"
+        };
+
+        var config = ProviderConfigFactory.Create(options);
+
+        Assert.NotNull(config);
+        Assert.Equal("OpenRouter", config.Type);
+        Assert.Equal("https://openrouter.ai/api/v1", config.BaseUrl);
+    }
 }

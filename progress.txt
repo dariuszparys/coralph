@@ -1188,3 +1188,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - For headless automation loops, user-input handlers must be explicitly excluded to avoid the loop stalling waiting for input that will never come
   - Tool-use hooks duplicate what event routing already provides; document rather than implement
+
+## 2026-03-03 - #95 (task 95-001)
+
+- Added `openrouter` as a valid `--provider-type` option
+- `ProviderConfigFactory` now defaults base URL to `https://openrouter.ai/api/v1` when type is `openrouter`
+- Updated `--provider-type` help text in `ArgParser.cs` to mention `openrouter` alongside `openai`
+- Added 3 tests in `ProviderConfigFactoryTests.cs` covering default URL, custom URL override, and case-insensitivity
+- Files changed: src/Coralph/ProviderConfigFactory.cs, src/Coralph/ArgParser.cs, src/Coralph.Tests/ProviderConfigFactoryTests.cs, generated_tasks.json
+- **Learnings:**
+  - Pattern matches the existing openai block: check type case-insensitively, set default URL only when not already specified
+  - OpenRouter does not need a default wireApi since it accepts standard OpenAI chat completions

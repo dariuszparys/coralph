@@ -37,6 +37,13 @@ internal static class ProviderConfigFactory
                 wireApi = "responses";
             }
         }
+        else if (string.Equals(type, "openrouter", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                baseUrl = "https://openrouter.ai/api/v1";
+            }
+        }
 
         return new ProviderConfig
         {

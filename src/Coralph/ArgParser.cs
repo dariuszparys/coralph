@@ -21,7 +21,7 @@ internal static class ArgParser
         var workingDirOption = new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)");
         var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
         var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
-        var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)");
+        var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
         var providerBaseUrlOption = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
         var providerWireApiOption = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
         var providerApiKeyOption = new Option<string?>("--provider-api-key", "Optional: provider API key");
@@ -479,7 +479,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)"));
         root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
         root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
-        root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai)"));
+        root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)"));
         root.AddOption(new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)"));
         root.AddOption(new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)"));
         root.AddOption(new Option<string?>("--provider-api-key", "Optional: provider API key"));
