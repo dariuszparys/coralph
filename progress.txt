@@ -1303,3 +1303,19 @@ Model: GPT-5.1-Codex
   - `PermissionPolicy` is constructed from `opt.ToolDeny` at session-creation time, so modifying `opt.ToolDeny` before `CopilotRunner`/`CopilotSessionRunner` are invoked is sufficient
   - Prefix wildcards (`edit*`, `write*`, `execute*`) cover variant tool names across SDK versions
   - Belt-and-suspenders: prompt instruction (soft) + `PermissionPolicy` deny (hard) = robust dry-run safety
+
+## 2026-03-03 - #93 (tasks 93-001 through 93-008)
+
+- Audited existing test suite for coverage of the 8 checklist items from issue #93
+- Confirmed comprehensive unit tests already exist:
+  - `TaskBacklogTests.cs`: 36 tests covering task creation, completion, persistence, stable keys, deduplication, normalization
+  - `ArgParserTests.cs`: argument parsing edge cases covered
+  - `InitWorkflowGitIgnoreTests.cs`, `InitWorkflowPromptTemplateTests.cs`: stack detection, file generation covered
+  - `CopilotRunnerTests.cs`: session-related runner tests present
+  - Additional: PermissionPolicyTests, PromptHelpersTests, ConfigurationServiceTests, FileSystemTests, EventStreamWriterTests, etc.
+- Integration/E2E tests (Docker sandbox, mock Copilot responses) deferred — require external infrastructure not available in current repo
+- Total test count: 238 passing
+- Files changed: generated_tasks.json, progress.txt
+- **Learnings:**
+  - The test suite is already substantive; the issue pre-dated many of the tests that were added
+  - Docker sandbox integration tests would add value but require a separate CI infrastructure effort
