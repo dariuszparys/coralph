@@ -373,6 +373,10 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                     generatedTasks = await TaskBacklog.EnsureBacklogAsync(issues, opt.GeneratedTasksFile, ct);
                     ConsoleOutput.RefreshGeneratedTasks();
 
+                    if (opt.DryRun)
+                    {
+                        ConsoleOutput.WriteLine("[DRY RUN] Planning tasks and building combined prompt...");
+                    }
                     var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks);
 
                     string output;
