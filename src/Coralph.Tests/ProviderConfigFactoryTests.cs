@@ -112,4 +112,46 @@ public class ProviderConfigFactoryTests
         Assert.Equal("OpenRouter", config.Type);
         Assert.Equal("https://openrouter.ai/api/v1", config.BaseUrl);
     }
+
+    [Fact]
+    public void Create_WithOpenRouterType_FallsBackToEnvVar()
+    {
+        Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env");
+        try
+        {
+            var options = new LoopOptions { ProviderType = "openrouter" };
+
+            var config = ProviderConfigFactory.Create(options);
+
+            Assert.NotNull(config);
+            Assert.Equal("sk-or-from-env", config.ApiKey);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
+        }
+    }
+
+    [Fact]
+    public void Create_WithOpenRouterType_ExplicitKeyTakesPrecedenceOverEnvVar()
+    {
+        Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env");
+        try
+        {
+            var options = new LoopOptions
+            {
+                ProviderType = "openrouter",
+                ProviderApiKey = "sk-or-explicit"
+            };
+
+            var config = ProviderConfigFactory.Create(options);
+
+            Assert.NotNull(config);
+            Assert.Equal("sk-or-explicit", config.ApiKey);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
+        }
+    }
 }

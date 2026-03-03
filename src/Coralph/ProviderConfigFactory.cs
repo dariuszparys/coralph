@@ -6,10 +6,20 @@ internal static class ProviderConfigFactory
 {
     internal static ProviderConfig? Create(LoopOptions options)
     {
+        var apiKey = options.ProviderApiKey;
+
+        // Auto-detect OPENROUTER_API_KEY when the caller has not supplied an explicit key
+        // and the provider type is (or will default to) openrouter.
+        if (string.IsNullOrWhiteSpace(apiKey) &&
+            string.Equals(options.ProviderType, "openrouter", StringComparison.OrdinalIgnoreCase))
+        {
+            apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
+        }
+
         var hasType = !string.IsNullOrWhiteSpace(options.ProviderType);
         var hasBaseUrl = !string.IsNullOrWhiteSpace(options.ProviderBaseUrl);
         var hasWireApi = !string.IsNullOrWhiteSpace(options.ProviderWireApi);
-        var hasApiKey = !string.IsNullOrWhiteSpace(options.ProviderApiKey);
+        var hasApiKey = !string.IsNullOrWhiteSpace(apiKey);
 
         if (!hasType && !hasBaseUrl && !hasWireApi && !hasApiKey)
         {
@@ -50,7 +60,7 @@ internal static class ProviderConfigFactory
             Type = type,
             BaseUrl = baseUrl ?? string.Empty,
             WireApi = wireApi,
-            ApiKey = options.ProviderApiKey
+            ApiKey = apiKey
         };
     }
 }
