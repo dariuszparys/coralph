@@ -220,6 +220,30 @@ Use an OpenAI-compatible provider with optional base URL and wire API overrides:
 	--provider-wire-api openai
 ```
 
+### OpenRouter
+
+[OpenRouter](https://openrouter.ai) is supported as a first-class provider type. The base URL (`https://openrouter.ai/api/v1`) is set automatically — no need to pass `--provider-base-url`.
+
+```bash
+# Minimal usage — model defaults to whatever the Copilot SDK selects
+./coralph --provider-type openrouter --provider-api-key sk-or-xxxxx
+
+# Select a specific model via --provider-wire-api
+./coralph --provider-type openrouter --provider-api-key sk-or-xxxxx \
+    --provider-wire-api anthropic/claude-3.5-sonnet
+```
+
+Or via `coralph.config.json`:
+```json
+{
+  "provider": {
+    "type": "openrouter",
+    "apiKey": "sk-or-xxxxx",
+    "wireApi": "anthropic/claude-3.5-sonnet"
+  }
+}
+```
+
 Do not commit API keys to source control. Use secrets or local configuration for `--provider-api-key` or config overrides.
 
 See `./coralph --help` for all options.

@@ -1208,3 +1208,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Reusing existing `--provider-api-key` keeps the CLI surface minimal; help text makes OpenRouter usage discoverable
   - Tasks implemented as side effects of prior tasks should be verified and marked done promptly
+
+## 2026-03-03 - #95 (tasks 95-004, 95-009, 95-010, 95-011)
+
+- Added OpenRouter section to README under Advanced Features
+- Covers: first-class provider type, automatic base URL, CLI example with and without model selection, `coralph.config.json` snippet, security note
+- Tasks 95-009 (OpenRouter section), 95-010 (example), 95-011 (model selection note) all covered by same README block
+- Files changed: README.md, generated_tasks.json
+- **Learnings:**
+  - Documentation tasks for the same feature can share one section; mark all related tasks done together
+  - Showing both CLI and config file usage patterns gives users flexibility
