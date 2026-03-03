@@ -400,6 +400,10 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                         {
                             output = await CopilotRunner.RunOnceAsync(opt, combinedPrompt, ct, eventStream, i);
                         }
+                        if (opt.DryRun)
+                        {
+                            ConsoleOutput.WriteLine("[DRY RUN] Preview complete. No files were written and no git commands were run.");
+                        }
                         Log.Information("Iteration {Iteration} completed successfully", i);
                     }
                     catch (Exception ex)

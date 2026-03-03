@@ -1273,3 +1273,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Specifying the exact format (unified diff) in the prompt gives Copilot clear guidance on what to output
   - Prompt instructions are the primary mechanism for controlling dry-run output format
+
+## 2026-03-03 - #94 (task 94-005)
+
+- Added `[DRY RUN] Preview complete. No files were written and no git commands were run.` footer printed after each Copilot turn when `--dry-run` is active
+- The dry-run preamble already instructs Copilot to output `[DRY RUN] WOULD COMMIT: <msg>` plus file list (added in 94-004); this footer provides a clear visual close to the commit preview
+- Files changed: src/Coralph/Program.cs, generated_tasks.json
+- **Learnings:**
+  - A footer message bookends the dry-run output so users know when the preview ended and no side-effects occurred
+  - The preamble (prompt-side) + footer (output-side) together satisfy "show what commits would be created"
