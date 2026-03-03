@@ -8,9 +8,18 @@ namespace Coralph;
 /// </summary>
 internal static class PromptHelpers
 {
-    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress, string? generatedTasksJson = null)
+    internal static string BuildCombinedPrompt(string promptTemplate, string issuesJson, string progress, string? generatedTasksJson = null, bool dryRun = false)
     {
         var sb = new StringBuilder();
+
+        if (dryRun)
+        {
+            sb.AppendLine("# DRY RUN MODE");
+            sb.AppendLine("You are running in DRY RUN mode. Do NOT write any files, do NOT run any git commands, and do NOT commit or push changes.");
+            sb.AppendLine("Instead, describe exactly what you WOULD do: output \"[DRY RUN] WOULD WRITE: <path>\" for each file you would change,");
+            sb.AppendLine("\"[DRY RUN] WOULD COMMIT: <message>\" for each commit you would make, and a final summary of what would change.");
+            sb.AppendLine();
+        }
 
         sb.AppendLine("You are running inside a loop. Use the files and repository as your source of truth.");
         sb.AppendLine("Ignore any pre-existing uncommitted changes in the working tree - focus only on the issues listed below.");

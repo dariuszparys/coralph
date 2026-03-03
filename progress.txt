@@ -1252,3 +1252,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Task planning must run normally in dry-run mode so the assistant can see what work would be done
   - The dry-run prefix on planning messages signals to the user that no permanent changes are being made
+
+## 2026-03-03 - #94 (task 94-003)
+
+- Added dry-run preamble to `BuildCombinedPrompt` via optional `dryRun` parameter
+- When dry-run is active, Copilot receives instructions to describe what it WOULD do instead of executing changes
+- Added `[DRY RUN] Calling Copilot...` message before the Copilot call in Program.cs
+- Files changed: src/Coralph/PromptHelpers.cs, src/Coralph/Program.cs, generated_tasks.json
+- **Learnings:**
+  - Injecting the dry-run instruction into the combined prompt is the key lever for all dry-run behavior
+  - Optional parameter with default `false` keeps existing callers unaffected
+  - Telling Copilot to output `[DRY RUN] WOULD WRITE: <path>` and `[DRY RUN] WOULD COMMIT: <msg>` gives structured output

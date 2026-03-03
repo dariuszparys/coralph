@@ -377,13 +377,17 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                     {
                         ConsoleOutput.WriteLine("[DRY RUN] Planning tasks and building combined prompt...");
                     }
-                    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks);
+                    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks, dryRun: opt.DryRun);
 
                     string output;
                     string? turnError = null;
                     var success = true;
                     try
                     {
+                        if (opt.DryRun)
+                        {
+                            ConsoleOutput.WriteLine("[DRY RUN] Calling Copilot to generate code changes (preview mode)...");
+                        }
                         if (useDockerPerIteration)
                         {
                             output = await DockerSandbox.RunIterationAsync(opt, combinedPrompt, i, ct);
