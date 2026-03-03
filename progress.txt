@@ -1263,3 +1263,13 @@ Model: GPT-5.1-Codex
   - Injecting the dry-run instruction into the combined prompt is the key lever for all dry-run behavior
   - Optional parameter with default `false` keeps existing callers unaffected
   - Telling Copilot to output `[DRY RUN] WOULD WRITE: <path>` and `[DRY RUN] WOULD COMMIT: <msg>` gives structured output
+
+## 2026-03-03 - #94 (task 94-004)
+
+- Enhanced dry-run preamble in `BuildCombinedPrompt` to request unified diff output for each changed file
+- Copilot is now instructed to output `[DRY RUN] WOULD WRITE: <path>` followed by a unified diff block (--- / +++ / @@ lines)
+- Also added a summary line format: `[DRY RUN] Summary: N file(s) changed, X insertion(s)(+), Y deletion(s)(-)`
+- Files changed: src/Coralph/PromptHelpers.cs, generated_tasks.json
+- **Learnings:**
+  - Specifying the exact format (unified diff) in the prompt gives Copilot clear guidance on what to output
+  - Prompt instructions are the primary mechanism for controlling dry-run output format

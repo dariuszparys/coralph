@@ -16,8 +16,15 @@ internal static class PromptHelpers
         {
             sb.AppendLine("# DRY RUN MODE");
             sb.AppendLine("You are running in DRY RUN mode. Do NOT write any files, do NOT run any git commands, and do NOT commit or push changes.");
-            sb.AppendLine("Instead, describe exactly what you WOULD do: output \"[DRY RUN] WOULD WRITE: <path>\" for each file you would change,");
-            sb.AppendLine("\"[DRY RUN] WOULD COMMIT: <message>\" for each commit you would make, and a final summary of what would change.");
+            sb.AppendLine("Instead, for each file you would change, output:");
+            sb.AppendLine("  [DRY RUN] WOULD WRITE: <path>");
+            sb.AppendLine("  followed by a unified diff block (--- / +++ / @@ lines) showing exactly what lines would be added or removed.");
+            sb.AppendLine("For each commit you would make, output:");
+            sb.AppendLine("  [DRY RUN] WOULD COMMIT: <conventional-commit message>");
+            sb.AppendLine("  followed by a list of files included in that commit.");
+            sb.AppendLine("At the end, output a summary line:");
+            sb.AppendLine("  [DRY RUN] Summary: N file(s) changed, X insertion(s)(+), Y deletion(s)(-)");
+            sb.AppendLine("Do NOT produce any other side effects.");
             sb.AppendLine();
         }
 
