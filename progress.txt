@@ -1199,3 +1199,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Pattern matches the existing openai block: check type case-insensitively, set default URL only when not already specified
   - OpenRouter does not need a default wireApi since it accepts standard OpenAI chat completions
+
+## 2026-03-03 - #95 (tasks 95-002, 95-003)
+
+- Task 95-002: "Set default base URL when type is openrouter" — already implemented in the previous iteration (as part of 95-001); marked done
+- Task 95-003: Confirmed decision to reuse `--provider-api-key` for OpenRouter (no new dedicated flag); updated help text for `--provider-api-key` to show OpenRouter example (`sk-or-...`)
+- Files changed: src/Coralph/ArgParser.cs, generated_tasks.json
+- **Learnings:**
+  - Reusing existing `--provider-api-key` keeps the CLI surface minimal; help text makes OpenRouter usage discoverable
+  - Tasks implemented as side effects of prior tasks should be verified and marked done promptly

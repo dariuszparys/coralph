@@ -24,7 +24,7 @@ internal static class ArgParser
         var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
         var providerBaseUrlOption = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
         var providerWireApiOption = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
-        var providerApiKeyOption = new Option<string?>("--provider-api-key", "Optional: provider API key");
+        var providerApiKeyOption = new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)");
         var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
         var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
         var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
@@ -482,7 +482,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)"));
         root.AddOption(new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)"));
         root.AddOption(new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)"));
-        root.AddOption(new Option<string?>("--provider-api-key", "Optional: provider API key"));
+        root.AddOption(new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)"));
         root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
         root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
         root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
