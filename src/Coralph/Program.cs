@@ -365,6 +365,14 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                     Log.Information("Starting iteration {Iteration} of {MaxIterations}", i, opt.MaxIterations);
                     ConsoleOutput.WriteLine($"\n=== Iteration {i}/{opt.MaxIterations} ===\n");
 
+                    if (opt.DryRun)
+                    {
+                        ConsoleOutput.WriteLine($"[DRY RUN] ╔══════════════════════════════════════════╗");
+                        ConsoleOutput.WriteLine($"[DRY RUN] ║  DRY RUN PREVIEW — iteration {i}/{opt.MaxIterations}");
+                        ConsoleOutput.WriteLine($"[DRY RUN] ║  No files will be modified. No commits.");
+                        ConsoleOutput.WriteLine($"[DRY RUN] ╚══════════════════════════════════════════╝");
+                    }
+
                     // Reload progress and issues before each iteration so assistant sees updates it made
                     progressRead = await fileCache.TryReadTextAsync(opt.ProgressFile, ct);
                     progress = progressRead.Exists ? progressRead.Content : string.Empty;

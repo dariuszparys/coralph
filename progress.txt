@@ -1282,3 +1282,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - A footer message bookends the dry-run output so users know when the preview ended and no side-effects occurred
   - The preamble (prompt-side) + footer (output-side) together satisfy "show what commits would be created"
+
+## 2026-03-03 - #94 (task 94-006)
+
+- Added a dry-run preview header box printed at the start of each iteration when `--dry-run` is active
+- Header reads: "DRY RUN PREVIEW — iteration N/M / No files will be modified. No commits."
+- Together with the footer from 94-005, this frames the full preview output as a clear summary report
+- Files changed: src/Coralph/Program.cs, generated_tasks.json
+- **Learnings:**
+  - A box-drawing header + footer pair gives a clear visual boundary to the dry-run preview output
+  - Summary report "without writing to disk" means: all output goes to stdout/console, nothing persisted
