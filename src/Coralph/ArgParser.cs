@@ -53,6 +53,7 @@ internal static class ArgParser
         var listModelsJsonOption = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
         var clientNameOption = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
         var reasoningEffortOption = new Option<string?>("--reasoning-effort", "Reasoning effort hint for the model (e.g. low, medium, high); omit to use model default");
+        var dryRunOption = new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)");
 
         toolAllowOption.AllowMultipleArgumentsPerToken = true;
         toolDenyOption.AllowMultipleArgumentsPerToken = true;
@@ -94,6 +95,7 @@ internal static class ArgParser
         root.AddOption(listModelsJsonOption);
         root.AddOption(clientNameOption);
         root.AddOption(reasoningEffortOption);
+        root.AddOption(dryRunOption);
 
         var result = root.Parse(args);
         showHelp = result.GetValueForOption(helpOption);
@@ -436,6 +438,11 @@ internal static class ArgParser
             options.ReasoningEffort = reasoningEffort.Trim();
         }
 
+        if (result.GetValueForOption(dryRunOption))
+        {
+            options.DryRun = true;
+        }
+
         if (result.Errors.Count > 0)
         {
             errorMessages.AddRange(result.Errors.Select(e => e.Message));
@@ -517,6 +524,7 @@ internal static class ArgParser
         root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
         root.AddOption(new Option<bool>("--list-models", "List available Copilot models and exit"));
         root.AddOption(new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit"));
+        root.AddOption(new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)"));
         return root;
     }
 

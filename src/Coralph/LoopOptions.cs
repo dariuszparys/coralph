@@ -44,6 +44,7 @@ internal sealed class LoopOptions
     public bool DemoMode { get; set; }
     public string ClientName { get; set; } = "coralph";
     public string? ReasoningEffort { get; set; }
+    public bool DryRun { get; set; }
 }
 
 internal sealed class LoopOptionsOverrides
@@ -87,4 +88,5 @@ internal sealed class LoopOptionsOverrides
     public bool? DemoMode { get; set; }
     public string? ClientName { get; set; }
     public string? ReasoningEffort { get; set; }
+    public bool? DryRun { get; set; }
 }

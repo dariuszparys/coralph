@@ -1218,3 +1218,28 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Documentation tasks for the same feature can share one section; mark all related tasks done together
   - Showing both CLI and config file usage patterns gives users flexibility
+
+---
+# Iteration 1
+
+- Task completed: 95-005 Support openrouter in coralph.config.json
+- Key decisions: coralph.config.json already supports openrouter via ProviderType field; fixed README config snippet to use correct LoopOptions structure
+- Files changed: README.md
+- Blockers/notes: None
+
+---
+# Iteration 2
+
+- Task completed: 95-006 Auto-detect OPENROUTER_API_KEY from environment
+- Key decisions: Read OPENROUTER_API_KEY env var in ProviderConfigFactory when type is openrouter and no explicit key provided; explicit key always wins
+- Files changed: src/Coralph/ProviderConfigFactory.cs, src/Coralph.Tests/ProviderConfigFactoryTests.cs, README.md
+- Blockers/notes: None
+
+## 2026-03-03 - #94 (task 94-001)
+
+- Added `--dry-run` flag (tracer bullet): wired `DryRun` through `LoopOptions`, `LoopOptionsOverrides`, `ArgParser`, and `ConfigurationService.ApplyOverrides`
+- Issue fetching (GitHub and Azure Boards) still executes normally in dry-run mode; write-to-disk is skipped and output is prefixed with `[DRY RUN]`
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph/ConfigurationService.cs, src/Coralph/Program.cs, generated_tasks.json
+- **Learnings:**
+  - Following the same wiring pattern as `DemoMode` and `ReasoningEffort` keeps the plumbing consistent
+  - Skipping `fileCache.Invalidate` in dry-run mode is important: the in-memory cache should keep the existing file view

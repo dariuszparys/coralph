@@ -70,6 +70,10 @@ try
         opt.UiMode = UiMode.Tui;
         opt.StreamEvents = false;
     }
+    if (opt.DryRun)
+    {
+        opt.StreamEvents = false;
+    }
     var effectiveUiMode = UiModeResolver.Resolve(opt);
     await ConsoleOutput.ConfigureForModeAsync(effectiveUiMode, opt);
 
@@ -265,19 +269,39 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
         if (opt.RefreshIssues)
         {
             Log.Information("Refreshing issues from repository {Repo}", opt.Repo);
-            ConsoleOutput.WriteLine("Refreshing issues from GitHub...");
+            if (opt.DryRun)
+            {
+                ConsoleOutput.WriteLine("[DRY RUN] Fetching open issues from GitHub...");
+            }
+            else
+            {
+                ConsoleOutput.WriteLine("Refreshing issues from GitHub...");
+            }
             var issuesJson = await GhIssues.FetchOpenIssuesJsonAsync(opt.Repo, ct);
-            await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
-            fileCache.Invalidate(opt.IssuesFile);
+            if (!opt.DryRun)
+            {
+                await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+                fileCache.Invalidate(opt.IssuesFile);
+            }
         }
         else if (opt.RefreshIssuesAzdo)
         {
             Log.Information("Refreshing work items from Azure Boards (Organization={Organization}, Project={Project})",
                 opt.AzdoOrganization ?? "(default)", opt.AzdoProject ?? "(default)");
-            ConsoleOutput.WriteLine("Refreshing work items from Azure Boards...");
+            if (opt.DryRun)
+            {
+                ConsoleOutput.WriteLine("[DRY RUN] Fetching open work items from Azure Boards...");
+            }
+            else
+            {
+                ConsoleOutput.WriteLine("Refreshing work items from Azure Boards...");
+            }
             var issuesJson = await AzBoards.FetchOpenWorkItemsJsonAsync(opt.AzdoOrganization, opt.AzdoProject, ct);
-            await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
-            fileCache.Invalidate(opt.IssuesFile);
+            if (!opt.DryRun)
+            {
+                await File.WriteAllTextAsync(opt.IssuesFile, issuesJson, ct);
+                fileCache.Invalidate(opt.IssuesFile);
+            }
         }
 
         if (!StartupValidation.TryValidatePromptFile(opt.PromptFile, out var promptValidationError))

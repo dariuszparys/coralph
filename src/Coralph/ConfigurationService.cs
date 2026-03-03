@@ -87,5 +87,6 @@ internal static class ConfigurationService
         if (overrides.DemoMode is { } demoMode) target.DemoMode = demoMode;
         if (!string.IsNullOrWhiteSpace(overrides.ClientName)) target.ClientName = overrides.ClientName;
         if (!string.IsNullOrWhiteSpace(overrides.ReasoningEffort)) target.ReasoningEffort = overrides.ReasoningEffort;
+        if (overrides.DryRun is { } dryRun) target.DryRun = dryRun;
     }
 }
