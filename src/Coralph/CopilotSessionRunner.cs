@@ -257,8 +257,7 @@ internal sealed class CopilotSessionEventRouter(
                             ["role"] = "assistant"
                         },
                         ["delta"] = delta.Data.DeltaContent,
-                        ["parentToolCallId"] = delta.Data.ParentToolCallId,
-                        ["totalResponseSizeBytes"] = delta.Data.TotalResponseSizeBytes
+                        ["parentToolCallId"] = delta.Data.ParentToolCallId
                     }, state: state);
                 }
                 if (!state.InAssistantMode)
