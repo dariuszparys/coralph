@@ -253,8 +253,26 @@ internal static class DockerSandbox
         var stdoutTask = ReadProcessStreamAsync(process.StandardOutput, stdout, streamOutput ? ConsoleOutput.Write : null, ct);
         var stderrTask = ReadProcessStreamAsync(process.StandardError, stderr, streamOutput ? ConsoleOutput.WriteError : null, ct);
 
-        await process.WaitForExitAsync(ct);
-        await Task.WhenAll(stdoutTask, stderrTask);
+        try
+        {
+            await process.WaitForExitAsync(ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            await TryTerminateProcessTreeAsync(process).ConfigureAwait(false);
+            throw;
+        }
+        finally
+        {
+            try
+            {
+                await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                // Expected when the caller cancels process streaming.
+            }
+        }
 
         return (process.ExitCode, stdout.ToString(), stderr.ToString());
     }
@@ -274,6 +292,49 @@ internal static class DockerSandbox
             var text = new string(chunk, 0, read);
             buffer.Append(text);
             write?.Invoke(text);
+        }
+    }
+
+    private static async Task TryTerminateProcessTreeAsync(Process process)
+    {
+        try
+        {
+            if (process.HasExited)
+            {
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Failed to query Docker process exit state during cancellation");
+            return;
+        }
+
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed to terminate Docker process tree after cancellation");
+            return;
+        }
+
+        try
+        {
+            await process.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            Log.Warning("Timed out waiting for Docker process tree to terminate after cancellation");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Failed while waiting for Docker process termination after cancellation");
         }
     }
 

@@ -160,6 +160,8 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
     Console.CancelKeyPress += cancelKeyPressHandler;
 
     var ct = cts.Token;
+    using var backendMonitorCts = new CancellationTokenSource();
+    var backendMonitorTask = ConsoleOutputSupervisor.Start(cts, backendMonitorCts.Token);
     var emittedCopilotDiagnostics = false;
     var fileCache = FileContentCache.Shared;
 
@@ -344,7 +346,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
             Log.Information("No open issues found, exiting");
             ConsoleOutput.WriteLine("NO_OPEN_ISSUES");
             TryCleanupGeneratedTasksFile(opt.GeneratedTasksFile, "no open issues remained");
-            await ConsoleOutput.WaitForAnyKeyToExitAsync("No open issues remain. Press any key to close the TUI.", ct);
+            await ConsoleOutput.WaitForAnyKeyToExitAsync("No open issues remain. Press Enter, Esc, or Q to close the TUI.", ct);
             return 0;
         }
 
@@ -481,7 +483,7 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
                         }
                         if (ShouldWaitForAnyKeyToExit(terminalSignal))
                         {
-                            await ConsoleOutput.WaitForAnyKeyToExitAsync("No work remaining. Press any key to close the TUI.", ct);
+                            await ConsoleOutput.WaitForAnyKeyToExitAsync("No work remaining. Press Enter, Esc, or Q to close the TUI.", ct);
                         }
 
                         stoppedByTerminalSignal = true;
@@ -517,6 +519,19 @@ static async Task<int> RunAsync(LoopOptions opt, EventStreamWriter? eventStream)
     }
     finally
     {
+        backendMonitorCts.Cancel();
+        if (backendMonitorTask is not null)
+        {
+            try
+            {
+                await backendMonitorTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (backendMonitorCts.IsCancellationRequested)
+            {
+                // Expected when the run finishes before the backend exits.
+            }
+        }
+
         Console.CancelKeyPress -= cancelKeyPressHandler;
     }
 }

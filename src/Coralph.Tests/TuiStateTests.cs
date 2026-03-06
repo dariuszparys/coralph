@@ -175,6 +175,44 @@ public class TuiStateTests
     }
 
     [Fact]
+    public void OpenQuitPrompt_CreatesMenuWithDefaultSelection()
+    {
+        var state = new TuiState();
+
+        state.OpenQuitPrompt();
+
+        var prompt = state.GetQuitPrompt();
+        Assert.NotNull(prompt);
+        Assert.Equal(0, prompt.SelectedIndex);
+        Assert.Equal(3, prompt.Options.Count);
+        Assert.Equal(TuiQuitAction.ResumeTui, prompt.Options[0].Action);
+    }
+
+    [Fact]
+    public void CompleteQuitPrompt_ReturnsSelectedActionAndClearsPrompt()
+    {
+        var state = new TuiState();
+        state.OpenQuitPrompt();
+        state.UpdateQuitPromptSelection(1);
+
+        var action = state.CompleteQuitPrompt();
+
+        Assert.Equal(TuiQuitAction.SwitchToClassic, action);
+        Assert.Null(state.GetQuitPrompt());
+    }
+
+    [Fact]
+    public void OpenQuitPrompt_DoesNothingWhenExitPromptIsActive()
+    {
+        var state = new TuiState();
+        state.WaitForAnyKeyAsync("Done");
+
+        state.OpenQuitPrompt();
+
+        Assert.Null(state.GetQuitPrompt());
+    }
+
+    [Fact]
     public void TranscriptLines_ReturnsMostRecentWhenMaxExceeded()
     {
         var state = new TuiState();

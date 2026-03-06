@@ -33,7 +33,7 @@ internal static class DemoMode
             ConsoleOutput.WriteLine();
 
             await EmitDemoTranscriptAsync(opt, ct).ConfigureAwait(false);
-            await ConsoleOutput.WaitForAnyKeyToExitAsync("Demo mode active. Press any key to exit.", ct)
+            await ConsoleOutput.WaitForAnyKeyToExitAsync("Demo mode active. Press Enter, Esc, or Q to exit.", ct)
                 .ConfigureAwait(false);
             return 0;
         }

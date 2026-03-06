@@ -20,6 +20,7 @@ internal static class CopilotRunner
 
         await using var client = new CopilotClient(clientOptions);
         var started = false;
+        var abortRequested = 0;
         string result;
         try
         {
@@ -46,14 +47,42 @@ internal static class CopilotRunner
                 var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);
                 var state = router.StartTurn(turn);
                 using var sub = session.On(router.HandleEvent);
+                using var cancelRegistration = ct.Register(() =>
+                {
+                    state.Done.TrySetCanceled(ct);
+                    if (Interlocked.Exchange(ref abortRequested, 1) != 0)
+                    {
+                        return;
+                    }
+
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await session.DisposeAsync().ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Failed to abort one-shot Copilot session after cancellation");
+                        }
+
+                        try
+                        {
+                            await client.StopAsync().ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Failed to stop Copilot client after cancellation");
+                        }
+                    });
+                });
+
+                ct.ThrowIfCancellationRequested();
                 await session.SendAsync(new MessageOptions { Prompt = prompt });
 
                 try
                 {
-                    using (ct.Register(() => state.Done.TrySetCanceled(ct)))
-                    {
-                        await state.Done.Task;
-                    }
+                    await state.Done.Task;
                 }
                 finally
                 {
@@ -65,7 +94,7 @@ internal static class CopilotRunner
         }
         finally
         {
-            if (started)
+            if (started && Interlocked.CompareExchange(ref abortRequested, 0, 0) == 0)
             {
                 try
                 {

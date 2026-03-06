@@ -24,6 +24,7 @@ internal sealed class TuiState
     private int _taskListScrollOffset;
 
     private PromptSelectionRequest? _prompt;
+    private QuitPromptRequest? _quitPrompt;
     private ExitPromptRequest? _exitPrompt;
 
     internal void AppendLine(TranscriptEntryKind kind, string text)
@@ -244,6 +245,14 @@ internal sealed class TuiState
         }
     }
 
+    internal QuitPromptRequest? GetQuitPrompt()
+    {
+        lock (_lock)
+        {
+            return _quitPrompt;
+        }
+    }
+
     internal Task<int> RequestPromptSelectionAsync(string title, IReadOnlyList<string> options, int defaultIndex)
     {
         lock (_lock)
@@ -302,6 +311,56 @@ internal sealed class TuiState
         {
             _prompt?.Completion.TrySetCanceled();
             _prompt = null;
+        }
+    }
+
+    internal void OpenQuitPrompt()
+    {
+        lock (_lock)
+        {
+            if (_prompt is not null || _exitPrompt is not null)
+            {
+                return;
+            }
+
+            _quitPrompt ??= new QuitPromptRequest(QuitPromptRequest.DefaultOptions, selectedIndex: 0);
+        }
+    }
+
+    internal void UpdateQuitPromptSelection(int index)
+    {
+        lock (_lock)
+        {
+            if (_quitPrompt is null)
+            {
+                return;
+            }
+
+            _quitPrompt.SelectedIndex = Math.Clamp(index, 0, _quitPrompt.Options.Count - 1);
+        }
+    }
+
+    internal TuiQuitAction CompleteQuitPrompt(int? index = null)
+    {
+        lock (_lock)
+        {
+            if (_quitPrompt is null)
+            {
+                return TuiQuitAction.ResumeTui;
+            }
+
+            var selectedIndex = Math.Clamp(index ?? _quitPrompt.SelectedIndex, 0, _quitPrompt.Options.Count - 1);
+            var action = _quitPrompt.Options[selectedIndex].Action;
+            _quitPrompt = null;
+            return action;
+        }
+    }
+
+    internal void CancelQuitPrompt()
+    {
+        lock (_lock)
+        {
+            _quitPrompt = null;
         }
     }
 
@@ -404,6 +463,34 @@ internal sealed class PromptSelectionRequest
     internal IReadOnlyList<string> Options { get; }
     internal int SelectedIndex { get; set; }
     internal TaskCompletionSource<int> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+}
+
+internal enum TuiQuitAction
+{
+    ResumeTui,
+    SwitchToClassic,
+    StopCoralph
+}
+
+internal sealed record QuitPromptOption(TuiQuitAction Action, string Label);
+
+internal sealed class QuitPromptRequest
+{
+    internal static IReadOnlyList<QuitPromptOption> DefaultOptions { get; } =
+    [
+        new(TuiQuitAction.ResumeTui, "Resume TUI"),
+        new(TuiQuitAction.SwitchToClassic, "Switch to classic output"),
+        new(TuiQuitAction.StopCoralph, "Stop Coralph")
+    ];
+
+    internal QuitPromptRequest(IReadOnlyList<QuitPromptOption> options, int selectedIndex)
+    {
+        Options = options;
+        SelectedIndex = selectedIndex;
+    }
+
+    internal IReadOnlyList<QuitPromptOption> Options { get; }
+    internal int SelectedIndex { get; set; }
 }
 
 internal sealed class ExitPromptRequest

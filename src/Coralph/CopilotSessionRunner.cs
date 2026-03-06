@@ -12,6 +12,7 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
     private readonly IDisposable _subscription;
     private bool _started;
     private bool _disposed;
+    private int _abortRequested;
 
     private CopilotSessionRunner(
         CopilotClient client,
@@ -106,15 +107,19 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
             throw new ObjectDisposedException(nameof(CopilotSessionRunner));
         }
 
+        ct.ThrowIfCancellationRequested();
         var state = _router.StartTurn(turn);
         try
         {
-            await _session.SendAsync(new MessageOptions { Prompt = prompt });
-
-            using (ct.Register(() => state.Done.TrySetCanceled(ct)))
+            using var cancelRegistration = ct.Register(() =>
             {
-                await state.Done.Task;
-            }
+                state.Done.TrySetCanceled(ct);
+                RequestAbort();
+            });
+
+            ct.ThrowIfCancellationRequested();
+            await _session.SendAsync(new MessageOptions { Prompt = prompt });
+            await state.Done.Task;
 
             return state.Output.ToString().Trim();
         }
@@ -122,6 +127,26 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
         {
             _router.EndTurn();
         }
+    }
+
+    private void RequestAbort()
+    {
+        if (Interlocked.Exchange(ref _abortRequested, 1) != 0)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Failed to abort Copilot session after cancellation");
+            }
+        });
     }
 
     public async ValueTask DisposeAsync()

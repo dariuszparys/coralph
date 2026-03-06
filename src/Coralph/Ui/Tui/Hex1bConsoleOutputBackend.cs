@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Coralph.Ui;
 using Hex1b;
+using Hex1b.Events;
 using Hex1b.Input;
 using Hex1b.Layout;
 using Hex1b.Widgets;
@@ -12,18 +13,18 @@ namespace Coralph.Ui.Tui;
 internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 {
     private static readonly Regex MarkupRegex = new(@"\[[^\]]+\]", RegexOptions.Compiled);
-    private static readonly Hex1bKey[] ExitAnyKeys = Enum.GetValues<Hex1bKey>()
-        .Where(key => key != Hex1bKey.None)
-        .ToArray();
 
     private readonly TuiState _state = new();
     private readonly GeneratedTasksSnapshotReader _tasksReader = new();
     private readonly LoopOptions _options;
     private readonly CancellationTokenSource _cts = new();
+    private readonly TaskCompletionSource<ConsoleOutputBackendExit> _exitTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private Hex1bApp? _app;
     private Task? _uiTask;
     private Task? _pollTask;
+    private int _exitSignaled;
+    private bool _disposeRequested;
 
     private IAnsiConsole _out;
     private IAnsiConsole _error;
@@ -36,6 +37,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     }
 
     public bool UsesTui => true;
+    public Task<ConsoleOutputBackendExit>? ExitTask => _exitTcs.Task;
 
     public IAnsiConsole Out => _out;
 
@@ -61,7 +63,9 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
     public async ValueTask DisposeAsync()
     {
+        _disposeRequested = true;
         _state.CancelPrompt();
+        _state.CancelQuitPrompt();
         _state.CancelExitPrompt();
 
         _cts.Cancel();
@@ -254,6 +258,11 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             _state.CancelExitPrompt();
             throw;
         }
+        catch (OperationCanceledException)
+        {
+            // The TUI backend can be disposed when switching to classic output.
+            // Treat that as a normal end to the TUI-specific wait.
+        }
         finally
         {
             RequestInvalidate();
@@ -274,10 +283,18 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         try
         {
             await terminal.RunAsync(ct).ConfigureAwait(false);
+            if (!_disposeRequested)
+            {
+                SignalExit(ConsoleOutputBackendExitReason.UnexpectedFailure, "TUI stopped unexpectedly");
+            }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
             // Expected on shutdown.
+        }
+        catch (Exception ex)
+        {
+            SignalExit(ConsoleOutputBackendExitReason.UnexpectedFailure, ex.Message, ex);
         }
     }
 
@@ -306,6 +323,12 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             return BuildPromptWidget(ctx, prompt);
         }
 
+        var quitPrompt = _state.GetQuitPrompt();
+        if (quitPrompt is not null)
+        {
+            return BuildQuitPromptWidget(ctx, quitPrompt);
+        }
+
         var exitPrompt = _state.GetExitPrompt();
         var transcriptLines = _state.GetTranscriptLines(maxLines: CalculateTranscriptVisibleLines());
         var tasksSnapshot = _state.GetTasksSnapshot();
@@ -316,13 +339,13 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         {
             infoItems.Add("DEMO");
         }
-        infoItems.AddRange(["Tasks", tasksSnapshot.Tasks.Count.ToString(), "Task Nav", "k/j  Ctrl+U/Ctrl+D  gg/G (Home/End)", "Keys", "Ctrl+C exits"]);
+        infoItems.AddRange(["Tasks", tasksSnapshot.Tasks.Count.ToString(), "Task Nav", "k/j  Ctrl+U/Ctrl+D  gg/Shift+G (Home/End)", "Keys", "Esc/q menu  Ctrl+C stops"]);
         var doneItems = new List<string> { "Coralph", "TUI" };
         if (_options.DemoMode)
         {
             doneItems.Add("DEMO");
         }
-        doneItems.AddRange(["Done", "Press any key to exit"]);
+        doneItems.AddRange(["Done", "Enter/Esc/Q closes"]);
 
         return ctx.VStack(v =>
         [
@@ -347,11 +370,18 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             bindings.Ctrl().Key(Hex1bKey.C).Global().Action(actionCtx =>
             {
                 _state.CancelPrompt();
+                _state.CancelQuitPrompt();
                 ConsoleOutput.RequestStop();
                 actionCtx.RequestStop();
             }, "Stop Coralph");
 
-            if (tasksSnapshot.Tasks.Count > 0)
+            if (exitPrompt is null)
+            {
+                bindings.Key(Hex1bKey.Escape).Global().Action(_ => OpenQuitPrompt(), "Open run menu");
+                bindings.Key(Hex1bKey.Q).Global().Action(_ => OpenQuitPrompt(), "Open run menu");
+            }
+
+            if (exitPrompt is null && tasksSnapshot.Tasks.Count > 0)
             {
                 var listRows = Math.Max(1, taskListVisibleRows);
                 bindings.Key(Hex1bKey.K).Global().Action(_ => HandleTaskSelection(-1, listRows), "Previous task");
@@ -359,17 +389,16 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                 bindings.Ctrl().Key(Hex1bKey.U).Global().Action(_ => HandleTaskSelection(-listRows, listRows), "Previous task page");
                 bindings.Ctrl().Key(Hex1bKey.D).Global().Action(_ => HandleTaskSelection(listRows, listRows), "Next task page");
                 bindings.Key(Hex1bKey.G).Then().Key(Hex1bKey.G).Global().Action(_ => HandleTaskFirst(listRows), "First task");
-                bindings.Key(Hex1bKey.G).Global().Action(_ => HandleTaskLast(listRows), "Last task");
+                bindings.Shift().Key(Hex1bKey.G).Global().Action(_ => HandleTaskLast(listRows), "Last task");
                 bindings.Key(Hex1bKey.Home).Global().Action(_ => HandleTaskFirst(listRows), "First task");
                 bindings.Key(Hex1bKey.End).Global().Action(_ => HandleTaskLast(listRows), "Last task");
             }
 
             if (exitPrompt is not null)
             {
-                foreach (var key in ExitAnyKeys)
-                {
-                    bindings.Key(key).Global().Action(HandleExitPromptInput, "Close TUI");
-                }
+                bindings.Key(Hex1bKey.Enter).Global().Action(HandleExitPromptInput, "Close TUI");
+                bindings.Key(Hex1bKey.Escape).Global().Action(HandleExitPromptInput, "Close TUI");
+                bindings.Key(Hex1bKey.Q).Global().Action(HandleExitPromptInput, "Close TUI");
             }
         });
     }
@@ -396,6 +425,37 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
             bindings.Ctrl().Key(Hex1bKey.C).Global().Action(actionCtx =>
             {
                 _state.CancelPrompt();
+                _state.CancelQuitPrompt();
+                ConsoleOutput.RequestStop();
+                actionCtx.RequestStop();
+            }, "Stop Coralph");
+        });
+    }
+
+    private Hex1bWidget BuildQuitPromptWidget(RootContext ctx, QuitPromptRequest prompt)
+    {
+        var options = prompt.Options.Select(option => option.Label).ToArray();
+        var promptList = (ctx.List(options) with
+        {
+            InitialSelectedIndex = Math.Clamp(prompt.SelectedIndex, 0, options.Length - 1)
+        })
+            .OnSelectionChanged(e => _state.UpdateQuitPromptSelection(e.SelectedIndex))
+            .OnItemActivated(HandleQuitPromptActivated);
+
+        return ctx.VStack(v =>
+        [
+            v.Text("Leave the TUI?"),
+            v.Text("Choose how Coralph should continue.").FixedHeight(1),
+            v.Border(promptList.Fill()).Title("Run Menu").FillHeight(),
+            v.InfoBar(["Prompt", "Active", "Keys", "Arrow + Enter", "Esc", "Resume"])
+        ]).WithInputBindings(bindings =>
+        {
+            bindings.Key(Hex1bKey.Escape).Global().Action(_ => CancelQuitPrompt(), "Resume TUI");
+            bindings.Ctrl().Key(Hex1bKey.C).Global().Action(actionCtx =>
+            {
+                _state.CancelQuitPrompt();
+                SignalExit(ConsoleOutputBackendExitReason.StopRequested, "Stop requested from TUI.");
+                _cts.Cancel();
                 ConsoleOutput.RequestStop();
                 actionCtx.RequestStop();
             }, "Stop Coralph");
@@ -649,6 +709,8 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     private void HandleExitPromptInput(InputBindingActionContext actionCtx)
     {
         _state.CompleteExitPrompt();
+        SignalExit(ConsoleOutputBackendExitReason.Completed, "TUI closed after completion.");
+        _cts.Cancel();
         actionCtx.RequestStop();
     }
 
@@ -714,6 +776,53 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         {
             // Best effort; app may be shutting down.
         }
+    }
+
+    private void OpenQuitPrompt()
+    {
+        _state.OpenQuitPrompt();
+        RequestInvalidate();
+    }
+
+    private void CancelQuitPrompt()
+    {
+        _state.CancelQuitPrompt();
+        RequestInvalidate();
+    }
+
+    private void HandleQuitPromptActivated(ListItemActivatedEventArgs activated)
+    {
+        var action = _state.CompleteQuitPrompt(activated.ActivatedIndex);
+        RequestInvalidate();
+
+        switch (action)
+        {
+            case TuiQuitAction.ResumeTui:
+                return;
+            case TuiQuitAction.SwitchToClassic:
+                SignalExit(ConsoleOutputBackendExitReason.SwitchToClassic, "Leaving TUI. Continuing in classic output.");
+                _cts.Cancel();
+                activated.Context.RequestStop();
+                return;
+            case TuiQuitAction.StopCoralph:
+                SignalExit(ConsoleOutputBackendExitReason.StopRequested, "Stop requested from TUI.");
+                _cts.Cancel();
+                ConsoleOutput.RequestStop();
+                activated.Context.RequestStop();
+                return;
+            default:
+                return;
+        }
+    }
+
+    private void SignalExit(ConsoleOutputBackendExitReason reason, string? message = null, Exception? exception = null)
+    {
+        if (Interlocked.Exchange(ref _exitSignaled, 1) != 0)
+        {
+            return;
+        }
+
+        _exitTcs.TrySetResult(new ConsoleOutputBackendExit(reason, message, exception));
     }
 
     private static string StripMarkup(string text)

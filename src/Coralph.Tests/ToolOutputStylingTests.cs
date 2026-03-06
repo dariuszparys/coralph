@@ -4,6 +4,7 @@ using Spectre.Console.Testing;
 
 namespace Coralph.Tests;
 
+[Collection("ConsoleOutput")]
 public class ToolOutputStylingTests
 {
     [Fact]

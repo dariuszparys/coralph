@@ -7,6 +7,7 @@ internal interface IConsoleOutputBackend : IProjectTypePrompt, IAsyncDisposable
     bool UsesTui { get; }
     IAnsiConsole Out { get; }
     IAnsiConsole Error { get; }
+    Task<ConsoleOutputBackendExit>? ExitTask { get; }
 
     Task InitializeAsync(CancellationToken ct = default);
 

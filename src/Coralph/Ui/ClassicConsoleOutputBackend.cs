@@ -5,6 +5,7 @@ namespace Coralph.Ui;
 internal sealed class ClassicConsoleOutputBackend : IConsoleOutputBackend
 {
     public bool UsesTui => false;
+    public Task<ConsoleOutputBackendExit>? ExitTask => null;
 
     public IAnsiConsole Out
     {

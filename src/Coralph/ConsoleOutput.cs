@@ -11,6 +11,7 @@ internal static class ConsoleOutput
     private static Action? _stopRequested;
 
     internal static bool UsesTui => _backend.UsesTui;
+    internal static Task<ConsoleOutputBackendExit>? ExitTask => _backend.ExitTask;
 
     internal static IAnsiConsole Out => _backend.Out;
 
@@ -50,6 +51,16 @@ internal static class ConsoleOutput
     {
         var backend = Interlocked.Exchange(ref _backend, new ClassicConsoleOutputBackend());
         await backend.DisposeAsync().ConfigureAwait(false);
+    }
+
+    internal static Task<ConsoleOutputBackendExit>? GetBackendExitTask()
+    {
+        return Volatile.Read(ref _backend).ExitTask;
+    }
+
+    internal static Task SwitchToClassicAsync(CancellationToken ct = default)
+    {
+        return UseBackendAsync(new ClassicConsoleOutputBackend(), ct);
     }
 
     internal static IDisposable PushStopRequestHandler(Action handler)
