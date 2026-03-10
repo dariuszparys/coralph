@@ -41,8 +41,8 @@
       },
       "GitHub.Copilot.SDK": {
         "type": "Transitive",
-        "resolved": "0.1.29",
-        "contentHash": "CpzIZwcuo4vyn+Z5vKSKECkcAiF4K01kgBNlJYd9LmIh+dpBh0nFjemjY2MgMNoH8qu1rKqM+V8WNUzv1RZGAQ==",
+        "resolved": "0.1.32",
+        "contentHash": "NztOyKvGrepwNqRB+rcywN5wC2kYLMgzZx86T/5IAYW8G0lkTMMKuCY+3UsHGx4aja6zkpQfclI6P2s2XtBRYw==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.2",
@@ -377,7 +377,7 @@
       "coralph": {
         "type": "Project",
         "dependencies": {
-          "GitHub.Copilot.SDK": "[0.1.29, )",
+          "GitHub.Copilot.SDK": "[0.1.32, )",
           "Hex1b": "[0.83.0, )",
           "Microsoft.Extensions.Configuration.Json": "[8.0.0, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[8.0.0, )",
