@@ -46,8 +46,8 @@ internal sealed class PermissionPolicy(LoopOptions opt, EventStreamWriter? event
 
         var decision = EvaluateDecision(candidates, out var matchedRule);
         var resultKind = decision == PermissionDecision.Allow
-            ? "approved"
-            : "denied-interactively-by-user";
+            ? PermissionRequestResultKind.Approved
+            : PermissionRequestResultKind.DeniedByRules;
 
         EmitDecision(kind, toolName, candidates, decision, matchedRule);
 
