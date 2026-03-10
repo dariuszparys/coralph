@@ -14,7 +14,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -194,7 +194,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     [Fact]
@@ -218,7 +218,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("denied-interactively-by-user", result.Kind);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -230,12 +230,22 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        Assert.Equal("approved", result.Kind);
+        AssertApproved(result);
     }
 
     private static PermissionRequest CreateRequest(string kind)
     {
         return new PermissionRequest { Kind = kind };
+    }
+
+    private static void AssertApproved(PermissionRequestResult result)
+    {
+        Assert.Equal(PermissionRequestResultKind.Approved, result.Kind);
+    }
+
+    private static void AssertDeniedByRules(PermissionRequestResult result)
+    {
+        Assert.Equal(PermissionRequestResultKind.DeniedByRules, result.Kind);
     }
 
     private static PermissionInvocation CreateInvocation()
