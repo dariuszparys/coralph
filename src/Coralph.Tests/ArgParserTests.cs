@@ -359,6 +359,26 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithClientName_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--client-name", "coralph-tests"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("coralph-tests", overrides.ClientName);
+    }
+
+    [Fact]
+    public void Parse_WithReasoningEffort_TrimsAndSetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--reasoning-effort", "  high  "]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("high", overrides.ReasoningEffort);
+    }
+
+    [Fact]
     public void PrintUsage_WritesToTextWriter()
     {
         var sw = new StringWriter();
@@ -378,5 +398,17 @@ public class ArgParserTests
         Assert.Contains("--azdo-project", output);
         Assert.Contains("--ui", output);
         Assert.Contains("--demo", output);
+        Assert.Contains("--client-name", output);
+        Assert.Contains("--reasoning-effort", output);
+    }
+
+    [Fact]
+    public void RegisteredOptions_IncludeHelpDriftOptions()
+    {
+        var optionNames = ArgParser.GetRegisteredOptionNames();
+
+        Assert.Contains("--client-name", optionNames);
+        Assert.Contains("--reasoning-effort", optionNames);
+        Assert.Equal(optionNames.Count, optionNames.Distinct(StringComparer.Ordinal).Count());
     }
 }

@@ -108,9 +108,9 @@ internal static class PromptHelpers
         if (string.IsNullOrWhiteSpace(output))
             return false;
 
-        if (output.Contains("<promise>COMPLETE</promise>", StringComparison.OrdinalIgnoreCase))
+        if (output.Contains($"<promise>{TerminalSignal.Complete}</promise>", StringComparison.OrdinalIgnoreCase))
         {
-            signal = "COMPLETE";
+            signal = TerminalSignal.Complete;
             return true;
         }
 
@@ -122,32 +122,26 @@ internal static class PromptHelpers
 
             line = TrimMarkdownWrapper(line);
 
-            if (line.Equals("COMPLETE", StringComparison.OrdinalIgnoreCase))
+            if (line.Equals(TerminalSignal.Complete, StringComparison.OrdinalIgnoreCase))
             {
-                signal = "COMPLETE";
+                signal = TerminalSignal.Complete;
                 return true;
             }
 
-            if (line.Equals("ALL_TASKS_COMPLETE", StringComparison.OrdinalIgnoreCase))
+            if (line.Equals(TerminalSignal.AllTasksComplete, StringComparison.OrdinalIgnoreCase))
             {
-                signal = "ALL_TASKS_COMPLETE";
+                signal = TerminalSignal.AllTasksComplete;
                 return true;
             }
 
-            if (line.Equals("NO_OPEN_ISSUES", StringComparison.OrdinalIgnoreCase))
+            if (line.Equals(TerminalSignal.NoOpenIssues, StringComparison.OrdinalIgnoreCase))
             {
-                signal = "NO_OPEN_ISSUES";
+                signal = TerminalSignal.NoOpenIssues;
                 return true;
             }
         }
 
         return false;
-    }
-
-    internal static bool ContainsComplete(string output)
-    {
-        return TryGetTerminalSignal(output, out var signal) &&
-               string.Equals(signal, "COMPLETE", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string TrimMarkdownWrapper(string value)

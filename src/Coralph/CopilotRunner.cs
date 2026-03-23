@@ -9,16 +9,7 @@ internal static class CopilotRunner
 {
     internal static async Task<string> RunOnceAsync(LoopOptions opt, string prompt, CancellationToken ct, EventStreamWriter? eventStream = null, int? turn = null)
     {
-        var clientOptions = new CopilotClientOptions
-        {
-            Cwd = Directory.GetCurrentDirectory(),
-        };
-
-        if (!string.IsNullOrWhiteSpace(opt.CliPath)) clientOptions.CliPath = opt.CliPath;
-        if (!string.IsNullOrWhiteSpace(opt.CliUrl)) clientOptions.CliUrl = opt.CliUrl;
-        if (!string.IsNullOrWhiteSpace(opt.CopilotToken)) clientOptions.GitHubToken = opt.CopilotToken;
-
-        await using var client = new CopilotClient(clientOptions);
+        await using var client = new CopilotClient(CopilotClientFactory.CreateClientOptions(opt));
         var started = false;
         var abortRequested = 0;
         string result;
@@ -33,16 +24,8 @@ internal static class CopilotRunner
             // OnUserInputRequest and OnPreToolUse/OnPostToolUse hooks are intentionally not set.
             // Coralph runs unattended; models must not prompt for user input during a loop iteration.
             // Tool-use events are already captured by CopilotSessionEventRouter via session.On().
-            await using (var session = await client.CreateSessionAsync(new SessionConfig
-            {
-                Model = opt.Model,
-                Streaming = true,
-                Tools = customTools,
-                OnPermissionRequest = permissionPolicy.HandleAsync,
-                Provider = ProviderConfigFactory.Create(opt),
-                ClientName = opt.ClientName,
-                ReasoningEffort = opt.ReasoningEffort
-            }))
+            await using (var session = await client.CreateSessionAsync(
+                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync)))
             {
                 var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);
                 var state = router.StartTurn(turn);

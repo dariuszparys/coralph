@@ -4,64 +4,6 @@ namespace Coralph.Tests;
 
 public class PromptHelpersTests
 {
-    #region ContainsComplete Tests
-
-    [Fact]
-    public void ContainsComplete_WithPromiseTag_ReturnsTrue()
-    {
-        var output = "Some output\n<promise>COMPLETE</promise>\nMore output";
-
-        Assert.True(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithPromiseTagCaseInsensitive_ReturnsTrue()
-    {
-        var output = "<Promise>complete</Promise>";
-
-        Assert.True(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithPlainComplete_ReturnsTrue()
-    {
-        var output = "Some output\nCOMPLETE\nMore output";
-
-        Assert.True(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithPlainCompleteLowercase_ReturnsTrue()
-    {
-        var output = "Some output\ncomplete\nMore output";
-
-        Assert.True(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithoutComplete_ReturnsFalse()
-    {
-        var output = "Some regular output without the magic word";
-
-        Assert.False(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithCompleteInWord_ReturnsFalse()
-    {
-        var output = "The task is completed successfully";
-
-        Assert.False(PromptHelpers.ContainsComplete(output));
-    }
-
-    [Fact]
-    public void ContainsComplete_WithEmptyString_ReturnsFalse()
-    {
-        Assert.False(PromptHelpers.ContainsComplete(""));
-    }
-
-    #endregion
-
     #region TryGetTerminalSignal Tests
 
     [Fact]

@@ -9,114 +9,23 @@ internal static class ArgParser
     internal static (LoopOptionsOverrides? Overrides, string? Error, bool Init, string? ConfigFile, bool ShowHelp, bool ShowVersion) Parse(string[] args)
     {
         var options = new LoopOptionsOverrides();
+        var optionSet = CreateOptionSet();
         string? configFile = null;
         var showHelp = false;
         var showVersion = false;
         var init = false;
         var errorMessages = new List<string>();
 
-        var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
-        var helpOption = new Option<bool>(new[] { "-h", "--help" }, "Show help");
-        var versionOption = new Option<bool>(new[] { "-v", "--version" }, "Show version");
-        var workingDirOption = new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)");
-        var maxIterationsOption = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
-        var modelOption = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
-        var providerTypeOption = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
-        var providerBaseUrlOption = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
-        var providerWireApiOption = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
-        var providerApiKeyOption = new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)");
-        var promptFileOption = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
-        var progressFileOption = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
-        var issuesFileOption = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
-        var generatedTasksFileOption = new Option<string?>("--generated-tasks-file", "Generated tasks backlog file (default: generated_tasks.json)");
-        var refreshIssuesOption = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
-        var repoOption = new Option<string?>("--repo", "Optional repo override for gh");
-        var refreshIssuesAzdoOption = new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`");
-        var azdoOrganizationOption = new Option<string?>("--azdo-organization", "Azure DevOps organization URL (uses az devops defaults if not set)");
-        var azdoProjectOption = new Option<string?>("--azdo-project", "Azure DevOps project name (uses az devops defaults if not set)");
-        var cliPathOption = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
-        var cliUrlOption = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
-        var copilotConfigPathOption = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
-        var copilotTokenOption = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
-        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)");
-        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny listed tool/permission kinds; all other tools remain allowed (repeatable or comma-separated)");
-        var configOption = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
-        var initOption = new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits");
-        var showReasoningOption = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
-        var colorizedOutputOption = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
-        var uiOption = new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)");
-        var demoOption = new Option<bool>("--demo", "Run in demo mode with mock UI data");
-        var streamEventsOption = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
-        var dockerSandboxOption = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
-        var dockerImageOption = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
-        var listModelsOption = new Option<bool>("--list-models", "List available Copilot models and exit");
-        var listModelsJsonOption = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
-        var clientNameOption = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
-        var reasoningEffortOption = new Option<string?>("--reasoning-effort", "Reasoning effort hint for the model (e.g. low, medium, high); omit to use model default");
-        var dryRunOption = new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)");
-
-        toolAllowOption.AllowMultipleArgumentsPerToken = true;
-        toolDenyOption.AllowMultipleArgumentsPerToken = true;
-
-        root.AddOption(helpOption);
-        root.AddOption(versionOption);
-        root.AddOption(workingDirOption);
-        root.AddOption(maxIterationsOption);
-        root.AddOption(modelOption);
-        root.AddOption(providerTypeOption);
-        root.AddOption(providerBaseUrlOption);
-        root.AddOption(providerWireApiOption);
-        root.AddOption(providerApiKeyOption);
-        root.AddOption(promptFileOption);
-        root.AddOption(progressFileOption);
-        root.AddOption(issuesFileOption);
-        root.AddOption(generatedTasksFileOption);
-        root.AddOption(refreshIssuesOption);
-        root.AddOption(repoOption);
-        root.AddOption(refreshIssuesAzdoOption);
-        root.AddOption(azdoOrganizationOption);
-        root.AddOption(azdoProjectOption);
-        root.AddOption(cliPathOption);
-        root.AddOption(cliUrlOption);
-        root.AddOption(copilotConfigPathOption);
-        root.AddOption(copilotTokenOption);
-        root.AddOption(toolAllowOption);
-        root.AddOption(toolDenyOption);
-        root.AddOption(configOption);
-        root.AddOption(initOption);
-        root.AddOption(showReasoningOption);
-        root.AddOption(colorizedOutputOption);
-        root.AddOption(uiOption);
-        root.AddOption(demoOption);
-        root.AddOption(streamEventsOption);
-        root.AddOption(dockerSandboxOption);
-        root.AddOption(dockerImageOption);
-        root.AddOption(listModelsOption);
-        root.AddOption(listModelsJsonOption);
-        root.AddOption(clientNameOption);
-        root.AddOption(reasoningEffortOption);
-        root.AddOption(dryRunOption);
-
+        var root = optionSet.CreateRootCommand();
         var result = root.Parse(args);
-        showHelp = result.GetValueForOption(helpOption);
-        showVersion = result.GetValueForOption(versionOption);
-        init = result.GetValueForOption(initOption);
-        configFile = result.GetValueForOption(configOption);
+        showHelp = result.GetValueForOption(optionSet.Help);
+        showVersion = result.GetValueForOption(optionSet.Version);
+        init = result.GetValueForOption(optionSet.Init);
+        configFile = result.GetValueForOption(optionSet.Config);
 
-        var workingDir = result.GetValueForOption(workingDirOption);
-        if (workingDir is not null)
-        {
-            if (string.IsNullOrWhiteSpace(workingDir))
-            {
-                errorMessages.Add("--working-dir is required");
-            }
-            else
-            {
-                options.WorkingDir = workingDir;
-            }
-        }
+        ApplyRequiredStringOption(result, optionSet.WorkingDir, value => options.WorkingDir = value, errorMessages, "--working-dir is required");
 
-        var maxIterations = result.GetValueForOption(maxIterationsOption);
+        var maxIterations = result.GetValueForOption(optionSet.MaxIterations);
         if (maxIterations is { } parsedMaxIterations)
         {
             if (parsedMaxIterations < 1)
@@ -129,171 +38,57 @@ internal static class ArgParser
             }
         }
 
-        var model = result.GetValueForOption(modelOption);
-        if (model is not null)
-        {
-            if (string.IsNullOrWhiteSpace(model))
-            {
-                errorMessages.Add("--model is required");
-            }
-            else
-            {
-                options.Model = model;
-            }
-        }
+        ApplyRequiredStringOption(result, optionSet.Model, value => options.Model = value, errorMessages, "--model is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderType, value => options.ProviderType = value, errorMessages, "--provider-type is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderBaseUrl, value => options.ProviderBaseUrl = value, errorMessages, "--provider-base-url is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderWireApi, value => options.ProviderWireApi = value, errorMessages, "--provider-wire-api is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderApiKey, value => options.ProviderApiKey = value, errorMessages, "--provider-api-key is required");
+        ApplyRequiredStringOption(result, optionSet.PromptFile, value => options.PromptFile = value, errorMessages, "--prompt-file is required");
+        ApplyRequiredStringOption(result, optionSet.ProgressFile, value => options.ProgressFile = value, errorMessages, "--progress-file is required");
+        ApplyRequiredStringOption(result, optionSet.IssuesFile, value => options.IssuesFile = value, errorMessages, "--issues-file is required");
+        ApplyRequiredStringOption(result, optionSet.GeneratedTasksFile, value => options.GeneratedTasksFile = value, errorMessages, "--generated-tasks-file is required");
 
-        var providerType = result.GetValueForOption(providerTypeOption);
-        if (providerType is not null)
-        {
-            if (string.IsNullOrWhiteSpace(providerType))
-            {
-                errorMessages.Add("--provider-type is required");
-            }
-            else
-            {
-                options.ProviderType = providerType;
-            }
-        }
-
-        var providerBaseUrl = result.GetValueForOption(providerBaseUrlOption);
-        if (providerBaseUrl is not null)
-        {
-            if (string.IsNullOrWhiteSpace(providerBaseUrl))
-            {
-                errorMessages.Add("--provider-base-url is required");
-            }
-            else
-            {
-                options.ProviderBaseUrl = providerBaseUrl;
-            }
-        }
-
-        var providerWireApi = result.GetValueForOption(providerWireApiOption);
-        if (providerWireApi is not null)
-        {
-            if (string.IsNullOrWhiteSpace(providerWireApi))
-            {
-                errorMessages.Add("--provider-wire-api is required");
-            }
-            else
-            {
-                options.ProviderWireApi = providerWireApi;
-            }
-        }
-
-        var providerApiKey = result.GetValueForOption(providerApiKeyOption);
-        if (providerApiKey is not null)
-        {
-            if (string.IsNullOrWhiteSpace(providerApiKey))
-            {
-                errorMessages.Add("--provider-api-key is required");
-            }
-            else
-            {
-                options.ProviderApiKey = providerApiKey;
-            }
-        }
-
-        var promptFile = result.GetValueForOption(promptFileOption);
-        if (promptFile is not null)
-        {
-            if (string.IsNullOrWhiteSpace(promptFile))
-            {
-                errorMessages.Add("--prompt-file is required");
-            }
-            else
-            {
-                options.PromptFile = promptFile;
-            }
-        }
-
-        var progressFile = result.GetValueForOption(progressFileOption);
-        if (progressFile is not null)
-        {
-            if (string.IsNullOrWhiteSpace(progressFile))
-            {
-                errorMessages.Add("--progress-file is required");
-            }
-            else
-            {
-                options.ProgressFile = progressFile;
-            }
-        }
-
-        var issuesFile = result.GetValueForOption(issuesFileOption);
-        if (issuesFile is not null)
-        {
-            if (string.IsNullOrWhiteSpace(issuesFile))
-            {
-                errorMessages.Add("--issues-file is required");
-            }
-            else
-            {
-                options.IssuesFile = issuesFile;
-            }
-        }
-
-        var generatedTasksFile = result.GetValueForOption(generatedTasksFileOption);
-        if (generatedTasksFile is not null)
-        {
-            if (string.IsNullOrWhiteSpace(generatedTasksFile))
-            {
-                errorMessages.Add("--generated-tasks-file is required");
-            }
-            else
-            {
-                options.GeneratedTasksFile = generatedTasksFile;
-            }
-        }
-
-        if (result.GetValueForOption(refreshIssuesOption))
+        if (result.GetValueForOption(optionSet.RefreshIssues))
         {
             options.RefreshIssues = true;
         }
 
-        var repo = result.GetValueForOption(repoOption);
+        var repo = result.GetValueForOption(optionSet.Repo);
         if (repo is not null)
         {
-            if (string.IsNullOrWhiteSpace(repo))
-            {
-                errorMessages.Add("--repo is required");
-            }
-            else
-            {
-                options.Repo = repo;
-            }
+            ApplyRequiredStringOption(result, optionSet.Repo, value => options.Repo = value, errorMessages, "--repo is required");
         }
 
-        if (result.GetValueForOption(refreshIssuesAzdoOption))
+        if (result.GetValueForOption(optionSet.RefreshIssuesAzdo))
         {
             options.RefreshIssuesAzdo = true;
         }
 
-        var azdoOrganization = result.GetValueForOption(azdoOrganizationOption);
+        var azdoOrganization = result.GetValueForOption(optionSet.AzdoOrganization);
         if (azdoOrganization is not null)
         {
             options.AzdoOrganization = azdoOrganization;
         }
 
-        var azdoProject = result.GetValueForOption(azdoProjectOption);
+        var azdoProject = result.GetValueForOption(optionSet.AzdoProject);
         if (azdoProject is not null)
         {
             options.AzdoProject = azdoProject;
         }
 
-        var showReasoning = result.GetValueForOption(showReasoningOption);
+        var showReasoning = result.GetValueForOption(optionSet.ShowReasoning);
         if (showReasoning.HasValue)
         {
             options.ShowReasoning = showReasoning.Value;
         }
 
-        var colorizedOutput = result.GetValueForOption(colorizedOutputOption);
+        var colorizedOutput = result.GetValueForOption(optionSet.ColorizedOutput);
         if (colorizedOutput.HasValue)
         {
             options.ColorizedOutput = colorizedOutput.Value;
         }
 
-        var ui = result.GetValueForOption(uiOption);
+        var ui = result.GetValueForOption(optionSet.Ui);
         if (ui is not null)
         {
             if (!UiModeParser.TryParse(ui, out var uiMode))
@@ -306,70 +101,23 @@ internal static class ArgParser
             }
         }
 
-        if (result.GetValueForOption(demoOption))
+        if (result.GetValueForOption(optionSet.Demo))
         {
             options.DemoMode = true;
         }
 
-        var streamEvents = result.GetValueForOption(streamEventsOption);
+        var streamEvents = result.GetValueForOption(optionSet.StreamEvents);
         if (streamEvents.HasValue)
         {
             options.StreamEvents = streamEvents.Value;
         }
 
-        var cliPath = result.GetValueForOption(cliPathOption);
-        if (cliPath is not null)
-        {
-            if (string.IsNullOrWhiteSpace(cliPath))
-            {
-                errorMessages.Add("--cli-path is required");
-            }
-            else
-            {
-                options.CliPath = cliPath;
-            }
-        }
+        ApplyRequiredStringOption(result, optionSet.CliPath, value => options.CliPath = value, errorMessages, "--cli-path is required");
+        ApplyRequiredStringOption(result, optionSet.CliUrl, value => options.CliUrl = value, errorMessages, "--cli-url is required");
+        ApplyRequiredStringOption(result, optionSet.CopilotConfigPath, value => options.CopilotConfigPath = value, errorMessages, "--copilot-config-path is required");
+        ApplyRequiredStringOption(result, optionSet.CopilotToken, value => options.CopilotToken = value, errorMessages, "--copilot-token is required");
 
-        var cliUrl = result.GetValueForOption(cliUrlOption);
-        if (cliUrl is not null)
-        {
-            if (string.IsNullOrWhiteSpace(cliUrl))
-            {
-                errorMessages.Add("--cli-url is required");
-            }
-            else
-            {
-                options.CliUrl = cliUrl;
-            }
-        }
-
-        var copilotConfigPath = result.GetValueForOption(copilotConfigPathOption);
-        if (copilotConfigPath is not null)
-        {
-            if (string.IsNullOrWhiteSpace(copilotConfigPath))
-            {
-                errorMessages.Add("--copilot-config-path is required");
-            }
-            else
-            {
-                options.CopilotConfigPath = copilotConfigPath;
-            }
-        }
-
-        var copilotToken = result.GetValueForOption(copilotTokenOption);
-        if (copilotToken is not null)
-        {
-            if (string.IsNullOrWhiteSpace(copilotToken))
-            {
-                errorMessages.Add("--copilot-token is required");
-            }
-            else
-            {
-                options.CopilotToken = copilotToken;
-            }
-        }
-
-        var toolAllow = result.GetValueForOption(toolAllowOption);
+        var toolAllow = result.GetValueForOption(optionSet.ToolAllow);
         if (toolAllow is { Length: > 0 })
         {
             var normalized = NormalizeMultiValueOption(toolAllow);
@@ -379,7 +127,7 @@ internal static class ArgParser
             }
         }
 
-        var toolDeny = result.GetValueForOption(toolDenyOption);
+        var toolDeny = result.GetValueForOption(optionSet.ToolDeny);
         if (toolDeny is { Length: > 0 })
         {
             var normalized = NormalizeMultiValueOption(toolDeny);
@@ -389,56 +137,34 @@ internal static class ArgParser
             }
         }
 
-        var dockerSandbox = result.GetValueForOption(dockerSandboxOption);
+        var dockerSandbox = result.GetValueForOption(optionSet.DockerSandbox);
         if (dockerSandbox.HasValue)
         {
             options.DockerSandbox = dockerSandbox.Value;
         }
 
-        var dockerImage = result.GetValueForOption(dockerImageOption);
-        if (dockerImage is not null)
-        {
-            if (string.IsNullOrWhiteSpace(dockerImage))
-            {
-                errorMessages.Add("--docker-image is required");
-            }
-            else
-            {
-                options.DockerImage = dockerImage;
-            }
-        }
+        ApplyRequiredStringOption(result, optionSet.DockerImage, value => options.DockerImage = value, errorMessages, "--docker-image is required");
 
-        if (result.GetValueForOption(listModelsOption))
+        if (result.GetValueForOption(optionSet.ListModels))
         {
             options.ListModels = true;
         }
 
-        if (result.GetValueForOption(listModelsJsonOption))
+        if (result.GetValueForOption(optionSet.ListModelsJson))
         {
             options.ListModelsJson = true;
             options.ListModels = true;
         }
 
-        var clientName = result.GetValueForOption(clientNameOption);
-        if (clientName is not null)
-        {
-            if (string.IsNullOrWhiteSpace(clientName))
-            {
-                errorMessages.Add("--client-name must not be empty");
-            }
-            else
-            {
-                options.ClientName = clientName;
-            }
-        }
+        ApplyRequiredStringOption(result, optionSet.ClientName, value => options.ClientName = value, errorMessages, "--client-name must not be empty");
 
-        var reasoningEffort = result.GetValueForOption(reasoningEffortOption);
+        var reasoningEffort = result.GetValueForOption(optionSet.ReasoningEffort);
         if (!string.IsNullOrWhiteSpace(reasoningEffort))
         {
             options.ReasoningEffort = reasoningEffort.Trim();
         }
 
-        if (result.GetValueForOption(dryRunOption))
+        if (result.GetValueForOption(optionSet.DryRun))
         {
             options.DryRun = true;
         }
@@ -480,52 +206,42 @@ internal static class ArgParser
 
     private static RootCommand BuildRootCommand()
     {
+        var optionSet = CreateOptionSet();
         var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
-        root.AddOption(new Option<bool>(new[] { "-h", "--help" }, "Show help"));
-        root.AddOption(new Option<bool>(new[] { "-v", "--version" }, "Show version"));
-        root.AddOption(new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)"));
-        root.AddOption(new Option<int?>("--max-iterations", "Max loop iterations (default: 10)"));
-        root.AddOption(new Option<string?>("--model", "Model (default: GPT-5.1-Codex)"));
-        root.AddOption(new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)"));
-        root.AddOption(new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)"));
-        root.AddOption(new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)"));
-        root.AddOption(new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)"));
-        root.AddOption(new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)"));
-        root.AddOption(new Option<string?>("--progress-file", "Progress file (default: progress.txt)"));
-        root.AddOption(new Option<string?>("--issues-file", "Issues json file (default: issues.json)"));
-        root.AddOption(new Option<string?>("--generated-tasks-file", "Generated tasks backlog file (default: generated_tasks.json)"));
-        root.AddOption(new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`"));
-        root.AddOption(new Option<string?>("--repo", "Optional repo override for gh"));
-        root.AddOption(new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`"));
-        root.AddOption(new Option<string?>("--azdo-organization", "Azure DevOps organization URL (uses az devops defaults if not set)"));
-        root.AddOption(new Option<string?>("--azdo-project", "Azure DevOps project name (uses az devops defaults if not set)"));
-        root.AddOption(new Option<string?>("--cli-path", "Optional: Copilot CLI executable path"));
-        root.AddOption(new Option<string?>("--cli-url", "Optional: connect to existing CLI server"));
-        root.AddOption(new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox"));
-        root.AddOption(new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)"));
-        var toolAllowOption = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)")
-        {
-            AllowMultipleArgumentsPerToken = true
-        };
-        var toolDenyOption = new Option<string[]>("--tool-deny", "Deny listed tool/permission kinds; all other tools remain allowed (repeatable or comma-separated)")
-        {
-            AllowMultipleArgumentsPerToken = true
-        };
-        root.AddOption(toolAllowOption);
-        root.AddOption(toolDenyOption);
-        root.AddOption(new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)"));
-        root.AddOption(new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits"));
-        root.AddOption(new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)"));
-        root.AddOption(new Option<bool?>("--colorized-output", "Use colored output (default: true)"));
-        root.AddOption(new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)"));
-        root.AddOption(new Option<bool>("--demo", "Run in demo mode with mock UI data"));
-        root.AddOption(new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout"));
-        root.AddOption(new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)"));
-        root.AddOption(new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)"));
-        root.AddOption(new Option<bool>("--list-models", "List available Copilot models and exit"));
-        root.AddOption(new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit"));
-        root.AddOption(new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)"));
+        optionSet.AddTo(root);
         return root;
+    }
+
+    internal static IReadOnlyList<string> GetRegisteredOptionNames()
+    {
+        return CreateOptionSet().RegisteredOptionNames;
+    }
+
+    private static OptionSet CreateOptionSet()
+    {
+        return new OptionSet();
+    }
+
+    private static void ApplyRequiredStringOption(
+        System.CommandLine.Parsing.ParseResult result,
+        Option<string?> option,
+        Action<string> assign,
+        List<string> errorMessages,
+        string errorMessage)
+    {
+        var value = result.GetValueForOption(option);
+        if (value is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            errorMessages.Add(errorMessage);
+            return;
+        }
+
+        assign(value);
     }
 
     private static string[] NormalizeMultiValueOption(IEnumerable<string> values)
@@ -549,5 +265,155 @@ internal static class ArgParser
         }
 
         return results.ToArray();
+    }
+
+    private sealed class OptionSet
+    {
+        internal OptionSet()
+        {
+            Help = new Option<bool>(new[] { "-h", "--help" }, "Show help");
+            Version = new Option<bool>(new[] { "-v", "--version" }, "Show version");
+            WorkingDir = new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)");
+            MaxIterations = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
+            Model = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
+            ProviderType = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
+            ProviderBaseUrl = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
+            ProviderWireApi = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
+            ProviderApiKey = new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)");
+            PromptFile = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
+            ProgressFile = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
+            IssuesFile = new Option<string?>("--issues-file", "Issues json file (default: issues.json)");
+            GeneratedTasksFile = new Option<string?>("--generated-tasks-file", "Generated tasks backlog file (default: generated_tasks.json)");
+            RefreshIssues = new Option<bool>("--refresh-issues", "Refresh issues.json via `gh issue list`");
+            Repo = new Option<string?>("--repo", "Optional repo override for gh");
+            RefreshIssuesAzdo = new Option<bool>("--refresh-issues-azdo", "Refresh issues.json from Azure Boards via `az boards`");
+            AzdoOrganization = new Option<string?>("--azdo-organization", "Azure DevOps organization URL (uses az devops defaults if not set)");
+            AzdoProject = new Option<string?>("--azdo-project", "Azure DevOps project name (uses az devops defaults if not set)");
+            CliPath = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
+            CliUrl = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
+            CopilotConfigPath = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
+            CopilotToken = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
+            ToolAllow = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)")
+            {
+                AllowMultipleArgumentsPerToken = true
+            };
+            ToolDeny = new Option<string[]>("--tool-deny", "Deny listed tool/permission kinds; all other tools remain allowed (repeatable or comma-separated)")
+            {
+                AllowMultipleArgumentsPerToken = true
+            };
+            Config = new Option<string?>("--config", "Optional: JSON config file (default: coralph.config.json)");
+            Init = new Option<bool>("--init", "Initialize the repository (issues.json, config, prompt, progress) and exits");
+            ShowReasoning = new Option<bool?>("--show-reasoning", "Show reasoning output (default: true)");
+            ColorizedOutput = new Option<bool?>("--colorized-output", "Use colored output (default: true)");
+            Ui = new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)");
+            Demo = new Option<bool>("--demo", "Run in demo mode with mock UI data");
+            StreamEvents = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
+            DockerSandbox = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
+            DockerImage = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
+            ListModels = new Option<bool>("--list-models", "List available Copilot models and exit");
+            ListModelsJson = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
+            ClientName = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
+            ReasoningEffort = new Option<string?>("--reasoning-effort", "Reasoning effort hint for the model (e.g. low, medium, high); omit to use model default");
+            DryRun = new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)");
+        }
+
+        internal Option<bool> Help { get; }
+        internal Option<bool> Version { get; }
+        internal Option<string?> WorkingDir { get; }
+        internal Option<int?> MaxIterations { get; }
+        internal Option<string?> Model { get; }
+        internal Option<string?> ProviderType { get; }
+        internal Option<string?> ProviderBaseUrl { get; }
+        internal Option<string?> ProviderWireApi { get; }
+        internal Option<string?> ProviderApiKey { get; }
+        internal Option<string?> PromptFile { get; }
+        internal Option<string?> ProgressFile { get; }
+        internal Option<string?> IssuesFile { get; }
+        internal Option<string?> GeneratedTasksFile { get; }
+        internal Option<bool> RefreshIssues { get; }
+        internal Option<string?> Repo { get; }
+        internal Option<bool> RefreshIssuesAzdo { get; }
+        internal Option<string?> AzdoOrganization { get; }
+        internal Option<string?> AzdoProject { get; }
+        internal Option<string?> CliPath { get; }
+        internal Option<string?> CliUrl { get; }
+        internal Option<string?> CopilotConfigPath { get; }
+        internal Option<string?> CopilotToken { get; }
+        internal Option<string[]> ToolAllow { get; }
+        internal Option<string[]> ToolDeny { get; }
+        internal Option<string?> Config { get; }
+        internal Option<bool> Init { get; }
+        internal Option<bool?> ShowReasoning { get; }
+        internal Option<bool?> ColorizedOutput { get; }
+        internal Option<string?> Ui { get; }
+        internal Option<bool> Demo { get; }
+        internal Option<bool?> StreamEvents { get; }
+        internal Option<bool?> DockerSandbox { get; }
+        internal Option<string?> DockerImage { get; }
+        internal Option<bool> ListModels { get; }
+        internal Option<bool> ListModelsJson { get; }
+        internal Option<string?> ClientName { get; }
+        internal Option<string?> ReasoningEffort { get; }
+        internal Option<bool> DryRun { get; }
+
+        internal IReadOnlyList<Option> AllOptions =>
+        [
+            Help,
+            Version,
+            WorkingDir,
+            MaxIterations,
+            Model,
+            ProviderType,
+            ProviderBaseUrl,
+            ProviderWireApi,
+            ProviderApiKey,
+            PromptFile,
+            ProgressFile,
+            IssuesFile,
+            GeneratedTasksFile,
+            RefreshIssues,
+            Repo,
+            RefreshIssuesAzdo,
+            AzdoOrganization,
+            AzdoProject,
+            CliPath,
+            CliUrl,
+            CopilotConfigPath,
+            CopilotToken,
+            ToolAllow,
+            ToolDeny,
+            Config,
+            Init,
+            ShowReasoning,
+            ColorizedOutput,
+            Ui,
+            Demo,
+            StreamEvents,
+            DockerSandbox,
+            DockerImage,
+            ListModels,
+            ListModelsJson,
+            ClientName,
+            ReasoningEffort,
+            DryRun
+        ];
+
+        internal IReadOnlyList<string> RegisteredOptionNames =>
+            AllOptions.SelectMany(option => option.Aliases).Distinct(StringComparer.Ordinal).ToArray();
+
+        internal RootCommand CreateRootCommand()
+        {
+            var root = new RootCommand("Coralph - Ralph loop runner using GitHub Copilot SDK");
+            AddTo(root);
+            return root;
+        }
+
+        internal void AddTo(RootCommand root)
+        {
+            foreach (var option in AllOptions)
+            {
+                root.AddOption(option);
+            }
+        }
     }
 }

@@ -4,9 +4,7 @@ internal static class BacklogCleanup
 {
     internal static bool ShouldDeleteForTerminalSignal(string terminalSignal)
     {
-        return string.Equals(terminalSignal, "COMPLETE", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(terminalSignal, "ALL_TASKS_COMPLETE", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(terminalSignal, "NO_OPEN_ISSUES", StringComparison.OrdinalIgnoreCase);
+        return TerminalSignal.All.Contains(terminalSignal);
     }
 
     internal static bool TryDelete(string? backlogFile, out Exception? error)

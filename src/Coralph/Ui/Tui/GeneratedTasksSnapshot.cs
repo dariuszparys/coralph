@@ -119,7 +119,7 @@ internal sealed class GeneratedTasksSnapshotReader
                 var issueNumber = ReadInt(task, "issueNumber");
                 var title = ReadString(task, "title");
                 var description = ReadString(task, "description");
-                var status = NormalizeStatus(ReadString(task, "status"));
+                var status = TaskStatusHelper.NormalizeStatus(ReadString(task, "status"));
                 var order = ReadInt(task, "order");
 
                 tasks.Add(new GeneratedTaskSnapshotItem(id, issueNumber, title, description, status, order, sourceIndex));
@@ -163,19 +163,4 @@ internal sealed class GeneratedTasksSnapshotReader
             : 0;
     }
 
-    private static string NormalizeStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-        {
-            return "open";
-        }
-
-        var normalized = status.Trim().ToLowerInvariant().Replace("-", "_");
-        return normalized switch
-        {
-            "done" or "complete" or "completed" => "done",
-            "in_progress" or "inprogress" => "in_progress",
-            _ => "open"
-        };
-    }
 }
