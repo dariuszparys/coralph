@@ -30,14 +30,4 @@ internal static class UiModeParser
         }
     }
 
-    internal static string ToCliValue(UiMode mode)
-    {
-        return mode switch
-        {
-            UiMode.Auto => "auto",
-            UiMode.Tui => "tui",
-            UiMode.Classic => "classic",
-            _ => "auto"
-        };
-    }
 }

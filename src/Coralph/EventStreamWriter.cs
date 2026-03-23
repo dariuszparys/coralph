@@ -7,7 +7,6 @@ internal sealed class EventStreamWriter(
     TextWriter writer,
     string sessionId,
     int version = EventStreamWriter.SchemaVersion,
-    bool leaveOpen = true,
     bool flushEachEvent = false)
 {
     internal const int SchemaVersion = 1;
@@ -32,7 +31,6 @@ internal sealed class EventStreamWriter(
 
     internal string SessionId { get; } = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
     internal int Version { get; } = version;
-    internal bool LeaveOpen { get; } = leaveOpen;
 
     internal void WriteSessionHeader(string cwd)
     {

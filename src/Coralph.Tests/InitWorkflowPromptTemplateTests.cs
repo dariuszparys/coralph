@@ -11,6 +11,10 @@ public sealed class InitWorkflowSerialCollection
 [Collection("InitWorkflowSerial")]
 public sealed class InitWorkflowPromptTemplateTests : IDisposable
 {
+    private static readonly MethodInfo EnsureIssuesFileAsyncMethod =
+        typeof(InitWorkflow).GetMethod("EnsureIssuesFileAsync", BindingFlags.NonPublic | BindingFlags.Static)
+        ?? throw new InvalidOperationException("InitWorkflow.EnsureIssuesFileAsync was not found.");
+
     private static readonly MethodInfo EnsurePromptFileAsyncMethod =
         typeof(InitWorkflow).GetMethod("EnsurePromptFileAsync", BindingFlags.NonPublic | BindingFlags.Static)
         ?? throw new InvalidOperationException("InitWorkflow.EnsurePromptFileAsync was not found.");
@@ -59,14 +63,6 @@ public sealed class InitWorkflowPromptTemplateTests : IDisposable
         ];
     }
 
-    public static IEnumerable<object[]> NonDotNetFallbackCases()
-    {
-        yield return ["JavaScript", new[] { "`npm test`", "`npm run lint`", "`npm run build`" }];
-        yield return ["Python", new[] { "`pytest`", "`flake8 .`", "`black . --check`" }];
-        yield return ["Go", new[] { "`go test ./...`", "`go build ./...`", "`gofmt -l .`", "`golangci-lint run`" }];
-        yield return ["Rust", new[] { "`cargo test`", "`cargo build`", "`cargo fmt --check`", "`cargo clippy -- -D warnings`" }];
-    }
-
     public static IEnumerable<object[]> ExampleTemplateCases()
     {
         yield return ["javascript-prompt.md", new[] { "`npm test`", "`npm run lint`", "`npm run build`" }];
@@ -94,25 +90,28 @@ public sealed class InitWorkflowPromptTemplateTests : IDisposable
         AssertAdaptedFeedbackLoops(generatedPrompt, expectedCommands, projectTypeName);
     }
 
-    [Theory]
-    [MemberData(nameof(NonDotNetFallbackCases))]
-    public async Task EnsurePromptFileAsync_WithMissingAssets_UsesEmbeddedTemplateAndAdaptedCoreLoops(
-        string projectTypeName,
-        string[] expectedCommands)
+    [Fact]
+    public async Task EnsureIssuesFileAsync_WithMissingAsset_ReturnsError()
+    {
+        var repoRoot = CreateTempDirectory("coralph-init-missing-issues");
+        var missingAssetsRoot = CreateTempDirectory("coralph-init-missing-issues-assets");
+
+        var exitCode = await InvokeEnsureIssuesFileAsync(repoRoot, missingAssetsRoot);
+
+        Assert.Equal(1, exitCode);
+        Assert.False(File.Exists(Path.Combine(repoRoot, "issues.json")));
+    }
+
+    [Fact]
+    public async Task EnsurePromptFileAsync_WithMissingAssets_ReturnsError()
     {
         var repoRoot = CreateTempDirectory("coralph-init-fallback-repo");
         var missingAssetsRoot = CreateTempDirectory("coralph-init-missing-assets");
-        var fallbackPromptPath = Path.Combine(AppContext.BaseDirectory, "prompt.md");
-        var fallbackPrompt = File.Exists(fallbackPromptPath)
-            ? await File.ReadAllTextAsync(fallbackPromptPath)
-            : string.Empty;
 
-        var exitCode = await InvokeEnsurePromptFileAsync(repoRoot, missingAssetsRoot, projectTypeName, fallbackPrompt);
+        var exitCode = await InvokeEnsurePromptFileAsync(repoRoot, missingAssetsRoot, "JavaScript");
 
-        Assert.Equal(0, exitCode);
-        var generatedPrompt = await File.ReadAllTextAsync(Path.Combine(repoRoot, "prompt.md"));
-        AssertCoreSections(generatedPrompt);
-        AssertAdaptedFeedbackLoops(generatedPrompt, expectedCommands, projectTypeName);
+        Assert.Equal(1, exitCode);
+        Assert.False(File.Exists(Path.Combine(repoRoot, "prompt.md")));
     }
 
     [Fact]
@@ -157,13 +156,20 @@ public sealed class InitWorkflowPromptTemplateTests : IDisposable
     private static async Task<int> InvokeEnsurePromptFileAsync(
         string repoRoot,
         string coralphRoot,
-        string projectTypeName,
-        string fallbackPrompt)
+        string projectTypeName)
     {
         var projectType = Enum.Parse(ProjectTypeEnumType, projectTypeName);
         var task = (Task<int>)EnsurePromptFileAsyncMethod.Invoke(
             null,
-            new object?[] { repoRoot, coralphRoot, projectType, fallbackPrompt })!;
+            new object?[] { repoRoot, coralphRoot, projectType })!;
+        return await task;
+    }
+
+    private static async Task<int> InvokeEnsureIssuesFileAsync(string repoRoot, string coralphRoot)
+    {
+        var task = (Task<int>)EnsureIssuesFileAsyncMethod.Invoke(
+            null,
+            new object?[] { repoRoot, coralphRoot })!;
         return await task;
     }
 

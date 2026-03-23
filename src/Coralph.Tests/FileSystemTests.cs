@@ -49,12 +49,6 @@ public sealed class FileSystemTests
             return Task.FromResult(entry.Content);
         }
 
-        public Task WriteAllTextAsync(string path, string contents, CancellationToken ct = default)
-        {
-            _files[Normalize(path)] = new FileEntry(contents, DateTime.UtcNow, contents.Length);
-            return Task.CompletedTask;
-        }
-
         public DateTime GetLastWriteTimeUtc(string path)
         {
             return _files.TryGetValue(Normalize(path), out var entry) ? entry.LastWriteUtc : DateTime.MinValue;

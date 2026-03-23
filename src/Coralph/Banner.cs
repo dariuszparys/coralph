@@ -118,28 +118,4 @@ internal static class Banner
         ConsoleOutput.MarkupLine($"[dim]v{GetVersion()}[/]");
     }
 
-    internal static void Display(IAnsiConsole console)
-    {
-        if (Console.IsOutputRedirected)
-        {
-            foreach (var line in AsciiLines)
-            {
-                console.WriteLine(line);
-            }
-            console.WriteLine($"v{GetVersion()}");
-            return;
-        }
-
-        for (var lineIndex = 0; lineIndex < AsciiLines.Length; lineIndex++)
-        {
-            var line = AsciiLines[lineIndex];
-            var colorIndex = lineIndex % GradientColors.Length;
-            var color = GradientColors[colorIndex];
-
-            console.MarkupLine($"[rgb({color.R},{color.G},{color.B})]{Markup.Escape(line)}[/]");
-        }
-
-        // Display version after banner
-        console.MarkupLine($"[dim]v{GetVersion()}[/]");
-    }
 }
