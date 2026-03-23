@@ -8,6 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+### Added
+- hard-block file-write and shell tools via PermissionPolicy
+- add preview header box framing each dry-run iteration
+- print preview-complete footer after each dry-run turn
+- show unified diff output for changed files in dry-run mode
+- inject dry-run instructions into Copilot prompt
+- dry-run prints planning message before prompt build
+- add --dry-run flag (tracer bullet) with safe issue fetching
+- auto-detect OPENROUTER_API_KEY env var for openrouter provider
+- reuse --provider-api-key for OpenRouter; update help text
+- add openrouter as a valid --provider-type with default base URL
+- add task pane navigation
+### Changed
+- remove init asset fallbacks
+- cache json settings and tui state updates
+- simplify configuration merge pipeline
+- extract loop orchestration and shared copilot setup
+- add package locks
+- bump actions/upload-artifact from 6 to 7
+- bump actions/download-artifact from 7 to 8
+### Fixed
+- harden process execution and secrets handling
+- use typed permission result kinds
+- stabilize tui exit and cancellation handling
+- build issues
+### Other
+- hardening: constrain docker sandbox defaults
+- Bump GitHub.Copilot.SDK from 0.1.30 to 0.1.32
+- Bump GitHub.Copilot.SDK from 0.1.29 to 0.1.30
+- Bump GitHub.Copilot.SDK from 0.1.26 to 0.1.29
 <a id="v1-1-3"></a>
 ## [1.1.3] - 2026-02-24
 ### Added
