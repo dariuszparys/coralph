@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Coralph.Ui.Tui;
 
 internal enum TranscriptEntryKind
@@ -10,7 +12,19 @@ internal enum TranscriptEntryKind
     Warning
 }
 
-internal sealed record TranscriptEntry(TranscriptEntryKind Kind, string Text, DateTimeOffset Timestamp);
+internal sealed class TranscriptEntry
+{
+    internal TranscriptEntry(TranscriptEntryKind kind, string text, DateTimeOffset timestamp)
+    {
+        Kind = kind;
+        Text = new StringBuilder(text);
+        Timestamp = timestamp;
+    }
+
+    internal TranscriptEntryKind Kind { get; }
+    internal StringBuilder Text { get; }
+    internal DateTimeOffset Timestamp { get; set; }
+}
 
 internal sealed class TuiState
 {
@@ -57,7 +71,7 @@ internal sealed class TuiState
             {
                 var prefix = KindPrefix(entry.Kind);
                 var linePrefix = $"{entry.Timestamp:HH:mm:ss} [{prefix}] ";
-                var chunks = entry.Text.Replace("\r\n", "\n").Split('\n');
+                var chunks = entry.Text.ToString().Replace("\r\n", "\n").Split('\n');
                 for (var i = 0; i < chunks.Length; i++)
                 {
                     var text = chunks[i];
@@ -400,21 +414,19 @@ internal sealed class TuiState
     {
         lock (_lock)
         {
+            var now = DateTimeOffset.UtcNow;
             if (allowCoalesce && _transcript.Count > 0)
             {
                 var last = _transcript[^1];
-                if (last.Kind == kind && (DateTimeOffset.UtcNow - last.Timestamp) < TimeSpan.FromSeconds(2))
+                if (last.Kind == kind && (now - last.Timestamp) < TimeSpan.FromSeconds(2))
                 {
-                    _transcript[^1] = last with
-                    {
-                        Text = last.Text + text,
-                        Timestamp = DateTimeOffset.UtcNow
-                    };
+                    last.Text.Append(text);
+                    last.Timestamp = now;
                     return;
                 }
             }
 
-            _transcript.Add(new TranscriptEntry(kind, text, DateTimeOffset.UtcNow));
+            _transcript.Add(new TranscriptEntry(kind, text, now));
             if (_transcript.Count > MaxTranscriptEntries)
             {
                 var removeCount = _transcript.Count - MaxTranscriptEntries;

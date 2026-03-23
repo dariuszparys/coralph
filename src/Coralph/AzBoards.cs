@@ -153,7 +153,7 @@ internal static partial class AzBoards
             });
         }
 
-        return JsonSerializer.Serialize(issues, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(issues, JsonDefaults.Indented);
     }
 
     private static string StripHtml(string html)

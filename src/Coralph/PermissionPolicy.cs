@@ -26,12 +26,20 @@ namespace Coralph;
 /// Deny takes precedence over allow when both lists are non-empty.
 /// </para>
 /// </remarks>
-internal sealed class PermissionPolicy(LoopOptions opt, EventStreamWriter? eventStream)
+internal sealed class PermissionPolicy
 {
-    private readonly HashSet<string> _allow = NormalizeEntries(opt.ToolAllow);
-    private readonly HashSet<string> _deny = NormalizeEntries(opt.ToolDeny);
-    private readonly bool _hasAllowList = NormalizeEntries(opt.ToolAllow).Count > 0;
-    private readonly EventStreamWriter? _eventStream = eventStream;
+    private readonly HashSet<string> _allow;
+    private readonly HashSet<string> _deny;
+    private readonly bool _hasAllowList;
+    private readonly EventStreamWriter? _eventStream;
+
+    internal PermissionPolicy(LoopOptions opt, EventStreamWriter? eventStream)
+    {
+        _allow = NormalizeEntries(opt.ToolAllow);
+        _deny = NormalizeEntries(opt.ToolDeny);
+        _hasAllowList = _allow.Count > 0;
+        _eventStream = eventStream;
+    }
 
     internal Task<PermissionRequestResult> HandleAsync(PermissionRequest request, PermissionInvocation invocation)
     {

@@ -5,7 +5,14 @@ namespace Coralph;
 
 internal static class Banner
 {
+    private static readonly Lazy<string> CachedVersion = new(GetVersionCore, LazyThreadSafetyMode.ExecutionAndPublication);
+
     internal static string GetVersion()
+    {
+        return CachedVersion.Value;
+    }
+
+    private static string GetVersionCore()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var infoVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
@@ -15,8 +22,10 @@ internal static class Banner
             var plusIndex = infoVersion.IndexOf('+');
             return plusIndex >= 0 ? infoVersion[..plusIndex] : infoVersion;
         }
+
         return assembly.GetName().Version?.ToString() ?? "unknown";
     }
+
     // ASCII art for "Coralph" - stylized and compact
     private static readonly string[] AsciiLines =
     [

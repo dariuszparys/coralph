@@ -570,7 +570,7 @@ internal static class InitWorkflow
         {
             [LoopOptions.ConfigurationSectionName] = new LoopOptions()
         };
-        var json = JsonSerializer.Serialize(defaultPayload, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(defaultPayload, JsonDefaults.Indented);
         try
         {
             await File.WriteAllTextAsync(path, json, CancellationToken.None);
