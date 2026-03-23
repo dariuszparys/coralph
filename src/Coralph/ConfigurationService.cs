@@ -2,19 +2,14 @@ using Microsoft.Extensions.Configuration;
 
 namespace Coralph;
 
-/// <summary>
-/// Service responsible for loading and resolving configuration options.
-/// Consolidates all configuration-related logic in compliance with SRP.
-/// </summary>
 internal static class ConfigurationService
 {
-    /// <summary>
-    /// Loads configuration from file (if exists) and applies CLI overrides.
-    /// </summary>
-    internal static LoopOptions LoadOptions(LoopOptionsOverrides overrides, string? configFile)
+    internal static LoopOptions LoadOptions(LoopOptionsOverrides cliOverrides, string? configFile)
     {
+        ArgumentNullException.ThrowIfNull(cliOverrides);
+
+        var configOverrides = new LoopOptionsOverrides();
         var path = ResolveConfigPath(configFile);
-        var options = new LoopOptions();
 
         if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
         {
@@ -22,27 +17,27 @@ internal static class ConfigurationService
                 .AddJsonFile(path, optional: true, reloadOnChange: false)
                 .Build();
 
-            config.GetSection(LoopOptions.ConfigurationSectionName).Bind(options);
+            config.GetSection(LoopOptions.ConfigurationSectionName).Bind(configOverrides);
         }
 
-        ApplyOverrides(options, overrides);
-        return options;
+        return Merge(cliOverrides, configOverrides);
     }
 
-    /// <summary>
-    /// Resolves the full path to the configuration file.
-    /// </summary>
     internal static string ResolveConfigPath(string? configFile)
     {
         var path = configFile ?? LoopOptions.ConfigurationFileName;
         if (Path.IsPathRooted(path))
+        {
             return path;
+        }
 
         if (configFile is null)
         {
             var cwdPath = Path.Combine(Directory.GetCurrentDirectory(), path);
             if (File.Exists(cwdPath))
+            {
                 return cwdPath;
+            }
 
             return Path.Combine(AppContext.BaseDirectory, path);
         }
@@ -50,43 +45,65 @@ internal static class ConfigurationService
         return Path.Combine(Directory.GetCurrentDirectory(), path);
     }
 
-    /// <summary>
-    /// Applies CLI argument overrides to the loaded configuration options.
-    /// </summary>
-    internal static void ApplyOverrides(LoopOptions target, LoopOptionsOverrides overrides)
+    internal static LoopOptions Merge(LoopOptionsOverrides cli, LoopOptionsOverrides config)
     {
-        if (overrides.MaxIterations is { } max) target.MaxIterations = max;
-        if (!string.IsNullOrWhiteSpace(overrides.Model)) target.Model = overrides.Model;
-        if (!string.IsNullOrWhiteSpace(overrides.ProviderType)) target.ProviderType = overrides.ProviderType;
-        if (!string.IsNullOrWhiteSpace(overrides.ProviderBaseUrl)) target.ProviderBaseUrl = overrides.ProviderBaseUrl;
-        if (!string.IsNullOrWhiteSpace(overrides.ProviderWireApi)) target.ProviderWireApi = overrides.ProviderWireApi;
-        if (!string.IsNullOrWhiteSpace(overrides.ProviderApiKey)) target.ProviderApiKey = overrides.ProviderApiKey;
-        if (!string.IsNullOrWhiteSpace(overrides.PromptFile)) target.PromptFile = overrides.PromptFile;
-        if (!string.IsNullOrWhiteSpace(overrides.ProgressFile)) target.ProgressFile = overrides.ProgressFile;
-        if (!string.IsNullOrWhiteSpace(overrides.IssuesFile)) target.IssuesFile = overrides.IssuesFile;
-        if (!string.IsNullOrWhiteSpace(overrides.GeneratedTasksFile)) target.GeneratedTasksFile = overrides.GeneratedTasksFile;
-        if (overrides.RefreshIssues is { } refresh) target.RefreshIssues = refresh;
-        if (!string.IsNullOrWhiteSpace(overrides.Repo)) target.Repo = overrides.Repo;
-        if (overrides.RefreshIssuesAzdo is { } refreshAzdo) target.RefreshIssuesAzdo = refreshAzdo;
-        if (!string.IsNullOrWhiteSpace(overrides.AzdoOrganization)) target.AzdoOrganization = overrides.AzdoOrganization;
-        if (!string.IsNullOrWhiteSpace(overrides.AzdoProject)) target.AzdoProject = overrides.AzdoProject;
-        if (!string.IsNullOrWhiteSpace(overrides.CliPath)) target.CliPath = overrides.CliPath;
-        if (!string.IsNullOrWhiteSpace(overrides.CliUrl)) target.CliUrl = overrides.CliUrl;
-        if (!string.IsNullOrWhiteSpace(overrides.CopilotConfigPath)) target.CopilotConfigPath = overrides.CopilotConfigPath;
-        if (!string.IsNullOrWhiteSpace(overrides.CopilotToken)) target.CopilotToken = overrides.CopilotToken;
-        if (overrides.ToolAllow is not null) target.ToolAllow = overrides.ToolAllow;
-        if (overrides.ToolDeny is not null) target.ToolDeny = overrides.ToolDeny;
-        if (overrides.ShowReasoning is { } showReasoning) target.ShowReasoning = showReasoning;
-        if (overrides.ColorizedOutput is { } colorizedOutput) target.ColorizedOutput = colorizedOutput;
-        if (overrides.UiMode is { } uiMode) target.UiMode = uiMode;
-        if (overrides.StreamEvents is { } streamEvents) target.StreamEvents = streamEvents;
-        if (overrides.DockerSandbox is { } dockerSandbox) target.DockerSandbox = dockerSandbox;
-        if (!string.IsNullOrWhiteSpace(overrides.DockerImage)) target.DockerImage = overrides.DockerImage;
-        if (overrides.ListModels is { } listModels) target.ListModels = listModels;
-        if (overrides.ListModelsJson is { } listModelsJson) target.ListModelsJson = listModelsJson;
-        if (overrides.DemoMode is { } demoMode) target.DemoMode = demoMode;
-        if (!string.IsNullOrWhiteSpace(overrides.ClientName)) target.ClientName = overrides.ClientName;
-        if (!string.IsNullOrWhiteSpace(overrides.ReasoningEffort)) target.ReasoningEffort = overrides.ReasoningEffort;
-        if (overrides.DryRun is { } dryRun) target.DryRun = dryRun;
+        ArgumentNullException.ThrowIfNull(cli);
+        ArgumentNullException.ThrowIfNull(config);
+        var defaults = new LoopOptions();
+
+        return new LoopOptions
+        {
+            MaxIterations = cli.MaxIterations ?? config.MaxIterations ?? defaults.MaxIterations,
+            Model = Coalesce(cli.Model, config.Model, defaults.Model),
+            ProviderType = CoalesceNullable(cli.ProviderType, config.ProviderType),
+            ProviderBaseUrl = CoalesceNullable(cli.ProviderBaseUrl, config.ProviderBaseUrl),
+            ProviderWireApi = CoalesceNullable(cli.ProviderWireApi, config.ProviderWireApi),
+            ProviderApiKey = CoalesceNullable(cli.ProviderApiKey, config.ProviderApiKey),
+            PromptFile = Coalesce(cli.PromptFile, config.PromptFile, defaults.PromptFile),
+            ProgressFile = Coalesce(cli.ProgressFile, config.ProgressFile, defaults.ProgressFile),
+            IssuesFile = Coalesce(cli.IssuesFile, config.IssuesFile, defaults.IssuesFile),
+            GeneratedTasksFile = Coalesce(cli.GeneratedTasksFile, config.GeneratedTasksFile, defaults.GeneratedTasksFile),
+            RefreshIssues = cli.RefreshIssues ?? config.RefreshIssues ?? defaults.RefreshIssues,
+            Repo = CoalesceNullable(cli.Repo, config.Repo),
+            RefreshIssuesAzdo = cli.RefreshIssuesAzdo ?? config.RefreshIssuesAzdo ?? defaults.RefreshIssuesAzdo,
+            AzdoOrganization = CoalesceNullable(cli.AzdoOrganization, config.AzdoOrganization),
+            AzdoProject = CoalesceNullable(cli.AzdoProject, config.AzdoProject),
+            CliPath = CoalesceNullable(cli.CliPath, config.CliPath),
+            CliUrl = CoalesceNullable(cli.CliUrl, config.CliUrl),
+            CopilotConfigPath = CoalesceNullable(cli.CopilotConfigPath, config.CopilotConfigPath),
+            CopilotToken = CoalesceNullable(cli.CopilotToken, config.CopilotToken),
+            ToolAllow = cli.ToolAllow ?? config.ToolAllow ?? [],
+            ToolDeny = cli.ToolDeny ?? config.ToolDeny ?? [],
+            ShowReasoning = cli.ShowReasoning ?? config.ShowReasoning ?? defaults.ShowReasoning,
+            ColorizedOutput = cli.ColorizedOutput ?? config.ColorizedOutput ?? defaults.ColorizedOutput,
+            UiMode = cli.UiMode ?? config.UiMode ?? defaults.UiMode,
+            StreamEvents = cli.StreamEvents ?? config.StreamEvents ?? defaults.StreamEvents,
+            DockerSandbox = cli.DockerSandbox ?? config.DockerSandbox ?? defaults.DockerSandbox,
+            DockerImage = Coalesce(cli.DockerImage, config.DockerImage, defaults.DockerImage),
+            ListModels = cli.ListModels ?? config.ListModels ?? defaults.ListModels,
+            ListModelsJson = cli.ListModelsJson ?? config.ListModelsJson ?? defaults.ListModelsJson,
+            DemoMode = cli.DemoMode ?? config.DemoMode ?? defaults.DemoMode,
+            ClientName = Coalesce(cli.ClientName, config.ClientName, defaults.ClientName),
+            ReasoningEffort = CoalesceNullable(cli.ReasoningEffort, config.ReasoningEffort),
+            DryRun = cli.DryRun ?? config.DryRun ?? defaults.DryRun
+        };
+    }
+
+    private static string Coalesce(string? cliValue, string? configValue, string fallback)
+    {
+        return !string.IsNullOrWhiteSpace(cliValue)
+            ? cliValue
+            : !string.IsNullOrWhiteSpace(configValue)
+                ? configValue
+                : fallback;
+    }
+
+    private static string? CoalesceNullable(string? cliValue, string? configValue)
+    {
+        return !string.IsNullOrWhiteSpace(cliValue)
+            ? cliValue
+            : !string.IsNullOrWhiteSpace(configValue)
+                ? configValue
+                : null;
     }
 }
