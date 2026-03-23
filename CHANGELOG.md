@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+<a id="v1-1-4"></a>
+## [1.1.4] - 2026-03-23
 ### Added
+- add Copilot SDK 0.2.0 observability support
+- add weekly agentic workflow to maintain AGENTS.md
 - hard-block file-write and shell tools via PermissionPolicy
 - add preview header box framing each dry-run iteration
 - print preview-complete footer after each dry-run turn
@@ -21,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - add openrouter as a valid --provider-type with default base URL
 - add task pane navigation
 ### Changed
+- update changelog
 - remove init asset fallbacks
 - cache json settings and tui state updates
 - simplify configuration merge pipeline
@@ -34,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - stabilize tui exit and cancellation handling
 - build issues
 ### Other
+- Bump GitHub.Copilot.SDK from 0.1.32 to 0.2.0
 - hardening: constrain docker sandbox defaults
 - Bump GitHub.Copilot.SDK from 0.1.30 to 0.1.32
 - Bump GitHub.Copilot.SDK from 0.1.29 to 0.1.30
@@ -232,7 +238,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial release.
 
-[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/dariuszparys/coralph/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/dariuszparys/coralph/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/dariuszparys/coralph/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/dariuszparys/coralph/compare/v1.1.0...v1.1.1
