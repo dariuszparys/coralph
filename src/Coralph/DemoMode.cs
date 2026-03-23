@@ -105,7 +105,7 @@ internal static class DemoMode
             }
         };
 
-        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(payload, JsonDefaults.Indented);
         var path = Path.Combine(Path.GetTempPath(), $"coralph-demo-tasks-{Guid.NewGuid():N}.json");
         await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
         return path;

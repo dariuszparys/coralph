@@ -25,6 +25,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     private Task? _pollTask;
     private int _exitSignaled;
     private bool _disposeRequested;
+    private DateTime _lastGeneratedTasksWriteTimeUtc = DateTime.MinValue;
 
     private IAnsiConsole _out;
     private IAnsiConsole _error;
@@ -209,7 +210,19 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
     public void RefreshGeneratedTasks()
     {
-        var snapshot = _tasksReader.Read(_options.GeneratedTasksFile);
+        var path = _options.GeneratedTasksFile;
+        var currentWriteTimeUtc = File.Exists(path)
+            ? File.GetLastWriteTimeUtc(path)
+            : DateTime.MinValue;
+
+        if (currentWriteTimeUtc == _lastGeneratedTasksWriteTimeUtc)
+        {
+            return;
+        }
+
+        _lastGeneratedTasksWriteTimeUtc = currentWriteTimeUtc;
+
+        var snapshot = _tasksReader.Read(path);
         _state.SetTasksSnapshot(snapshot);
         RequestInvalidate();
     }
@@ -311,7 +324,15 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
                 break;
             }
 
-            RefreshGeneratedTasks();
+            var path = _options.GeneratedTasksFile;
+            var currentWriteTimeUtc = File.Exists(path)
+                ? File.GetLastWriteTimeUtc(path)
+                : DateTime.MinValue;
+
+            if (currentWriteTimeUtc != _lastGeneratedTasksWriteTimeUtc)
+            {
+                RefreshGeneratedTasks();
+            }
         }
     }
 

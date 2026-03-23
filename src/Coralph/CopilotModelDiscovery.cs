@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using GitHub.Copilot.SDK;
 using Serilog;
 
@@ -133,13 +132,7 @@ internal static class CopilotModelDiscovery
                     : new ModelBillingDto(model.Billing.Multiplier)))
             .ToList();
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-
-        ConsoleOutput.WriteLine(JsonSerializer.Serialize(payload, options));
+        ConsoleOutput.WriteLine(JsonSerializer.Serialize(payload, JsonDefaults.IndentedIgnoreNull));
     }
 
     private static string PadRight(string value, int width)

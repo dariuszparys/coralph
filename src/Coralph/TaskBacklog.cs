@@ -889,15 +889,7 @@ internal static partial class TaskBacklog
             return false;
         }
 
-        foreach (var generic in GenericHeadingTitles)
-        {
-            if (string.Equals(normalized, generic, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return !GenericHeadingTitles.Contains(normalized);
     }
 
     private static bool LooksLikeMetadata(string value)
