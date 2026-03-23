@@ -419,6 +419,33 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithTelemetryOptions_SetsOverrides()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(
+        [
+            "--telemetry-otlp-endpoint", "http://localhost:4318",
+            "--telemetry-source-name", "coralph-tests",
+            "--telemetry-capture-content", "true"
+        ]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("http://localhost:4318", overrides.TelemetryOtlpEndpoint);
+        Assert.Equal("coralph-tests", overrides.TelemetrySourceName);
+        Assert.True(overrides.TelemetryCaptureContent);
+    }
+
+    [Fact]
+    public void Parse_WithEmptyTelemetryEndpoint_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--telemetry-otlp-endpoint", ""]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--telemetry-otlp-endpoint", err);
+    }
+
+    [Fact]
     public void PrintUsage_WritesToTextWriter()
     {
         var sw = new StringWriter();
@@ -440,6 +467,9 @@ public class ArgParserTests
         Assert.Contains("--demo", output);
         Assert.Contains("--client-name", output);
         Assert.Contains("--reasoning-effort", output);
+        Assert.Contains("--telemetry-otlp-endpoint", output);
+        Assert.Contains("--telemetry-source-name", output);
+        Assert.Contains("--telemetry-capture-content", output);
         Assert.Contains("--docker-network", output);
         Assert.Contains("--docker-memory", output);
         Assert.Contains("--docker-cpus", output);
@@ -452,6 +482,9 @@ public class ArgParserTests
 
         Assert.Contains("--client-name", optionNames);
         Assert.Contains("--reasoning-effort", optionNames);
+        Assert.Contains("--telemetry-otlp-endpoint", optionNames);
+        Assert.Contains("--telemetry-source-name", optionNames);
+        Assert.Contains("--telemetry-capture-content", optionNames);
         Assert.Contains("--docker-network", optionNames);
         Assert.Contains("--docker-memory", optionNames);
         Assert.Contains("--docker-cpus", optionNames);

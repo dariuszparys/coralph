@@ -167,6 +167,15 @@ internal static class ArgParser
             options.ReasoningEffort = reasoningEffort.Trim();
         }
 
+        ApplyRequiredStringOption(result, optionSet.TelemetryOtlpEndpoint, value => options.TelemetryOtlpEndpoint = value, errorMessages, "--telemetry-otlp-endpoint must not be empty");
+        ApplyRequiredStringOption(result, optionSet.TelemetrySourceName, value => options.TelemetrySourceName = value, errorMessages, "--telemetry-source-name must not be empty");
+
+        var telemetryCaptureContent = result.GetValueForOption(optionSet.TelemetryCaptureContent);
+        if (telemetryCaptureContent.HasValue)
+        {
+            options.TelemetryCaptureContent = telemetryCaptureContent.Value;
+        }
+
         if (result.GetValueForOption(optionSet.DryRun))
         {
             options.DryRun = true;
@@ -320,6 +329,9 @@ internal static class ArgParser
             ListModelsJson = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
             ClientName = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
             ReasoningEffort = new Option<string?>("--reasoning-effort", "Reasoning effort hint for the model (e.g. low, medium, high); omit to use model default");
+            TelemetryOtlpEndpoint = new Option<string?>("--telemetry-otlp-endpoint", "Optional: OTLP HTTP endpoint for Copilot SDK telemetry (e.g. http://localhost:4318)");
+            TelemetrySourceName = new Option<string?>("--telemetry-source-name", "Optional: source name for Copilot SDK telemetry spans");
+            TelemetryCaptureContent = new Option<bool?>("--telemetry-capture-content", "Optional: include prompt/response content in Copilot SDK telemetry");
             DryRun = new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)");
         }
 
@@ -363,6 +375,9 @@ internal static class ArgParser
         internal Option<bool> ListModelsJson { get; }
         internal Option<string?> ClientName { get; }
         internal Option<string?> ReasoningEffort { get; }
+        internal Option<string?> TelemetryOtlpEndpoint { get; }
+        internal Option<string?> TelemetrySourceName { get; }
+        internal Option<bool?> TelemetryCaptureContent { get; }
         internal Option<bool> DryRun { get; }
 
         internal IReadOnlyList<Option> AllOptions =>
@@ -407,6 +422,9 @@ internal static class ArgParser
             ListModelsJson,
             ClientName,
             ReasoningEffort,
+            TelemetryOtlpEndpoint,
+            TelemetrySourceName,
+            TelemetryCaptureContent,
             DryRun
         ];
 

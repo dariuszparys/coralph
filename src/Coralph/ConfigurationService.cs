@@ -88,6 +88,9 @@ internal static class ConfigurationService
             DemoMode = cli.DemoMode ?? config.DemoMode ?? defaults.DemoMode,
             ClientName = Coalesce(cli.ClientName, config.ClientName, defaults.ClientName),
             ReasoningEffort = CoalesceNullable(cli.ReasoningEffort, config.ReasoningEffort),
+            TelemetryOtlpEndpoint = CoalesceNullable(cli.TelemetryOtlpEndpoint, config.TelemetryOtlpEndpoint),
+            TelemetrySourceName = CoalesceNullable(cli.TelemetrySourceName, config.TelemetrySourceName),
+            TelemetryCaptureContent = cli.TelemetryCaptureContent ?? config.TelemetryCaptureContent ?? defaults.TelemetryCaptureContent,
             DryRun = cli.DryRun ?? config.DryRun ?? defaults.DryRun
         };
     }

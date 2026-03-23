@@ -47,6 +47,9 @@ internal sealed class LoopOptions
     public bool DemoMode { get; set; }
     public string ClientName { get; set; } = "coralph";
     public string? ReasoningEffort { get; set; }
+    public string? TelemetryOtlpEndpoint { get; set; }
+    public string? TelemetrySourceName { get; set; }
+    public bool? TelemetryCaptureContent { get; set; }
     public bool DryRun { get; set; }
 }
 
@@ -94,5 +97,8 @@ internal sealed class LoopOptionsOverrides
     public bool? DemoMode { get; set; }
     public string? ClientName { get; set; }
     public string? ReasoningEffort { get; set; }
+    public string? TelemetryOtlpEndpoint { get; set; }
+    public string? TelemetrySourceName { get; set; }
+    public bool? TelemetryCaptureContent { get; set; }
     public bool? DryRun { get; set; }
 }

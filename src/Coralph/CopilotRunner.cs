@@ -1,4 +1,3 @@
-using System.Text;
 using System.Linq;
 using Serilog;
 using GitHub.Copilot.SDK;
@@ -20,16 +19,15 @@ internal static class CopilotRunner
 
             var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile, opt.GeneratedTasksFile);
             var permissionPolicy = new PermissionPolicy(opt, eventStream);
+            var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);
 
             // OnUserInputRequest and OnPreToolUse/OnPostToolUse hooks are intentionally not set.
             // Coralph runs unattended; models must not prompt for user input during a loop iteration.
-            // Tool-use events are already captured by CopilotSessionEventRouter via session.On().
+            // Tool-use events are captured by CopilotSessionEventRouter via SessionConfig.OnEvent.
             await using (var session = await client.CreateSessionAsync(
-                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync)))
+                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent)))
             {
-                var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: true, emitSessionEndOnDispose: false);
                 var state = router.StartTurn(turn);
-                using var sub = session.On(router.HandleEvent);
                 using var cancelRegistration = ct.Register(() =>
                 {
                     state.Done.TrySetCanceled(ct);

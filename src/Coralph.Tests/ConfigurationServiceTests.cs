@@ -94,6 +94,28 @@ public sealed class ConfigurationServiceTests
     }
 
     [Fact]
+    public void Merge_TelemetryValuesFollowOverridePrecedence()
+    {
+        var cli = new LoopOptionsOverrides
+        {
+            TelemetrySourceName = "cli-source",
+            TelemetryCaptureContent = true
+        };
+        var config = new LoopOptionsOverrides
+        {
+            TelemetryOtlpEndpoint = "http://localhost:4318",
+            TelemetrySourceName = "config-source",
+            TelemetryCaptureContent = false
+        };
+
+        var options = ConfigurationService.Merge(cli, config);
+
+        Assert.Equal("http://localhost:4318", options.TelemetryOtlpEndpoint);
+        Assert.Equal("cli-source", options.TelemetrySourceName);
+        Assert.True(options.TelemetryCaptureContent);
+    }
+
+    [Fact]
     public void LoadOptions_WithUiModeInConfig_BindsUiMode()
     {
         var tempPath = CreateTempConfig(
@@ -110,6 +132,34 @@ public sealed class ConfigurationServiceTests
             var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), tempPath);
 
             Assert.Equal(UiMode.Classic, options.UiMode);
+        }
+        finally
+        {
+            File.Delete(tempPath);
+        }
+    }
+
+    [Fact]
+    public void LoadOptions_WithTelemetrySettingsInConfig_BindsTelemetryOptions()
+    {
+        var tempPath = CreateTempConfig(
+            """
+            {
+              "LoopOptions": {
+                "TelemetryOtlpEndpoint": "http://localhost:4318",
+                "TelemetrySourceName": "coralph-config",
+                "TelemetryCaptureContent": true
+              }
+            }
+            """);
+
+        try
+        {
+            var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), tempPath);
+
+            Assert.Equal("http://localhost:4318", options.TelemetryOtlpEndpoint);
+            Assert.Equal("coralph-config", options.TelemetrySourceName);
+            Assert.True(options.TelemetryCaptureContent);
         }
         finally
         {

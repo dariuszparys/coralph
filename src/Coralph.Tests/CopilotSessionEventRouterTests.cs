@@ -219,6 +219,48 @@ public class CopilotSessionEventRouterTests
         }
     }
 
+    [Fact]
+    public async Task HandleEvent_SystemNotification_EmitsStructuredEvent()
+    {
+        var backend = new CapturingConsoleBackend();
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "session-5");
+        var options = new LoopOptions();
+
+        await ConsoleOutput.UseBackendAsync(backend);
+        try
+        {
+            var router = new CopilotSessionEventRouter(options, stream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: false);
+
+            router.HandleEvent(CreateSessionStartEvent("session-5"));
+            router.HandleEvent(new SystemNotificationEvent
+            {
+                Data = new SystemNotificationData
+                {
+                    Content = "<system_notification>Shell completed</system_notification>",
+                    Kind = new SystemNotificationDataKindShellCompleted
+                    {
+                        ShellId = "shell-1",
+                        ExitCode = 0,
+                        Description = "dotnet test"
+                    }
+                }
+            });
+
+            var lines = ParseJsonLines(output.ToString());
+            Assert.Equal("system_notification", lines[1].GetProperty("type").GetString());
+            Assert.Equal("<system_notification>Shell completed</system_notification>", lines[1].GetProperty("content").GetString());
+            Assert.Equal("shell_completed", lines[1].GetProperty("kind").GetProperty("type").GetString());
+            Assert.Equal("shell-1", lines[1].GetProperty("kind").GetProperty("shellId").GetString());
+            Assert.Equal(0, lines[1].GetProperty("kind").GetProperty("exitCode").GetInt32());
+            Assert.Equal("dotnet test", lines[1].GetProperty("kind").GetProperty("description").GetString());
+        }
+        finally
+        {
+            await ConsoleOutput.ResetAsync();
+        }
+    }
+
     private static SessionStartEvent CreateSessionStartEvent(string sessionId)
     {
         return new SessionStartEvent

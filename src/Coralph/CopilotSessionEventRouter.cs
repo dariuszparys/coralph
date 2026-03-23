@@ -293,6 +293,13 @@ internal sealed class CopilotSessionEventRouter(
                     ["quotaSnapshots"] = assistantUsage.Data.QuotaSnapshots
                 }, state: state);
                 break;
+            case SystemNotificationEvent notification:
+                Emit("system_notification", fields: _eventStream is null ? null : new Dictionary<string, object?>
+                {
+                    ["content"] = notification.Data.Content,
+                    ["kind"] = MapSystemNotificationKind(notification.Data.Kind)
+                }, state: state);
+                break;
             case AssistantMessageEvent:
                 if (state is null)
                 {
@@ -413,6 +420,51 @@ internal sealed class CopilotSessionEventRouter(
         }
 
         return result;
+    }
+
+    private static Dictionary<string, object?>? MapSystemNotificationKind(SystemNotificationDataKind? kind)
+    {
+        if (kind is null)
+        {
+            return null;
+        }
+
+        return kind switch
+        {
+            SystemNotificationDataKindAgentCompleted agentCompleted => new Dictionary<string, object?>
+            {
+                ["type"] = agentCompleted.Type,
+                ["agentId"] = agentCompleted.AgentId,
+                ["agentType"] = agentCompleted.AgentType,
+                ["status"] = agentCompleted.Status.ToString(),
+                ["description"] = agentCompleted.Description,
+                ["prompt"] = agentCompleted.Prompt
+            },
+            SystemNotificationDataKindAgentIdle agentIdle => new Dictionary<string, object?>
+            {
+                ["type"] = agentIdle.Type,
+                ["agentId"] = agentIdle.AgentId,
+                ["agentType"] = agentIdle.AgentType,
+                ["description"] = agentIdle.Description
+            },
+            SystemNotificationDataKindShellCompleted shellCompleted => new Dictionary<string, object?>
+            {
+                ["type"] = shellCompleted.Type,
+                ["shellId"] = shellCompleted.ShellId,
+                ["exitCode"] = shellCompleted.ExitCode,
+                ["description"] = shellCompleted.Description
+            },
+            SystemNotificationDataKindShellDetachedCompleted shellDetachedCompleted => new Dictionary<string, object?>
+            {
+                ["type"] = shellDetachedCompleted.Type,
+                ["shellId"] = shellDetachedCompleted.ShellId,
+                ["description"] = shellDetachedCompleted.Description
+            },
+            _ => new Dictionary<string, object?>
+            {
+                ["type"] = kind.Type
+            }
+        };
     }
 
     private string ResolveAssistantMessageId(TurnState state, string? messageId)

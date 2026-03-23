@@ -10,6 +10,7 @@ internal static class CopilotClientFactory
         var clientOptions = new CopilotClientOptions
         {
             Cwd = Directory.GetCurrentDirectory(),
+            Telemetry = CreateTelemetryConfig(options)
         };
 
         if (!string.IsNullOrWhiteSpace(options.CliPath))
@@ -33,7 +34,8 @@ internal static class CopilotClientFactory
     internal static SessionConfig CreateSessionConfig(
         LoopOptions options,
         AIFunction[] tools,
-        PermissionRequestHandler onPermissionRequest)
+        PermissionRequestHandler onPermissionRequest,
+        SessionEventHandler? onEvent = null)
     {
         return new SessionConfig
         {
@@ -41,9 +43,28 @@ internal static class CopilotClientFactory
             Streaming = true,
             Tools = tools,
             OnPermissionRequest = onPermissionRequest,
+            OnEvent = onEvent,
             Provider = ProviderConfigFactory.Create(options),
             ClientName = options.ClientName,
-            ReasoningEffort = options.ReasoningEffort
+            ReasoningEffort = options.ReasoningEffort,
+            SystemMessage = CopilotSystemMessageFactory.Create(options)
+        };
+    }
+
+    private static TelemetryConfig? CreateTelemetryConfig(LoopOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.TelemetryOtlpEndpoint) &&
+            string.IsNullOrWhiteSpace(options.TelemetrySourceName) &&
+            !options.TelemetryCaptureContent.HasValue)
+        {
+            return null;
+        }
+
+        return new TelemetryConfig
+        {
+            OtlpEndpoint = options.TelemetryOtlpEndpoint,
+            SourceName = options.TelemetrySourceName,
+            CaptureContent = options.TelemetryCaptureContent
         };
     }
 }

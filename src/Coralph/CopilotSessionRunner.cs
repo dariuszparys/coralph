@@ -1,4 +1,3 @@
-using System.Text;
 using GitHub.Copilot.SDK;
 using Serilog;
 
@@ -9,7 +8,6 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
     private readonly CopilotClient _client;
     private readonly CopilotSession _session;
     private readonly CopilotSessionEventRouter _router;
-    private readonly IDisposable _subscription;
     private bool _started;
     private bool _disposed;
     private int _abortRequested;
@@ -18,13 +16,11 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
         CopilotClient client,
         CopilotSession session,
         CopilotSessionEventRouter router,
-        IDisposable subscription,
         bool started)
     {
         _client = client;
         _session = session;
         _router = router;
-        _subscription = subscription;
         _started = started;
     }
 
@@ -33,7 +29,6 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
         var client = new CopilotClient(CopilotClientFactory.CreateClientOptions(opt));
         var started = false;
         CopilotSession? session = null;
-        IDisposable? subscription = null;
 
         try
         {
@@ -42,25 +37,18 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
 
             var customTools = CustomTools.GetDefaultTools(opt.IssuesFile, opt.ProgressFile, opt.GeneratedTasksFile);
             var permissionPolicy = new PermissionPolicy(opt, eventStream);
+            var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: true);
 
             // OnUserInputRequest and OnPreToolUse/OnPostToolUse hooks are intentionally not set.
             // Coralph runs unattended; models must not prompt for user input during a loop iteration.
-            // Tool-use events are already captured by CopilotSessionEventRouter via session.On().
+            // Tool-use events are captured by CopilotSessionEventRouter via SessionConfig.OnEvent.
             session = await client.CreateSessionAsync(
-                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync));
+                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent));
 
-            var router = new CopilotSessionEventRouter(opt, eventStream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: true);
-            subscription = session.On(router.HandleEvent);
-
-            return new CopilotSessionRunner(client, session, router, subscription, started);
+            return new CopilotSessionRunner(client, session, router, started);
         }
         catch
         {
-            if (subscription is not null)
-            {
-                subscription.Dispose();
-            }
-
             if (session is not null)
             {
                 await session.DisposeAsync();
@@ -141,15 +129,6 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
 
         _disposed = true;
         _router.EmitSessionEndIfNeeded("disposed");
-
-        try
-        {
-            _subscription.Dispose();
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to dispose Copilot session subscription");
-        }
 
         await _session.DisposeAsync();
 
