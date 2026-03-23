@@ -8,6 +8,11 @@ internal static class ProviderConfigFactory
     {
         var apiKey = options.ProviderApiKey;
 
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            apiKey = Environment.GetEnvironmentVariable("CORALPH_PROVIDER_API_KEY");
+        }
+
         // Auto-detect OPENROUTER_API_KEY when the caller has not supplied an explicit key
         // and the provider type is (or will default to) openrouter.
         if (string.IsNullOrWhiteSpace(apiKey) &&

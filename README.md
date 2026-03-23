@@ -244,7 +244,7 @@ Or via `coralph.config.json`:
 }
 ```
 
-Do not commit API keys to source control. Use the `OPENROUTER_API_KEY` environment variable, secrets, or local configuration for `--provider-api-key` or config overrides.
+Do not commit API keys to source control. Prefer environment variables such as `OPENROUTER_API_KEY` or `CORALPH_PROVIDER_API_KEY` over `--provider-api-key`, and use secrets or local configuration for overrides when needed.
 
 See `./coralph --help` for all options.
 

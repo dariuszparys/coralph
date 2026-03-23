@@ -154,4 +154,26 @@ public class ProviderConfigFactoryTests
             Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
         }
     }
+
+    [Fact]
+    public void Create_WithCoralphProviderApiKeyEnvVar_UsesGenericFallback()
+    {
+        Environment.SetEnvironmentVariable("CORALPH_PROVIDER_API_KEY", "sk-generic-from-env");
+        try
+        {
+            var options = new LoopOptions
+            {
+                ProviderType = "openai"
+            };
+
+            var config = ProviderConfigFactory.Create(options);
+
+            Assert.NotNull(config);
+            Assert.Equal("sk-generic-from-env", config.ApiKey);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("CORALPH_PROVIDER_API_KEY", null);
+        }
+    }
 }

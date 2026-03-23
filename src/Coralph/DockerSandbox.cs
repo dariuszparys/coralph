@@ -76,8 +76,8 @@ internal static class DockerSandbox
         try
         {
             var launchInfo = ResolveLaunchInfo(repoRoot);
-            var args = BuildDockerRunArguments(opt, repoRoot, combinedPromptPath, launchInfo);
-            var result = await RunDockerAsync(args, ct, streamOutput: true);
+            var psi = BuildDockerRunProcessStartInfo(opt, repoRoot, combinedPromptPath, launchInfo);
+            var result = await RunDockerAsync(psi, ct, streamOutput: true);
             var output = CombineOutput(result.Output, result.Error);
             if (result.ExitCode != 0)
             {
@@ -121,8 +121,10 @@ internal static class DockerSandbox
         throw new InvalidOperationException("Unable to resolve Coralph executable path for Docker sandbox.");
     }
 
-    private static string BuildDockerRunArguments(LoopOptions opt, string repoRoot, string combinedPromptPath, DockerLaunchInfo launchInfo)
+    internal static ProcessStartInfo BuildDockerRunProcessStartInfo(LoopOptions opt, string repoRoot, string combinedPromptPath, DockerLaunchInfo launchInfo)
     {
+        var psi = CreateDockerProcessStartInfo();
+
         if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
         {
             AddCopilotConfigMounts(launchInfo.Mounts, opt.CopilotConfigPath);
@@ -139,110 +141,110 @@ internal static class DockerSandbox
             cliContainerPath = MapPathToContainer(repoRoot, opt.CliPath, "Copilot CLI", launchInfo.Mounts, allowOutsideRepo: true, readOnly: true);
         }
 
-        var output = new StringBuilder();
-        output.Append("run --rm");
-        output.Append(" --pull=missing");
-        output.Append(" -v ");
-        output.Append(Quote($"{repoRoot}:/repo"));
-        output.Append(" -w /repo");
+        psi.ArgumentList.Add("run");
+        psi.ArgumentList.Add("--rm");
+        psi.ArgumentList.Add("--pull=missing");
+        psi.ArgumentList.Add("-v");
+        psi.ArgumentList.Add($"{repoRoot}:/repo");
+        psi.ArgumentList.Add("-w");
+        psi.ArgumentList.Add("/repo");
         foreach (var mount in launchInfo.Mounts)
         {
-            output.Append(" -v ");
-            output.Append(Quote($"{mount.HostPath}:{mount.ContainerPath}{(mount.ReadOnly ? ":ro" : string.Empty)}"));
+            psi.ArgumentList.Add("-v");
+            psi.ArgumentList.Add($"{mount.HostPath}:{mount.ContainerPath}{(mount.ReadOnly ? ":ro" : string.Empty)}");
         }
-        output.Append(" -e ");
-        output.Append(Quote($"{SandboxFlagEnv}=1"));
-        output.Append(" -e ");
-        output.Append("DOTNET_ROLL_FORWARD_TO_PRERELEASE=1");
-        output.Append(" -e ");
-        output.Append(Quote($"{CombinedPromptEnv}={combinedPromptContainerPath}"));
-        AddCopilotTokenEnvironment(output, opt);
+        AddDockerEnv(psi, SandboxFlagEnv, "1");
+        AddDockerEnv(psi, "DOTNET_ROLL_FORWARD_TO_PRERELEASE", "1");
+        AddDockerEnv(psi, CombinedPromptEnv, combinedPromptContainerPath);
+        AddCopilotTokenEnvironment(psi, opt);
+        if (!string.IsNullOrWhiteSpace(opt.ProviderApiKey))
+        {
+            AddDockerEnv(psi, "CORALPH_PROVIDER_API_KEY", opt.ProviderApiKey);
+        }
 
-        output.Append(' ');
-        output.Append(Quote(opt.DockerImage));
-        output.Append(' ');
-        output.Append(Quote(launchInfo.Command));
+        psi.ArgumentList.Add(opt.DockerImage);
+        psi.ArgumentList.Add(launchInfo.Command);
         foreach (var argument in launchInfo.Arguments)
         {
-            output.Append(' ');
-            output.Append(Quote(argument));
+            psi.ArgumentList.Add(argument);
         }
-        output.Append(" --max-iterations 1");
-        output.Append(" --prompt-file ");
-        output.Append(Quote(promptContainerPath));
-        output.Append(" --progress-file ");
-        output.Append(Quote(progressContainerPath));
-        output.Append(" --issues-file ");
-        output.Append(Quote(issuesContainerPath));
-        output.Append(" --generated-tasks-file ");
-        output.Append(Quote(generatedTasksContainerPath));
-        output.Append(" --model ");
-        output.Append(Quote(opt.Model));
-        output.Append(" --show-reasoning ");
-        output.Append(opt.ShowReasoning.ToString().ToLowerInvariant());
-        output.Append(" --colorized-output ");
-        output.Append(opt.ColorizedOutput.ToString().ToLowerInvariant());
-        output.Append(" --ui classic");
-        output.Append(" --stream-events false");
-        output.Append(" --docker-sandbox false");
-        output.Append(" --docker-image ");
-        output.Append(Quote(opt.DockerImage));
+        psi.ArgumentList.Add("--max-iterations");
+        psi.ArgumentList.Add("1");
+        psi.ArgumentList.Add("--prompt-file");
+        psi.ArgumentList.Add(promptContainerPath);
+        psi.ArgumentList.Add("--progress-file");
+        psi.ArgumentList.Add(progressContainerPath);
+        psi.ArgumentList.Add("--issues-file");
+        psi.ArgumentList.Add(issuesContainerPath);
+        psi.ArgumentList.Add("--generated-tasks-file");
+        psi.ArgumentList.Add(generatedTasksContainerPath);
+        psi.ArgumentList.Add("--model");
+        psi.ArgumentList.Add(opt.Model);
+        psi.ArgumentList.Add("--show-reasoning");
+        psi.ArgumentList.Add(opt.ShowReasoning.ToString().ToLowerInvariant());
+        psi.ArgumentList.Add("--colorized-output");
+        psi.ArgumentList.Add(opt.ColorizedOutput.ToString().ToLowerInvariant());
+        psi.ArgumentList.Add("--ui");
+        psi.ArgumentList.Add("classic");
+        psi.ArgumentList.Add("--stream-events");
+        psi.ArgumentList.Add("false");
+        psi.ArgumentList.Add("--docker-sandbox");
+        psi.ArgumentList.Add("false");
+        psi.ArgumentList.Add("--docker-image");
+        psi.ArgumentList.Add(opt.DockerImage);
 
         if (!string.IsNullOrWhiteSpace(opt.Repo))
         {
-            output.Append(" --repo ");
-            output.Append(Quote(opt.Repo));
+            psi.ArgumentList.Add("--repo");
+            psi.ArgumentList.Add(opt.Repo);
         }
 
         if (!string.IsNullOrWhiteSpace(cliContainerPath))
         {
-            output.Append(" --cli-path ");
-            output.Append(Quote(cliContainerPath));
+            psi.ArgumentList.Add("--cli-path");
+            psi.ArgumentList.Add(cliContainerPath);
         }
 
         if (!string.IsNullOrWhiteSpace(opt.CliUrl))
         {
-            output.Append(" --cli-url ");
-            output.Append(Quote(opt.CliUrl));
+            psi.ArgumentList.Add("--cli-url");
+            psi.ArgumentList.Add(opt.CliUrl);
         }
 
         if (!string.IsNullOrWhiteSpace(opt.ProviderType))
         {
-            output.Append(" --provider-type ");
-            output.Append(Quote(opt.ProviderType));
+            psi.ArgumentList.Add("--provider-type");
+            psi.ArgumentList.Add(opt.ProviderType);
         }
 
         if (!string.IsNullOrWhiteSpace(opt.ProviderBaseUrl))
         {
-            output.Append(" --provider-base-url ");
-            output.Append(Quote(opt.ProviderBaseUrl));
+            psi.ArgumentList.Add("--provider-base-url");
+            psi.ArgumentList.Add(opt.ProviderBaseUrl);
         }
 
         if (!string.IsNullOrWhiteSpace(opt.ProviderWireApi))
         {
-            output.Append(" --provider-wire-api ");
-            output.Append(Quote(opt.ProviderWireApi));
+            psi.ArgumentList.Add("--provider-wire-api");
+            psi.ArgumentList.Add(opt.ProviderWireApi);
         }
 
-        if (!string.IsNullOrWhiteSpace(opt.ProviderApiKey))
-        {
-            output.Append(" --provider-api-key ");
-            output.Append(Quote(opt.ProviderApiKey));
-        }
-
-        return output.ToString();
+        return psi;
     }
 
-    private static async Task<(int ExitCode, string Output, string Error)> RunDockerAsync(string arguments, CancellationToken ct, bool streamOutput = false)
+    private static ProcessStartInfo CreateDockerProcessStartInfo()
     {
-        var psi = new ProcessStartInfo("docker", arguments)
+        return new ProcessStartInfo("docker")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+    }
 
+    private static async Task<(int ExitCode, string Output, string Error)> RunDockerAsync(ProcessStartInfo psi, CancellationToken ct, bool streamOutput = false)
+    {
         using var process = Process.Start(psi);
         if (process is null)
             return (-1, string.Empty, "Failed to start Docker.");
@@ -275,6 +277,19 @@ internal static class DockerSandbox
         }
 
         return (process.ExitCode, stdout.ToString(), stderr.ToString());
+    }
+
+    private static async Task<(int ExitCode, string Output, string Error)> RunDockerAsync(string arguments, CancellationToken ct, bool streamOutput = false)
+    {
+        var psi = new ProcessStartInfo("docker", arguments)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        return await RunDockerAsync(psi, ct, streamOutput).ConfigureAwait(false);
     }
 
     private static async Task ReadProcessStreamAsync(StreamReader reader, StringBuilder buffer, Action<string>? write, CancellationToken ct)
@@ -520,11 +535,11 @@ internal static class DockerSandbox
         return new DockerLaunchInfo(containerPath, new List<string>(), mounts);
     }
 
-    private static void AddCopilotTokenEnvironment(StringBuilder output, LoopOptions opt)
+    private static void AddCopilotTokenEnvironment(ProcessStartInfo psi, LoopOptions opt)
     {
         if (!string.IsNullOrWhiteSpace(opt.CopilotToken))
         {
-            AddDockerEnv(output, "GH_TOKEN", opt.CopilotToken);
+            AddDockerEnv(psi, "GH_TOKEN", opt.CopilotToken);
             return;
         }
 
@@ -533,18 +548,19 @@ internal static class DockerSandbox
 
         if (!string.IsNullOrWhiteSpace(ghToken))
         {
-            AddDockerEnv(output, "GH_TOKEN", ghToken);
+            AddDockerEnv(psi, "GH_TOKEN", ghToken);
         }
 
         if (!string.IsNullOrWhiteSpace(githubToken))
         {
-            AddDockerEnv(output, "GITHUB_TOKEN", githubToken);
+            AddDockerEnv(psi, "GITHUB_TOKEN", githubToken);
         }
     }
 
-    private static void AddDockerEnv(StringBuilder output, string name, string value)
+    private static void AddDockerEnv(ProcessStartInfo psi, string name, string value)
     {
-        output.Append(" -e ");
-        output.Append(Quote($"{name}={value}"));
+        psi.Environment[name] = value;
+        psi.ArgumentList.Add("-e");
+        psi.ArgumentList.Add(name);
     }
 }

@@ -45,6 +45,9 @@ CodeCoverage/
 .env
 .env.*
 
+# Local Coralph config may contain API keys or other secrets
+coralph.config.json
+
 # OS files
 .DS_Store
 

@@ -7,10 +7,15 @@ public sealed class ConsoleOutputCollection : ICollectionFixture<ConsoleOutputFi
 {
 }
 
-public sealed class ConsoleOutputFixture : IDisposable
+public sealed class ConsoleOutputFixture : IAsyncLifetime
 {
-    public void Dispose()
+    public Task InitializeAsync()
     {
-        ConsoleOutput.Reset();
+        return Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+        await ConsoleOutput.ResetAsync();
     }
 }

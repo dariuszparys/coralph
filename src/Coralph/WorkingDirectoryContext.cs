@@ -98,9 +98,23 @@ internal static class WorkingDirectoryContext
 
     private static bool TryGetGitRepositoryRoot(string candidateDirectory, out string repoRoot, out string error)
     {
-        repoRoot = string.Empty;
-        error = string.Empty;
+        try
+        {
+            var result = Task.Run(() => TryGetGitRepositoryRootAsync(candidateDirectory)).GetAwaiter().GetResult();
+            repoRoot = result.RepoRoot;
+            error = result.Error;
+            return result.Success;
+        }
+        catch (Exception ex)
+        {
+            repoRoot = string.Empty;
+            error = $"Failed to resolve git repository root for '{candidateDirectory}': {ex.Message}";
+            return false;
+        }
+    }
 
+    private static async Task<GitRepositoryRootResult> TryGetGitRepositoryRootAsync(string candidateDirectory)
+    {
         var psi = new ProcessStartInfo("git")
         {
             RedirectStandardOutput = true,
@@ -113,46 +127,41 @@ internal static class WorkingDirectoryContext
         psi.ArgumentList.Add("rev-parse");
         psi.ArgumentList.Add("--show-toplevel");
 
-        try
+        using var process = Process.Start(psi);
+        if (process is null)
         {
-            using var process = Process.Start(psi);
-            if (process is null)
-            {
-                error = "Failed to start git while resolving --working-dir.";
-                return false;
-            }
-
-            var stdout = process.StandardOutput.ReadToEnd();
-            var stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                var details = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
-                details = details.Trim();
-                if (string.IsNullOrWhiteSpace(details))
-                {
-                    details = "unknown error";
-                }
-
-                error = $"Path is not inside a git repository: {candidateDirectory} ({details})";
-                return false;
-            }
-
-            var resolved = stdout.Trim();
-            if (string.IsNullOrWhiteSpace(resolved))
-            {
-                error = $"Failed to resolve git repository root for: {candidateDirectory}";
-                return false;
-            }
-
-            repoRoot = resolved;
-            return true;
+            return new GitRepositoryRootResult(false, string.Empty, "Failed to start git while resolving --working-dir.");
         }
-        catch (Exception ex)
+
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync().ConfigureAwait(false);
+        await Task.WhenAll(stdoutTask, stderrTask).ConfigureAwait(false);
+
+        var stdout = await stdoutTask.ConfigureAwait(false);
+        var stderr = await stderrTask.ConfigureAwait(false);
+
+        if (process.ExitCode != 0)
         {
-            error = $"Failed to resolve git repository root for '{candidateDirectory}': {ex.Message}";
-            return false;
+            var details = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
+            details = details.Trim();
+            if (string.IsNullOrWhiteSpace(details))
+            {
+                details = "unknown error";
+            }
+
+            return new GitRepositoryRootResult(false, string.Empty, $"Path is not inside a git repository: {candidateDirectory} ({details})");
         }
+
+        var resolved = stdout.Trim();
+        if (string.IsNullOrWhiteSpace(resolved))
+        {
+            return new GitRepositoryRootResult(false, string.Empty, $"Failed to resolve git repository root for: {candidateDirectory}");
+        }
+
+        return new GitRepositoryRootResult(true, resolved, string.Empty);
     }
+
+    private readonly record struct GitRepositoryRootResult(bool Success, string RepoRoot, string Error);
 }
