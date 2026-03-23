@@ -47,6 +47,18 @@ internal static class ConsoleOutput
         await _backend.InitializeAsync(ct).ConfigureAwait(false);
     }
 
+    internal static async Task ResetAsync()
+    {
+        try
+        {
+            await DisposeBackendAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best effort: tests should still proceed.
+        }
+    }
+
     internal static async Task DisposeBackendAsync()
     {
         var backend = Interlocked.Exchange(ref _backend, new ClassicConsoleOutputBackend());
@@ -92,15 +104,7 @@ internal static class ConsoleOutput
 
     internal static void Reset()
     {
-        var backend = Interlocked.Exchange(ref _backend, new ClassicConsoleOutputBackend());
-        try
-        {
-            backend.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        }
-        catch
-        {
-            // Best effort: tests should still proceed.
-        }
+        Task.Run(async () => await ResetAsync().ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     internal static void Write(string text) => _backend.Write(text);

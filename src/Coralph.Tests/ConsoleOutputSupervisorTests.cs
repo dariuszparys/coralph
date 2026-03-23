@@ -24,7 +24,7 @@ public class ConsoleOutputSupervisorTests
         Assert.False(ConsoleOutput.UsesTui);
         Assert.True(backend.Disposed);
 
-        ConsoleOutput.Reset();
+        await ConsoleOutput.ResetAsync();
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class ConsoleOutputSupervisorTests
             CancellationToken.None);
 
         Assert.True(cts.IsCancellationRequested);
-        ConsoleOutput.Reset();
+        await ConsoleOutput.ResetAsync();
     }
 
     private sealed class FakeTuiBackend : IConsoleOutputBackend

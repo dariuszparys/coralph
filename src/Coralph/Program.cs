@@ -542,13 +542,13 @@ static async Task CommitProgressIfNeededAsync(string progressFile, CancellationT
         return;
 
     // Check if progress file has uncommitted changes
-    var statusResult = await RunGitAsync($"status --porcelain -- \"{progressFile}\"", ct);
+    var statusResult = await RunGitAsync(["status", "--porcelain", "--", progressFile], ct);
     if (string.IsNullOrWhiteSpace(statusResult))
         return; // No changes to commit
 
     // Stage and commit the progress file
-    await RunGitAsync($"add \"{progressFile}\"", ct);
-    var commitResult = await RunGitAsync("commit -m \"chore: update progress.txt\"", ct);
+    await RunGitAsync(["add", progressFile], ct);
+    var commitResult = await RunGitAsync(["commit", "-m", "chore: update progress.txt"], ct);
     if (!string.IsNullOrWhiteSpace(commitResult))
         ConsoleOutput.WriteLine($"Auto-committed {progressFile}");
 }
@@ -578,20 +578,24 @@ static void TryCleanupGeneratedTasksFile(string backlogFile, string reason)
     ConsoleOutput.WriteWarningLine($"Warning: failed to delete generated tasks backlog '{backlogFile}': {deleteError.Message}");
 }
 
-static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
+static async Task<string> RunGitAsync(IReadOnlyList<string> arguments, CancellationToken ct)
 {
-    var psi = new ProcessStartInfo("git", arguments)
+    var psi = new ProcessStartInfo("git")
     {
         RedirectStandardOutput = true,
         RedirectStandardError = true,
         UseShellExecute = false,
         CreateNoWindow = true
     };
+    foreach (var argument in arguments)
+    {
+        psi.ArgumentList.Add(argument);
+    }
 
     using var process = Process.Start(psi);
     if (process is null)
     {
-        Log.Warning("Failed to start git for arguments: {Arguments}", arguments);
+        Log.Warning("Failed to start git for arguments: {Arguments}", string.Join(' ', arguments));
         return string.Empty;
     }
 
@@ -605,7 +609,7 @@ static async Task<string> RunGitAsync(string arguments, CancellationToken ct)
     if (process.ExitCode != 0)
     {
         var trimmedError = error?.Trim();
-        Log.Warning("git {Arguments} failed with exit code {ExitCode}: {Error}", arguments, process.ExitCode,
+        Log.Warning("git {Arguments} failed with exit code {ExitCode}: {Error}", string.Join(' ', arguments), process.ExitCode,
             string.IsNullOrWhiteSpace(trimmedError) ? "(no error output)" : trimmedError);
         return string.Empty;
     }
