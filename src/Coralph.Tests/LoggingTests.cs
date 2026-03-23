@@ -4,6 +4,26 @@ using Xunit;
 
 namespace Coralph.Tests;
 
+[CollectionDefinition("Logging", DisableParallelization = true)]
+public sealed class LoggingCollection : ICollectionFixture<LoggingFixture>
+{
+}
+
+public sealed class LoggingFixture : IAsyncLifetime
+{
+    public Task InitializeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DisposeAsync()
+    {
+        Logging.Close();
+        return Task.CompletedTask;
+    }
+}
+
+[Collection("Logging")]
 public class LoggingTests
 {
     [Fact]
