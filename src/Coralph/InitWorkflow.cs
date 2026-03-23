@@ -6,339 +6,6 @@ internal static class InitWorkflow
 {
     private const string CoralphGitIgnoreBlockStart = "# Coralph loop artifacts (managed)";
     private const string CoralphGitIgnoreBlockEnd = "# End Coralph loop artifacts";
-    private const string EmbeddedIssuesSample = """
-        [
-          {
-            "number": 101,
-            "title": "Sample: Add hello command",
-            "body": "Add a new CLI command `hello` that prints `hello` and exits.\n\n- [ ] Implement the command\n- [ ] Add usage docs",
-            "url": "https://example.invalid/issues/101",
-            "labels": [],
-            "comments": []
-          },
-          {
-            "number": 102,
-            "title": "Sample: Fix typo in README",
-            "body": "Fix a typo in the README.\n\n- [ ] Locate the typo\n- [ ] Correct it",
-            "url": "https://example.invalid/issues/102",
-            "labels": [],
-            "comments": []
-          }
-        ]
-        """;
-    private const string EmbeddedCorePrompt = """
-        # ISSUES
-        
-        Issues JSON is provided at start of context. Parse it to get **OPEN** issues
-        with their bodies and comments.
-        
-        `GENERATED_TASKS_JSON` is also provided. It contains persisted task splits for
-        the open issues. Treat it as the primary backlog for this loop.
-        
-        **If there are no open issues, output "NO_OPEN_ISSUES" and stop immediately.**
-        
-        # TASK BREAKDOWN
-        
-        Use `GENERATED_TASKS_JSON` as the default task split. If an issue appears to be
-        under-split, propose finer-grained follow-up tasks in your summary.
-        
-        Make each task the smallest possible unit of work. We don't want to outrun our
-        headlights. Aim for one small change per task.
-        
-        # TASK SELECTION
-        
-        Pick the next task from `GENERATED_TASKS_JSON` where status is `open` (or
-        `in_progress`). Prioritize tasks in this order:
-        
-        1. Critical bugfixes
-        2. Tracer bullets for new features
-        
-        Tracer bullets comes from the Pragmatic Programmer. When building systems, you
-        want to write code that gets you feedback as quickly as possible. Tracer bullets
-        are small slices of functionality that go through all layers of the system,
-        allowing you to test and validate your approach early. This helps in identifying
-        potential issues and ensures that the overall architecture is sound before
-        investing significant time in development.
-        
-        TL;DR - build a tiny, end-to-end slice of the feature first, then expand it out.
-        
-        3. Polish and quick wins
-        4. Refactors
-        
-        **If no tasks remain from open issues in `GENERATED_TASKS_JSON`, output
-        "ALL_TASKS_COMPLETE" and stop immediately.**
-        
-        # PRE-FLIGHT CHECK
-        
-        Before starting work:
-        
-        1. Verify the issue is still OPEN (check with
-           `gh issue view <number> --json state`)
-        2. Check if the work was already done in a previous iteration (review recent
-           commits and progress.txt)
-        3. If already done or issue is closed, skip to the next open issue or output
-           "ALL_TASKS_COMPLETE"
-        4. Mark the selected task as `in_progress` in `generated_tasks.json`
-        
-        # EXPLORATION
-        
-        Explore the repo and fill your context window with relevant information that
-        will allow you to complete the task.
-        
-        # EXECUTION
-        
-        Complete the task.
-        
-        If you find that the task is larger than you expected (for instance, requires a
-        refactor first), output "HANG_ON_A_SECOND".
-        
-        Then, find a way to break it into smaller chunks and only do that chunk (i.e.
-        complete the smaller refactor).
-        
-        When the task is completed in this iteration, mark it `done` in
-        `generated_tasks.json`. Leave any remaining tasks as `open`.
-        
-        # FEEDBACK LOOPS
-        
-        Before committing, run the feedback loops:
-        
-        - `dotnet build` to run the build
-        - `dotnet test` to run the tests
-        
-        # PROGRESS
-        
-        After completing, append to progress.txt:
-        
-        ```markdown
-        ## [Date] - [GitHub Issue ID]
-        
-        - What was implemented
-        - Files changed: [list]
-        - **Learnings:**
-          - Any patterns discovered
-          - Gotchas encountered
-        ```
-        
-        # COMMIT
-        
-        Make a git commit using conventional commits. **Include progress.txt in your
-        commit** - ensure all changes including progress.txt are staged and committed:
-        
-        - What was implemented
-        - Add key decisions made
-        - **Learnings:**
-          - Any patterns discovered
-          - Gotchas encountered
-        
-        - Commit your changes to the current branch (typically main)
-        - Push the changes: `git push`
-        
-        # CLOSE THE ISSUE
-        
-        **Before closing, ALWAYS add a comment summarizing what was done:**
-        Use `gh issue comment <number> --body-file /tmp/issue-comment.md` (create the file with a heredoc to preserve line breaks) to document:
-        - What was implemented or fixed
-        - Key files changed
-        - Any important decisions or gotchas
-        
-        After commenting, close the issue using `gh issue close <number>`.
-        
-        If the issue is not complete, leave a comment explaining what was done and what remains.
-        
-        # FINAL RULES
-        
-        - ONLY WORK ON A SINGLE GENERATED TASK PER ITERATION
-        - After completing one issue, DO NOT output COMPLETE - instead, the loop will
-          continue and you will work on the next open issue in the next iteration
-        - Do NOT re-work already completed/closed issues
-        - Do NOT make unnecessary commits (like updating progress.txt for work already
-          logged)
-        - If nothing needs to be done, output "ALL_TASKS_COMPLETE" and stop
-        
-        # OUTPUT_RULES
-        
-        - Work on ONE generated task per iteration. Make real changes to files.
-        - After making changes, summarize what you did and what remains.
-        - Only output <promise>COMPLETE</promise> when ALL of these are true:
-          1. You made changes in THIS iteration (not just reviewed code)
-          2. EVERY task in GENERATED_TASKS_JSON is done (not just the current one)
-          3. There is genuinely no remaining work across ALL issues
-          4. progress.txt has been updated AND committed (verify with `git status`)
-        - If you completed one issue but others remain open, do NOT output COMPLETE
-        - If unsure whether to output COMPLETE, do NOT output it - continue working.
-        """;
-    private const string EmbeddedJavaScriptPrompt = """
-        # JavaScript/TypeScript Project Prompt Template
-        
-        ## Repo context
-        
-        - Node.js/TypeScript project
-        - Source code in `src/` directory
-        - Tests in `__tests__/` or `tests/` directory
-        
-        ## Build and test
-        
-        - Install dependencies: `npm install`
-        - Run tests: `npm test`
-        - Build: `npm run build`
-        - Lint: `npm run lint`
-        - Format: `npm run format` (if available)
-        
-        ## Project structure
-        
-        ```
-        ├── src/
-        │   ├── index.ts
-        │   └── utils/
-        │       └── helpers.ts
-        ├── __tests__/
-        │   └── index.test.ts
-        ├── package.json
-        ├── tsconfig.json
-        ├── .eslintrc.js
-        └── README.md
-        ```
-
-        ## Coding standards
-        
-        - Use ESLint and Prettier for consistent formatting
-        - Prefer TypeScript over plain JavaScript
-        - Use async/await over callbacks
-        - Write Jest tests for new functionality
-        
-        ## Changes and logging
-        
-        After completing work, append progress to `progress.txt` using the format in `prompt.md`.
-        """;
-    private const string EmbeddedPythonPrompt = """
-        # Python Project Prompt Template
-        
-        ## Repo context
-        
-        - Python project using standard tooling (pytest, flake8, black)
-        - Source code in `src/` directory
-        - Tests in `tests/` directory
-        
-        ## Build and test
-        
-        - Install dependencies: `pip install -r requirements.txt` or `pip install -e .`
-        - Run tests: `pytest`
-        - Run linter: `flake8 .`
-        - Format code: `black .`
-        - Type checking: `mypy src/`
-        
-        ## Project structure
-        
-        ```
-        ├── src/
-        │   └── my_package/
-        │       ├── __init__.py
-        │       └── main.py
-        ├── tests/
-        │   ├── __init__.py
-        │   └── test_main.py
-        ├── requirements.txt
-        ├── pyproject.toml
-        └── README.md
-        ```
-
-        ## Coding standards
-        
-        - Follow PEP 8 style guidelines
-        - Use type hints for function signatures
-        - Write docstrings for public functions and classes
-        - Keep functions small and focused
-        
-        ## Changes and logging
-        
-        After completing work, append progress to `progress.txt` using the format in `prompt.md`.
-        """;
-    private const string EmbeddedGoPrompt = """
-        # Go Project Prompt Template
-        
-        ## Repo context
-        
-        - Go project using standard Go toolchain
-        - Source code in `cmd/` and `internal/` directories
-        - Tests co-located with source files (`*_test.go`)
-        
-        ## Build and test
-        
-        - Build: `go build ./...`
-        - Run tests: `go test ./...`
-        - Run tests with coverage: `go test -cover ./...`
-        - Lint: `golangci-lint run`
-        - Format: `gofmt -w .`
-        
-        ## Project structure
-        
-        ```
-        ├── cmd/
-        │   └── myapp/
-        │       └── main.go
-        ├── internal/
-        │   └── pkg/
-        │       ├── handler.go
-        │       └── handler_test.go
-        ├── go.mod
-        ├── go.sum
-        └── README.md
-        ```
-
-        ## Coding standards
-        
-        - Follow Effective Go guidelines
-        - Use meaningful package and function names
-        - Keep functions small and focused
-        - Write table-driven tests
-        - Handle errors explicitly, don't ignore them
-        
-        ## Changes and logging
-        
-        After completing work, append progress to `progress.txt` using the format in `prompt.md`.
-        """;
-    private const string EmbeddedRustPrompt = """
-        # Rust Project Prompt Template
-        
-        ## Repo context
-        
-        - Rust project using Cargo
-        - Source code in `src/` directory
-        - Tests in `tests/` directory or inline with `#[cfg(test)]`
-        
-        ## Build and test
-        
-        - Build: `cargo build`
-        - Run tests: `cargo test`
-        - Lint: `cargo clippy`
-        - Format: `cargo fmt`
-        - Check without building: `cargo check`
-        
-        ## Project structure
-        
-        ```
-        ├── src/
-        │   ├── main.rs (or lib.rs)
-        │   └── utils.rs
-        ├── tests/
-        │   └── integration_test.rs
-        ├── Cargo.toml
-        ├── Cargo.lock
-        └── README.md
-        ```
-
-        ## Coding standards
-        
-        - Follow Rust API Guidelines
-        - Use `Result` and `Option` types for error handling
-        - Write documentation comments (`///`) for public items
-        - Avoid `unwrap()` in production code
-        - Prefer iterators over manual loops
-        
-        ## Changes and logging
-        
-        After completing work, append progress to `progress.txt` using the format in `prompt.md`.
-        """;
 
     internal static async Task<int> RunAsync(string? configFile)
     {
@@ -383,12 +50,11 @@ internal static class InitWorkflow
             ConsoleOutput.WriteLine($"Selected project type: {projectType}");
 
             var coralphRoot = AppContext.BaseDirectory;
-            var fallbackPrompt = await TryReadFileAsync(Path.Combine(coralphRoot, "prompt.md")).ConfigureAwait(false);
 
             var exitCode = 0;
             exitCode |= await EnsureIssuesFileAsync(repoRoot, coralphRoot);
             exitCode |= await EnsureConfigFileAsync(repoRoot, configFile);
-            exitCode |= await EnsurePromptFileAsync(repoRoot, coralphRoot, projectType.Value, fallbackPrompt);
+            exitCode |= await EnsurePromptFileAsync(repoRoot, coralphRoot, projectType.Value);
             exitCode |= await EnsureProgressFileAsync(repoRoot);
             exitCode |= await EnsureGitIgnoreEntriesAsync(repoRoot, configFile);
 
@@ -518,39 +184,37 @@ internal static class InitWorkflow
         return null;
     }
 
-    private static async Task<int> EnsureIssuesFileAsync(string repoRoot, string coralphRoot)
+    private static Task<int> EnsureIssuesFileAsync(string repoRoot, string coralphRoot)
     {
         var targetPath = Path.Combine(repoRoot, "issues.json");
         if (File.Exists(targetPath))
         {
             ConsoleOutput.WriteLine("issues.json already exists, skipping.");
-            return 0;
+            return Task.FromResult(0);
         }
 
         var sourcePath = Path.Combine(coralphRoot, "issues.sample.json");
+        if (!File.Exists(sourcePath))
+        {
+            ConsoleOutput.WriteErrorLine($"Required init asset not found: {sourcePath}");
+            return Task.FromResult(1);
+        }
+
         try
         {
-            if (File.Exists(sourcePath))
-            {
-                File.Copy(sourcePath, targetPath);
-                ConsoleOutput.WriteLine("Created issues.json");
-                await Task.CompletedTask;
-                return 0;
-            }
-
-            await File.WriteAllTextAsync(targetPath, EmbeddedIssuesSample, CancellationToken.None);
-            ConsoleOutput.WriteLine("Created issues.json (embedded sample)");
-            return 0;
+            File.Copy(sourcePath, targetPath);
+            ConsoleOutput.WriteLine("Created issues.json");
+            return Task.FromResult(0);
         }
         catch (IOException ex)
         {
             ConsoleOutput.WriteErrorLine($"Failed to write issues.json: {ex.Message}");
-            return 1;
+            return Task.FromResult(1);
         }
         catch (UnauthorizedAccessException ex)
         {
             ConsoleOutput.WriteErrorLine($"Failed to write issues.json: {ex.Message}");
-            return 1;
+            return Task.FromResult(1);
         }
     }
 
@@ -589,7 +253,7 @@ internal static class InitWorkflow
         }
     }
 
-    private static async Task<int> EnsurePromptFileAsync(string repoRoot, string coralphRoot, ProjectType projectType, string fallbackPrompt)
+    private static async Task<int> EnsurePromptFileAsync(string repoRoot, string coralphRoot, ProjectType projectType)
     {
         var targetPath = Path.Combine(repoRoot, "prompt.md");
         if (File.Exists(targetPath))
@@ -598,22 +262,12 @@ internal static class InitWorkflow
             return 0;
         }
 
-        var sourcePath = projectType switch
-        {
-            ProjectType.JavaScript => Path.Combine(coralphRoot, "examples", "javascript-prompt.md"),
-            ProjectType.Python => Path.Combine(coralphRoot, "examples", "python-prompt.md"),
-            ProjectType.Go => Path.Combine(coralphRoot, "examples", "go-prompt.md"),
-            ProjectType.Rust => Path.Combine(coralphRoot, "examples", "rust-prompt.md"),
-            ProjectType.DotNet => Path.Combine(coralphRoot, "prompt.md"),
-            _ => Path.Combine(coralphRoot, "examples", "javascript-prompt.md")
-        };
-
         try
         {
-            var promptContent = await BuildPromptContentAsync(projectType, coralphRoot, fallbackPrompt).ConfigureAwait(false);
+            var sourcePath = GetPromptTemplatePath(coralphRoot, projectType);
+            var promptContent = await BuildPromptContentAsync(sourcePath, projectType).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(promptContent))
             {
-                ConsoleOutput.WriteErrorLine($"Prompt template not found: {sourcePath}");
                 return 1;
             }
 
@@ -633,30 +287,9 @@ internal static class InitWorkflow
         }
     }
 
-    private static async Task<string> TryReadFileAsync(string path)
+    private static string GetPromptTemplatePath(string coralphRoot, ProjectType projectType)
     {
-        if (!File.Exists(path))
-        {
-            return string.Empty;
-        }
-
-        try
-        {
-            return await File.ReadAllTextAsync(path, CancellationToken.None).ConfigureAwait(false);
-        }
-        catch (IOException)
-        {
-            return string.Empty;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return string.Empty;
-        }
-    }
-
-    private static async Task<string> BuildPromptContentAsync(ProjectType projectType, string coralphRoot, string fallbackPrompt)
-    {
-        var templatePath = projectType switch
+        return projectType switch
         {
             ProjectType.JavaScript => Path.Combine(coralphRoot, "examples", "javascript-prompt.md"),
             ProjectType.Python => Path.Combine(coralphRoot, "examples", "python-prompt.md"),
@@ -665,92 +298,57 @@ internal static class InitWorkflow
             ProjectType.DotNet => Path.Combine(coralphRoot, "prompt.md"),
             _ => Path.Combine(coralphRoot, "examples", "javascript-prompt.md")
         };
+    }
 
-        var templateContent = await TryReadFileAsync(templatePath).ConfigureAwait(false);
-        var corePrompt = string.IsNullOrWhiteSpace(fallbackPrompt) ? EmbeddedCorePrompt : fallbackPrompt;
+    private static async Task<string?> BuildPromptContentAsync(string templatePath, ProjectType projectType)
+    {
+        if (!File.Exists(templatePath))
+        {
+            ConsoleOutput.WriteErrorLine($"Required init asset not found: {templatePath}");
+            return null;
+        }
+
+        string templateContent;
+        try
+        {
+            templateContent = await File.ReadAllTextAsync(templatePath, CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (IOException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to read prompt template: {ex.Message}");
+            return null;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ConsoleOutput.WriteErrorLine($"Failed to read prompt template: {ex.Message}");
+            return null;
+        }
 
         if (projectType == ProjectType.DotNet)
         {
-            return string.IsNullOrWhiteSpace(templateContent) ? corePrompt : templateContent;
+            return templateContent;
         }
 
-        var adaptedCorePrompt = AdaptCorePromptForProjectType(corePrompt, projectType);
-
-        if (!string.IsNullOrWhiteSpace(templateContent))
+        if (!ContainsCoreWorkflow(templateContent))
         {
-            var cleanedTemplate = RemoveTemplateFeedbackLoopSection(templateContent);
-            if (ContainsCoreWorkflow(cleanedTemplate))
-            {
-                return AdaptCorePromptForProjectType(cleanedTemplate, projectType);
-            }
-
-            if (string.IsNullOrWhiteSpace(adaptedCorePrompt))
-            {
-                return cleanedTemplate;
-            }
-
-            return $"{cleanedTemplate.TrimEnd()}\n\n{adaptedCorePrompt.TrimStart()}";
+            ConsoleOutput.WriteErrorLine($"Prompt template is missing core workflow sections: {templatePath}");
+            return null;
         }
 
-        var embeddedTemplate = RemoveTemplateFeedbackLoopSection(GetEmbeddedPromptTemplate(projectType));
-        if (!string.IsNullOrWhiteSpace(embeddedTemplate))
+        var adaptedPrompt = AdaptCorePromptForProjectType(templateContent, projectType);
+        if (string.IsNullOrWhiteSpace(adaptedPrompt))
         {
-            if (string.IsNullOrWhiteSpace(adaptedCorePrompt))
-            {
-                return embeddedTemplate;
-            }
-
-            return $"{embeddedTemplate.TrimEnd()}\n\n{adaptedCorePrompt.TrimStart()}";
+            ConsoleOutput.WriteErrorLine($"Prompt template could not be adapted for {projectType}: {templatePath}");
+            return null;
         }
 
-        return adaptedCorePrompt;
+        return adaptedPrompt;
     }
 
     private static bool ContainsCoreWorkflow(string promptContent)
     {
         return promptContent.Contains("# ISSUES", StringComparison.Ordinal)
             && promptContent.Contains("# TASK BREAKDOWN", StringComparison.Ordinal);
-    }
-
-    private static string RemoveTemplateFeedbackLoopSection(string templateContent)
-    {
-        if (string.IsNullOrWhiteSpace(templateContent))
-        {
-            return templateContent;
-        }
-
-        const string feedbackHeading = "## Feedback loops";
-        var sectionStart = FindHeadingStart(templateContent, feedbackHeading);
-        if (sectionStart < 0)
-        {
-            return templateContent;
-        }
-
-        var sectionEnd = FindNextSecondLevelHeading(templateContent, sectionStart + feedbackHeading.Length);
-        if (sectionEnd < 0)
-        {
-            return templateContent[..sectionStart].TrimEnd();
-        }
-
-        return $"{templateContent[..sectionStart].TrimEnd()}\n\n{templateContent[sectionEnd..].TrimStart()}";
-    }
-
-    private static int FindHeadingStart(string content, string heading)
-    {
-        if (content.StartsWith(heading, StringComparison.Ordinal))
-        {
-            return 0;
-        }
-
-        var marker = $"\n{heading}";
-        var markerIndex = content.IndexOf(marker, StringComparison.Ordinal);
-        return markerIndex < 0 ? -1 : markerIndex + 1;
-    }
-
-    private static int FindNextSecondLevelHeading(string content, int searchStart)
-    {
-        var markerIndex = content.IndexOf("\n## ", searchStart, StringComparison.Ordinal);
-        return markerIndex < 0 ? -1 : markerIndex + 1;
     }
 
     private static string AdaptCorePromptForProjectType(string promptContent, ProjectType projectType)
@@ -831,18 +429,6 @@ internal static class InitWorkflow
                 - `cargo clippy -- -D warnings` to run lint checks
                 """,
             _ => string.Empty
-        };
-    }
-
-    private static string GetEmbeddedPromptTemplate(ProjectType projectType)
-    {
-        return projectType switch
-        {
-            ProjectType.JavaScript => EmbeddedJavaScriptPrompt,
-            ProjectType.Python => EmbeddedPythonPrompt,
-            ProjectType.Go => EmbeddedGoPrompt,
-            ProjectType.Rust => EmbeddedRustPrompt,
-            _ => EmbeddedJavaScriptPrompt
         };
     }
 
