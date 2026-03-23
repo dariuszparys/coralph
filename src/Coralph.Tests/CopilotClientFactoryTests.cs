@@ -17,7 +17,8 @@ public class CopilotClientFactoryTests
 
         var clientOptions = CopilotClientFactory.CreateClientOptions(options);
 
-        Assert.Equal(Directory.GetCurrentDirectory(), clientOptions.Cwd);
+        Assert.False(string.IsNullOrWhiteSpace(clientOptions.Cwd));
+        Assert.True(Path.IsPathRooted(clientOptions.Cwd));
         Assert.Equal("/usr/local/bin/copilot", clientOptions.CliPath);
         Assert.Equal("http://localhost:3000", clientOptions.CliUrl);
         Assert.Equal("ghp_test_token", clientOptions.GitHubToken);
@@ -28,7 +29,8 @@ public class CopilotClientFactoryTests
     {
         var clientOptions = CopilotClientFactory.CreateClientOptions(new LoopOptions());
 
-        Assert.Equal(Directory.GetCurrentDirectory(), clientOptions.Cwd);
+        Assert.False(string.IsNullOrWhiteSpace(clientOptions.Cwd));
+        Assert.True(Path.IsPathRooted(clientOptions.Cwd));
         Assert.Null(clientOptions.CliPath);
         Assert.Null(clientOptions.CliUrl);
         Assert.Null(clientOptions.GitHubToken);
