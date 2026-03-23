@@ -140,20 +140,24 @@ coralph --working-dir /path/to/your/target/repo --max-iterations 10
 
 ### `coralph.config.json`
 
-Customize behavior for your repository:
+Customize behavior for your repository. The JSON binds to the `LoopOptions` section, using the same property names as `src/Coralph/LoopOptions.cs`.
 
 ```json
 {
-  "model": "gpt-4o",
-  "maxIterations": 10,
-  "maxTokens": 100000,
-  "issuesFile": "issues.json",
-  "promptFile": "prompt.md",
-  "progressFile": "progress.txt",
-  "refreshIssues": false,
-  "repo": "owner/repo-name",
-  "showReasoning": true,
-  "colorizedOutput": true
+  "LoopOptions": {
+    "MaxIterations": 10,
+    "Model": "GPT-5.1-Codex",
+    "PromptFile": "prompt.md",
+    "ProgressFile": "progress.txt",
+    "IssuesFile": "issues.json",
+    "GeneratedTasksFile": "generated_tasks.json",
+    "RefreshIssues": false,
+    "Repo": "owner/repo-name",
+    "ShowReasoning": true,
+    "ColorizedOutput": true,
+    "DockerSandbox": false,
+    "ClientName": "coralph"
+  }
 }
 ```
 
@@ -161,14 +165,23 @@ Customize behavior for your repository:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `model` | `gpt-4o` | AI model to use |
-| `maxIterations` | `10` | Maximum loop iterations |
-| `promptFile` | `prompt.md` | Instructions file |
-| `issuesFile` | `issues.json` | GitHub issues cache |
-| `progressFile` | `progress.txt` | Progress tracking log |
-| `repo` | (required for `--refresh-issues`) | GitHub repo `owner/name` |
-| `showReasoning` | `true` | Display AI reasoning steps |
-| `colorizedOutput` | `true` | Use colored terminal output |
+| `Model` | `GPT-5.1-Codex` | AI model to use |
+| `MaxIterations` | `10` | Maximum loop iterations |
+| `GeneratedTasksFile` | `generated_tasks.json` | Generated task backlog file |
+| `PromptFile` | `prompt.md` | Instructions file |
+| `IssuesFile` | `issues.json` | GitHub issues cache |
+| `ProgressFile` | `progress.txt` | Progress tracking log |
+| `RefreshIssues` | `false` | Refresh issues before the loop starts |
+| `Repo` | (required for `--refresh-issues`) | GitHub repo `owner/name` |
+| `ShowReasoning` | `true` | Display AI reasoning steps |
+| `ColorizedOutput` | `true` | Use colored terminal output |
+| `DockerSandbox` | `false` | Run each iteration inside Docker |
+| `DockerImage` | `mcr.microsoft.com/devcontainers/dotnet:10.0` | Docker image for sandbox runs |
+| `ClientName` | `coralph` | Client name sent to the Copilot session |
+| `ReasoningEffort` | (model default) | Reasoning budget hint |
+| `ToolAllow` / `ToolDeny` | `[]` | Allow/deny lists for tool permissions |
+
+See `src/Coralph/LoopOptions.cs` for the full set of config keys, including provider settings, CLI paths, Azure Boards integration, list-models, demo mode, and dry-run support.
 
 ## Adapting `prompt.md` for Your Stack
 

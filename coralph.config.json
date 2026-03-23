@@ -1,7 +1,7 @@
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "claude-sonnet-4.6",
+    "Model": "GPT-5.1-Codex",
     "ProviderType": null,
     "ProviderBaseUrl": null,
     "ProviderWireApi": null,
@@ -9,6 +9,7 @@
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
     "IssuesFile": "issues.json",
+    "GeneratedTasksFile": "generated_tasks.json",
     "RefreshIssues": false,
     "Repo": null,
     "RefreshIssuesAzdo": false,
@@ -19,6 +20,8 @@
     "DockerSandbox": false,
     "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0",
     "ClientName": "coralph",
+    "ShowReasoning": true,
+    "ColorizedOutput": true,
     "ReasoningEffort": null
   }
 }
