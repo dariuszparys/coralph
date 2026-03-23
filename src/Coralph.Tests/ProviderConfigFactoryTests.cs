@@ -2,6 +2,25 @@ using Coralph;
 
 namespace Coralph.Tests;
 
+[CollectionDefinition("EnvironmentVariables", DisableParallelization = true)]
+public sealed class EnvironmentVariablesCollection : ICollectionFixture<EnvironmentVariablesFixture>
+{
+}
+
+public sealed class EnvironmentVariablesFixture : IAsyncLifetime
+{
+    public Task InitializeAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
+}
+
+[Collection("EnvironmentVariables")]
 public class ProviderConfigFactoryTests
 {
     [Fact]
@@ -116,8 +135,7 @@ public class ProviderConfigFactoryTests
     [Fact]
     public void Create_WithOpenRouterType_FallsBackToEnvVar()
     {
-        Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env");
-        try
+        WithEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env", () =>
         {
             var options = new LoopOptions { ProviderType = "openrouter" };
 
@@ -125,18 +143,13 @@ public class ProviderConfigFactoryTests
 
             Assert.NotNull(config);
             Assert.Equal("sk-or-from-env", config.ApiKey);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
-        }
+        });
     }
 
     [Fact]
     public void Create_WithOpenRouterType_ExplicitKeyTakesPrecedenceOverEnvVar()
     {
-        Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env");
-        try
+        WithEnvironmentVariable("OPENROUTER_API_KEY", "sk-or-from-env", () =>
         {
             var options = new LoopOptions
             {
@@ -148,18 +161,13 @@ public class ProviderConfigFactoryTests
 
             Assert.NotNull(config);
             Assert.Equal("sk-or-explicit", config.ApiKey);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
-        }
+        });
     }
 
     [Fact]
     public void Create_WithCoralphProviderApiKeyEnvVar_UsesGenericFallback()
     {
-        Environment.SetEnvironmentVariable("CORALPH_PROVIDER_API_KEY", "sk-generic-from-env");
-        try
+        WithEnvironmentVariable("CORALPH_PROVIDER_API_KEY", "sk-generic-from-env", () =>
         {
             var options = new LoopOptions
             {
@@ -170,10 +178,21 @@ public class ProviderConfigFactoryTests
 
             Assert.NotNull(config);
             Assert.Equal("sk-generic-from-env", config.ApiKey);
+        });
+    }
+
+    private static void WithEnvironmentVariable(string name, string? value, Action assertion)
+    {
+        var original = Environment.GetEnvironmentVariable(name);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(name, value);
+            assertion();
         }
         finally
         {
-            Environment.SetEnvironmentVariable("CORALPH_PROVIDER_API_KEY", null);
+            Environment.SetEnvironmentVariable(name, original);
         }
     }
 }
