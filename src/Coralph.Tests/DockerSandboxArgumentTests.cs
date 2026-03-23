@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Coralph;
 
 namespace Coralph.Tests;
@@ -38,10 +39,73 @@ public sealed class DockerSandboxArgumentTests : IDisposable
         Assert.DoesNotContain("CORALPH_PROVIDER_API_KEY", args);
     }
 
+    [Fact]
+    public void BuildDockerRunProcessStartInfo_AddsDockerHardeningDefaults()
+    {
+        var psi = BuildProcessStartInfo(new LoopOptions());
+
+        var args = psi.ArgumentList.ToArray();
+        AssertArgumentPair(args, "--network", "none");
+        AssertArgumentPair(args, "--security-opt", "no-new-privileges");
+        AssertArgumentPair(args, "--memory", "2g");
+        AssertArgumentPair(args, "--cpus", "2");
+    }
+
+    [Fact]
+    public void BuildDockerRunProcessStartInfo_UsesConfiguredDockerLimits()
+    {
+        var psi = BuildProcessStartInfo(new LoopOptions
+        {
+            DockerNetworkMode = "bridge",
+            DockerMemoryLimit = "4g",
+            DockerCpuLimit = "1.5"
+        });
+
+        var args = psi.ArgumentList.ToArray();
+        AssertArgumentPair(args, "--network", "bridge");
+        AssertArgumentPair(args, "--memory", "4g");
+        AssertArgumentPair(args, "--cpus", "1.5");
+    }
+
+    [Fact]
+    public void BuildDockerRunProcessStartInfo_WithInvalidDockerImage_Throws()
+    {
+        var options = new LoopOptions { DockerImage = "coralph:latest;rm -rf /" };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => BuildProcessStartInfo(options));
+
+        Assert.Contains("Invalid Docker image", ex.Message);
+    }
+
+    [Fact]
+    public void AppendStreamedOutput_CapsTailAndPreservesTerminalSignal()
+    {
+        var buffer = new StringBuilder();
+        DockerSandbox.AppendStreamedOutput(buffer, new string('x', DockerSandbox.StreamedOutputTailLimit + 2048), capTail: true);
+        DockerSandbox.AppendStreamedOutput(buffer, "\nCOMPLETE\n", capTail: true);
+
+        Assert.True(buffer.Length <= DockerSandbox.StreamedOutputTailLimit);
+        Assert.True(PromptHelpers.TryGetTerminalSignal(buffer.ToString(), out var signal));
+        Assert.Equal(TerminalSignal.Complete, signal);
+    }
+
     private ProcessStartInfo BuildProcessStartInfo(LoopOptions options)
     {
         var launchInfo = new DockerLaunchInfo("dotnet", ["Coralph.dll"], []);
         return DockerSandbox.BuildDockerRunProcessStartInfo(options, _repoRoot, _combinedPromptPath, launchInfo);
+    }
+
+    private static void AssertArgumentPair(string[] args, string name, string value)
+    {
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == name && args[i + 1] == value)
+            {
+                return;
+            }
+        }
+
+        Assert.Fail($"Expected argument pair '{name} {value}' not found.");
     }
 
     public void Dispose()

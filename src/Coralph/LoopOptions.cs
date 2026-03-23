@@ -39,6 +39,9 @@ internal sealed class LoopOptions
     public bool StreamEvents { get; set; }
     public bool DockerSandbox { get; set; }
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
+    public string DockerNetworkMode { get; set; } = "none";
+    public string DockerMemoryLimit { get; set; } = "2g";
+    public string DockerCpuLimit { get; set; } = "2";
     public bool ListModels { get; set; }
     public bool ListModelsJson { get; set; }
     public bool DemoMode { get; set; }
@@ -83,6 +86,9 @@ internal sealed class LoopOptionsOverrides
     public bool? StreamEvents { get; set; }
     public bool? DockerSandbox { get; set; }
     public string? DockerImage { get; set; }
+    public string? DockerNetworkMode { get; set; }
+    public string? DockerMemoryLimit { get; set; }
+    public string? DockerCpuLimit { get; set; }
     public bool? ListModels { get; set; }
     public bool? ListModelsJson { get; set; }
     public bool? DemoMode { get; set; }

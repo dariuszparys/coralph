@@ -313,6 +313,46 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithEmptyDockerNetwork_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-network", ""]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--docker-network", err);
+    }
+
+    [Fact]
+    public void Parse_WithDockerNetwork_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-network", "bridge"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("bridge", overrides.DockerNetworkMode);
+    }
+
+    [Fact]
+    public void Parse_WithDockerMemory_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-memory", "4g"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("4g", overrides.DockerMemoryLimit);
+    }
+
+    [Fact]
+    public void Parse_WithDockerCpus_SetsOverride()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-cpus", "1.5"]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("1.5", overrides.DockerCpuLimit);
+    }
+
+    [Fact]
     public void Parse_WithEmptyDockerImage_ReturnsError()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--docker-image", ""]);
@@ -400,6 +440,9 @@ public class ArgParserTests
         Assert.Contains("--demo", output);
         Assert.Contains("--client-name", output);
         Assert.Contains("--reasoning-effort", output);
+        Assert.Contains("--docker-network", output);
+        Assert.Contains("--docker-memory", output);
+        Assert.Contains("--docker-cpus", output);
     }
 
     [Fact]
@@ -409,6 +452,9 @@ public class ArgParserTests
 
         Assert.Contains("--client-name", optionNames);
         Assert.Contains("--reasoning-effort", optionNames);
+        Assert.Contains("--docker-network", optionNames);
+        Assert.Contains("--docker-memory", optionNames);
+        Assert.Contains("--docker-cpus", optionNames);
         Assert.Equal(optionNames.Count, optionNames.Distinct(StringComparer.Ordinal).Count());
     }
 }

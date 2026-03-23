@@ -12,13 +12,17 @@ public sealed class ConfigurationServiceTests
         {
             Model = "cli-model",
             UiMode = UiMode.Tui,
-            ShowReasoning = false
+            ShowReasoning = false,
+            DockerNetworkMode = "host"
         };
         var config = new LoopOptionsOverrides
         {
             Model = "config-model",
             UiMode = UiMode.Classic,
-            ShowReasoning = true
+            ShowReasoning = true,
+            DockerNetworkMode = "none",
+            DockerMemoryLimit = "2g",
+            DockerCpuLimit = "2"
         };
 
         var options = ConfigurationService.Merge(cli, config);
@@ -26,6 +30,7 @@ public sealed class ConfigurationServiceTests
         Assert.Equal("cli-model", options.Model);
         Assert.Equal(UiMode.Tui, options.UiMode);
         Assert.False(options.ShowReasoning);
+        Assert.Equal("host", options.DockerNetworkMode);
     }
 
     [Fact]
@@ -36,7 +41,10 @@ public sealed class ConfigurationServiceTests
         {
             MaxIterations = 25,
             PromptFile = "config-prompt.md",
-            DockerSandbox = true
+            DockerSandbox = true,
+            DockerNetworkMode = "bridge",
+            DockerMemoryLimit = "4g",
+            DockerCpuLimit = "1.5"
         };
 
         var options = ConfigurationService.Merge(cli, config);
@@ -44,6 +52,9 @@ public sealed class ConfigurationServiceTests
         Assert.Equal(25, options.MaxIterations);
         Assert.Equal("config-prompt.md", options.PromptFile);
         Assert.True(options.DockerSandbox);
+        Assert.Equal("bridge", options.DockerNetworkMode);
+        Assert.Equal("4g", options.DockerMemoryLimit);
+        Assert.Equal("1.5", options.DockerCpuLimit);
     }
 
     [Fact]
@@ -57,6 +68,9 @@ public sealed class ConfigurationServiceTests
         Assert.Equal(defaults.Model, options.Model);
         Assert.Equal(defaults.PromptFile, options.PromptFile);
         Assert.Equal(defaults.UiMode, options.UiMode);
+        Assert.Equal(defaults.DockerNetworkMode, options.DockerNetworkMode);
+        Assert.Equal(defaults.DockerMemoryLimit, options.DockerMemoryLimit);
+        Assert.Equal(defaults.DockerCpuLimit, options.DockerCpuLimit);
     }
 
     [Fact]
@@ -146,6 +160,37 @@ public sealed class ConfigurationServiceTests
             Assert.Equal("config-model", options.Model);
             Assert.Equal(new LoopOptions().ProgressFile, options.ProgressFile);
             Assert.Equal(new LoopOptions().ShowReasoning, options.ShowReasoning);
+            Assert.Equal(new LoopOptions().DockerNetworkMode, options.DockerNetworkMode);
+            Assert.Equal(new LoopOptions().DockerMemoryLimit, options.DockerMemoryLimit);
+            Assert.Equal(new LoopOptions().DockerCpuLimit, options.DockerCpuLimit);
+        }
+        finally
+        {
+            File.Delete(tempPath);
+        }
+    }
+
+    [Fact]
+    public void LoadOptions_WithDockerLimitsInConfig_BindsAndMerges()
+    {
+        var tempPath = CreateTempConfig(
+            """
+            {
+              "LoopOptions": {
+                "DockerNetworkMode": "bridge",
+                "DockerMemoryLimit": "3g",
+                "DockerCpuLimit": "1.25"
+              }
+            }
+            """);
+
+        try
+        {
+            var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), tempPath);
+
+            Assert.Equal("bridge", options.DockerNetworkMode);
+            Assert.Equal("3g", options.DockerMemoryLimit);
+            Assert.Equal("1.25", options.DockerCpuLimit);
         }
         finally
         {

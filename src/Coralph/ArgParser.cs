@@ -144,6 +144,9 @@ internal static class ArgParser
         }
 
         ApplyRequiredStringOption(result, optionSet.DockerImage, value => options.DockerImage = value, errorMessages, "--docker-image is required");
+        ApplyRequiredStringOption(result, optionSet.DockerNetworkMode, value => options.DockerNetworkMode = value, errorMessages, "--docker-network must not be empty");
+        ApplyRequiredStringOption(result, optionSet.DockerMemoryLimit, value => options.DockerMemoryLimit = value, errorMessages, "--docker-memory must not be empty");
+        ApplyRequiredStringOption(result, optionSet.DockerCpuLimit, value => options.DockerCpuLimit = value, errorMessages, "--docker-cpus must not be empty");
 
         if (result.GetValueForOption(optionSet.ListModels))
         {
@@ -310,6 +313,9 @@ internal static class ArgParser
             StreamEvents = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
             DockerSandbox = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
             DockerImage = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
+            DockerNetworkMode = new Option<string?>("--docker-network", "Docker network mode for sandbox (default: none)");
+            DockerMemoryLimit = new Option<string?>("--docker-memory", "Docker memory limit for sandbox (default: 2g)");
+            DockerCpuLimit = new Option<string?>("--docker-cpus", "Docker CPU limit for sandbox (default: 2)");
             ListModels = new Option<bool>("--list-models", "List available Copilot models and exit");
             ListModelsJson = new Option<bool>("--list-models-json", "List available Copilot models as JSON and exit");
             ClientName = new Option<string?>("--client-name", "Client name sent to Copilot session (default: coralph)");
@@ -350,6 +356,9 @@ internal static class ArgParser
         internal Option<bool?> StreamEvents { get; }
         internal Option<bool?> DockerSandbox { get; }
         internal Option<string?> DockerImage { get; }
+        internal Option<string?> DockerNetworkMode { get; }
+        internal Option<string?> DockerMemoryLimit { get; }
+        internal Option<string?> DockerCpuLimit { get; }
         internal Option<bool> ListModels { get; }
         internal Option<bool> ListModelsJson { get; }
         internal Option<string?> ClientName { get; }
@@ -391,6 +400,9 @@ internal static class ArgParser
             StreamEvents,
             DockerSandbox,
             DockerImage,
+            DockerNetworkMode,
+            DockerMemoryLimit,
+            DockerCpuLimit,
             ListModels,
             ListModelsJson,
             ClientName,

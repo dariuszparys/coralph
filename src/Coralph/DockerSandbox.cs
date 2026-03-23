@@ -2,6 +2,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Serilog;
 
 namespace Coralph;
@@ -14,8 +15,10 @@ internal static class DockerSandbox
 {
     internal const string SandboxFlagEnv = "CORALPH_DOCKER_SANDBOX";
     internal const string CombinedPromptEnv = "CORALPH_COMBINED_PROMPT_FILE";
+    internal const int StreamedOutputTailLimit = 16 * 1024;
 
     private static readonly SearchValues<char> QuoteChars = SearchValues.Create([' ', '"']);
+    private static readonly Regex DockerImageValidationRegex = new("^[A-Za-z0-9._/:-]+$", RegexOptions.Compiled);
 
     internal static async Task<DockerCheckResult> CheckDockerAsync(CancellationToken ct)
     {
@@ -36,16 +39,16 @@ internal static class DockerSandbox
 
     internal static async Task<DockerCheckResult> CheckCopilotCliAsync(string dockerImage, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(dockerImage))
+        if (!TryValidateDockerImage(dockerImage, out var normalizedDockerImage, out var imageError))
         {
-            return new DockerCheckResult(false, "Docker image is required for sandboxed Copilot runs.");
+            return new DockerCheckResult(false, imageError);
         }
 
         var args = new StringBuilder();
         args.Append("run --rm --pull=missing --entrypoint ");
         args.Append(Quote("sh"));
         args.Append(' ');
-        args.Append(Quote(dockerImage));
+        args.Append(Quote(normalizedDockerImage));
         args.Append(" -lc ");
         args.Append(Quote("copilot --version"));
 
@@ -123,6 +126,7 @@ internal static class DockerSandbox
 
     internal static ProcessStartInfo BuildDockerRunProcessStartInfo(LoopOptions opt, string repoRoot, string combinedPromptPath, DockerLaunchInfo launchInfo)
     {
+        var dockerImage = NormalizeDockerImage(opt.DockerImage);
         var psi = CreateDockerProcessStartInfo();
 
         if (!string.IsNullOrWhiteSpace(opt.CopilotConfigPath))
@@ -153,6 +157,14 @@ internal static class DockerSandbox
             psi.ArgumentList.Add("-v");
             psi.ArgumentList.Add($"{mount.HostPath}:{mount.ContainerPath}{(mount.ReadOnly ? ":ro" : string.Empty)}");
         }
+        psi.ArgumentList.Add("--network");
+        psi.ArgumentList.Add(NormalizeDockerRunValue(opt.DockerNetworkMode, "none"));
+        psi.ArgumentList.Add("--security-opt");
+        psi.ArgumentList.Add("no-new-privileges");
+        psi.ArgumentList.Add("--memory");
+        psi.ArgumentList.Add(NormalizeDockerRunValue(opt.DockerMemoryLimit, "2g"));
+        psi.ArgumentList.Add("--cpus");
+        psi.ArgumentList.Add(NormalizeDockerRunValue(opt.DockerCpuLimit, "2"));
         AddDockerEnv(psi, SandboxFlagEnv, "1");
         AddDockerEnv(psi, "DOTNET_ROLL_FORWARD_TO_PRERELEASE", "1");
         AddDockerEnv(psi, CombinedPromptEnv, combinedPromptContainerPath);
@@ -162,7 +174,7 @@ internal static class DockerSandbox
             AddDockerEnv(psi, "CORALPH_PROVIDER_API_KEY", opt.ProviderApiKey);
         }
 
-        psi.ArgumentList.Add(opt.DockerImage);
+        psi.ArgumentList.Add(dockerImage);
         psi.ArgumentList.Add(launchInfo.Command);
         foreach (var argument in launchInfo.Arguments)
         {
@@ -191,7 +203,7 @@ internal static class DockerSandbox
         psi.ArgumentList.Add("--docker-sandbox");
         psi.ArgumentList.Add("false");
         psi.ArgumentList.Add("--docker-image");
-        psi.ArgumentList.Add(opt.DockerImage);
+        psi.ArgumentList.Add(dockerImage);
 
         if (!string.IsNullOrWhiteSpace(opt.Repo))
         {
@@ -305,7 +317,7 @@ internal static class DockerSandbox
             }
 
             var text = new string(chunk, 0, read);
-            buffer.Append(text);
+            AppendStreamedOutput(buffer, text, write is not null);
             write?.Invoke(text);
         }
     }
@@ -478,6 +490,50 @@ internal static class DockerSandbox
         }
 
         return $"{stdout}{Environment.NewLine}{stderr}";
+    }
+
+    internal static void AppendStreamedOutput(StringBuilder buffer, string text, bool capTail)
+    {
+        buffer.Append(text);
+        if (capTail && buffer.Length > StreamedOutputTailLimit)
+        {
+            buffer.Remove(0, buffer.Length - StreamedOutputTailLimit);
+        }
+    }
+
+    private static string NormalizeDockerImage(string dockerImage)
+    {
+        if (!TryValidateDockerImage(dockerImage, out var normalized, out var error))
+        {
+            throw new InvalidOperationException(error);
+        }
+
+        return normalized;
+    }
+
+    private static bool TryValidateDockerImage(string dockerImage, out string normalizedDockerImage, out string error)
+    {
+        normalizedDockerImage = dockerImage?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedDockerImage))
+        {
+            error = "Docker image is required for sandboxed Copilot runs.";
+            return false;
+        }
+
+        if (!DockerImageValidationRegex.IsMatch(normalizedDockerImage))
+        {
+            error = $"Invalid Docker image '{normalizedDockerImage}'. Only letters, numbers, '.', '_', '/', ':', and '-' are allowed.";
+            return false;
+        }
+
+        error = string.Empty;
+        return true;
+    }
+
+    private static string NormalizeDockerRunValue(string? value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
     }
 
 
