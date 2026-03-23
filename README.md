@@ -260,12 +260,12 @@ See `./coralph --help` for all options.
 | `progress.txt` | Completed work log |
 | `coralph.config.json` | Configuration overrides |
 
-The loop stops when the AI outputs `COMPLETE` or no open issues remain.
+The loop stops when the AI outputs `COMPLETE`, `NO_OPEN_ISSUES`, or `ALL_TASKS_COMPLETE`.
 
 ---
 
 ## Extending Tech Stack Support
 
 1. Create `examples/<stack>-prompt.md` with build/test commands
-2. Update `--init` detection logic for your manifest files (see src/Coralph/Program.cs)
+2. Update `--init` detection logic for your manifest files (see src/Coralph/InitWorkflow.cs)
 3. Submit a PR – see [CONTRIBUTING.md](CONTRIBUTING.md)
