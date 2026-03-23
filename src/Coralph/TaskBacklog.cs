@@ -199,7 +199,7 @@ internal static partial class TaskBacklog
 
                 var status = statusByStableKey.TryGetValue(stableKey, out var existingStatus)
                     ? existingStatus
-                    : NormalizeStatus(draft.Status);
+                    : TaskStatusHelper.NormalizeStatus(draft.Status);
 
                 tasks.Add(new GeneratedTaskItem
                 {
@@ -348,7 +348,7 @@ internal static partial class TaskBacklog
             backlog.Tasks ??= [];
             foreach (var task in backlog.Tasks)
             {
-                task.Status = NormalizeStatus(task.Status);
+                task.Status = TaskStatusHelper.NormalizeStatus(task.Status);
             }
 
             return backlog;
@@ -374,7 +374,7 @@ internal static partial class TaskBacklog
                 continue;
             }
 
-            map[task.StableKey.Trim()] = NormalizeStatus(task.Status);
+            map[task.StableKey.Trim()] = TaskStatusHelper.NormalizeStatus(task.Status);
         }
 
         return map;
@@ -809,7 +809,7 @@ internal static partial class TaskBacklog
                 Title: Truncate(title, 140),
                 Description: Truncate(string.IsNullOrWhiteSpace(draft.Description) ? title : CleanTaskText(draft.Description), 320),
                 Origin: draft.Origin,
-                Status: NormalizeStatus(draft.Status)));
+                Status: TaskStatusHelper.NormalizeStatus(draft.Status)));
 
             if (result.Count >= MaxTasksPerIssue)
             {
@@ -1041,26 +1041,6 @@ internal static partial class TaskBacklog
         return WhitespaceRegex().Replace(sb.ToString(), " ").Trim();
     }
 
-    private static string NormalizeStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-        {
-            return "open";
-        }
-
-        var normalized = status.Trim().ToLowerInvariant()
-            .Replace("-", "_", StringComparison.Ordinal)
-            .Replace(" ", "_", StringComparison.Ordinal);
-
-        return normalized switch
-        {
-            "done" or "completed" or "complete" => "done",
-            "in_progress" or "inprogress" => "in_progress",
-            "blocked" => "blocked",
-            _ => "open",
-        };
-    }
-
     private static string[] SplitLines(string value)
     {
         return value.Replace("\r\n", "\n").Split('\n');
@@ -1096,7 +1076,7 @@ internal static partial class TaskBacklog
                 !string.Equals(left.IssueTitle, right.IssueTitle, StringComparison.Ordinal) ||
                 !string.Equals(left.Title, right.Title, StringComparison.Ordinal) ||
                 !string.Equals(left.Description, right.Description, StringComparison.Ordinal) ||
-                !string.Equals(NormalizeStatus(left.Status), NormalizeStatus(right.Status), StringComparison.Ordinal) ||
+                !string.Equals(TaskStatusHelper.NormalizeStatus(left.Status), TaskStatusHelper.NormalizeStatus(right.Status), StringComparison.Ordinal) ||
                 !string.Equals(left.Origin, right.Origin, StringComparison.Ordinal) ||
                 left.Order != right.Order)
             {

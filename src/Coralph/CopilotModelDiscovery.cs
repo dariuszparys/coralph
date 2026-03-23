@@ -9,16 +9,7 @@ internal static class CopilotModelDiscovery
 {
     internal static async Task<IReadOnlyList<ModelInfo>> ListModelsAsync(LoopOptions opt, CancellationToken ct)
     {
-        var clientOptions = new CopilotClientOptions
-        {
-            Cwd = Directory.GetCurrentDirectory(),
-        };
-
-        if (!string.IsNullOrWhiteSpace(opt.CliPath)) clientOptions.CliPath = opt.CliPath;
-        if (!string.IsNullOrWhiteSpace(opt.CliUrl)) clientOptions.CliUrl = opt.CliUrl;
-        if (!string.IsNullOrWhiteSpace(opt.CopilotToken)) clientOptions.GitHubToken = opt.CopilotToken;
-
-        await using var client = new CopilotClient(clientOptions);
+        await using var client = new CopilotClient(CopilotClientFactory.CreateClientOptions(opt));
         var started = false;
 
         try
