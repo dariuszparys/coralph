@@ -4,9 +4,9 @@
     "net10.0": {
       "GitHub.Copilot.SDK": {
         "type": "Direct",
-        "requested": "[0.2.0, )",
-        "resolved": "0.2.0",
-        "contentHash": "def3SIzgR62p1ue6TqyHqoyFnvy5Dk599MhzzhIempFJ1JJDaSaXi3YSEYkg1OVzElQIefDviDNRAnIL+m9NLA==",
+        "requested": "[0.2.1, )",
+        "resolved": "0.2.1",
+        "contentHash": "cBwA4TTKyeITHtqLWWNImsyXzWicH1cBDxvDyiCYkkk0mGEUsOZtf6MlNSnBUREayCtNUMq0nc3EyXWufP8P0w==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.2",
@@ -50,9 +50,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.0, )",
-        "resolved": "10.0.0",
-        "contentHash": "kICGrGYEzCNI3wPzfEXcwNHgTvlvVn9yJDhSdRK+oZQy4jvYH529u7O0xf5ocQKzOMjfS07+3z9PKRIjrFMJDA=="
+        "requested": "[10.0.3, )",
+        "resolved": "10.0.3",
+        "contentHash": "0B6nZyCHWXnvmlB559oduOspVdNOnpNXPjhpWVMovLPAsDVG7A4jJR9rzECf67JUzxP8/ee/wA8clwIzJcWNFA=="
       },
       "Serilog": {
         "type": "Direct",
