@@ -1319,3 +1319,13 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - The test suite is already substantive; the issue pre-dated many of the tests that were added
   - Docker sandbox integration tests would add value but require a separate CI infrastructure effort
+
+## 2026-04-09 - #113 (task 113-001)
+
+- Changed `PermissionPolicy` so unconfigured runs deny dangerous tool requests by default instead of auto-approving them
+- Preserved explicit operator opt-in by letting `--tool-allow` override the built-in dangerous-tool block, while keeping `--tool-deny` highest precedence
+- Updated CLI help text, README security guidance, and regression tests to match the new default posture
+- Files changed: src/Coralph/PermissionPolicy.cs, src/Coralph.Tests/PermissionPolicyTests.cs, src/Coralph/ArgParser.cs, README.md, generated_tasks.json
+- **Learnings:**
+  - A safe default can be added without removing flexibility by evaluating explicit allow rules before the built-in dangerous-tool deny set
+  - Reusing the same dangerous-tool patterns already used for `--dry-run` keeps the approval model consistent across execution modes

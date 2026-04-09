@@ -6,7 +6,19 @@ namespace Coralph.Tests;
 public sealed class PermissionPolicyTests
 {
     [Fact]
-    public async Task HandleAsync_NoRestrictions_Approves()
+    public async Task HandleAsync_NoRestrictions_SafeToolApproves()
+    {
+        var opt = new LoopOptions { ToolAllow = null!, ToolDeny = null! };
+        var policy = new PermissionPolicy(opt, eventStream: null);
+        var request = CreateRequest("list_open_issues");
+
+        var result = await policy.HandleAsync(request, CreateInvocation());
+
+        AssertApproved(result);
+    }
+
+    [Fact]
+    public async Task HandleAsync_NoRestrictions_DangerousToolDenies()
     {
         var opt = new LoopOptions { ToolAllow = null!, ToolDeny = null! };
         var policy = new PermissionPolicy(opt, eventStream: null);
@@ -14,7 +26,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertApproved(result);
+        AssertDeniedByRules(result);
     }
 
     [Fact]
@@ -30,11 +42,11 @@ public sealed class PermissionPolicyTests
     }
 
     [Fact]
-    public async Task HandleAsync_DenyListNoMatch_Approves()
+    public async Task HandleAsync_DenyListNoMatchForSafeTool_Approves()
     {
         var opt = new LoopOptions { ToolAllow = null!, ToolDeny = ["bash"] };
         var policy = new PermissionPolicy(opt, eventStream: null);
-        var request = CreateRequest("edit");
+        var request = CreateRequest("list_open_issues");
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
@@ -45,6 +57,18 @@ public sealed class PermissionPolicyTests
     public async Task HandleAsync_AllowListMatch_Approves()
     {
         var opt = new LoopOptions { ToolAllow = ["bash", "edit"], ToolDeny = null! };
+        var policy = new PermissionPolicy(opt, eventStream: null);
+        var request = CreateRequest("bash");
+
+        var result = await policy.HandleAsync(request, CreateInvocation());
+
+        AssertApproved(result);
+    }
+
+    [Fact]
+    public async Task HandleAsync_AllowListExplicitlyOverridesDefaultDangerousDeny()
+    {
+        var opt = new LoopOptions { ToolAllow = ["bash"], ToolDeny = null! };
         var policy = new PermissionPolicy(opt, eventStream: null);
         var request = CreateRequest("bash");
 

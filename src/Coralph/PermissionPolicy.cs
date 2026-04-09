@@ -9,15 +9,16 @@ namespace Coralph;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Default posture (empty allow and deny lists): <b>allow-all</b>.
-/// Every tool request is approved unless restricted by a deny or allow list.
-/// This is intentionally permissive so that unattended loop runs do not stall
-/// waiting for approval.
+/// Default posture (empty allow and deny lists): <b>deny dangerous tools by default</b>.
+/// Shell execution and file-write capabilities are denied unless they are
+/// explicitly allowed by the operator.
 /// </para>
 /// <para>
 /// Evaluation order:
 /// <list type="number">
 ///   <item>If the tool matches a <c>--tool-deny</c> entry → <b>deny</b>.</item>
+///   <item>If the tool matches a <c>--tool-allow</c> entry → <b>allow</b>.</item>
+///   <item>If the tool matches a built-in dangerous-tool rule → <b>deny</b>.</item>
 ///   <item>If a <c>--tool-allow</c> list is provided and the tool does NOT match → <b>deny</b>.</item>
 ///   <item>Otherwise → <b>allow</b>.</item>
 /// </list>
@@ -28,16 +29,28 @@ namespace Coralph;
 /// </remarks>
 internal sealed class PermissionPolicy
 {
-    private readonly HashSet<string> _allow;
-    private readonly HashSet<string> _deny;
-    private readonly bool _hasAllowList;
+    private static readonly HashSet<string> DefaultDangerousRules = NormalizeEntries(
+    [
+        "edit*",
+        "create_file",
+        "delete_file",
+        "write*",
+        "run_in_terminal",
+        "bash",
+        "execute*",
+        "shell"
+    ]);
+
+    private readonly HashSet<string> _userAllow;
+    private readonly HashSet<string> _userDeny;
+    private readonly bool _hasExplicitAllowList;
     private readonly EventStreamWriter? _eventStream;
 
     internal PermissionPolicy(LoopOptions opt, EventStreamWriter? eventStream)
     {
-        _allow = NormalizeEntries(opt.ToolAllow);
-        _deny = NormalizeEntries(opt.ToolDeny);
-        _hasAllowList = _allow.Count > 0;
+        _userAllow = NormalizeEntries(opt.ToolAllow);
+        _userDeny = NormalizeEntries(opt.ToolDeny);
+        _hasExplicitAllowList = _userAllow.Count > 0;
         _eventStream = eventStream;
     }
 
@@ -64,16 +77,25 @@ internal sealed class PermissionPolicy
 
     private PermissionDecision EvaluateDecision(IReadOnlyList<string> candidates, out string? matchedRule)
     {
-        if (MatchesRuleSet(_deny, candidates, out matchedRule))
+        if (MatchesRuleSet(_userDeny, candidates, out matchedRule))
         {
             return PermissionDecision.Deny;
         }
 
-        if (_hasAllowList)
+        if (MatchesRuleSet(_userAllow, candidates, out matchedRule))
         {
-            return MatchesRuleSet(_allow, candidates, out matchedRule)
-                ? PermissionDecision.Allow
-                : PermissionDecision.Deny;
+            return PermissionDecision.Allow;
+        }
+
+        if (MatchesRuleSet(DefaultDangerousRules, candidates, out matchedRule))
+        {
+            return PermissionDecision.Deny;
+        }
+
+        if (_hasExplicitAllowList)
+        {
+            matchedRule = null;
+            return PermissionDecision.Deny;
         }
 
         matchedRule = null;

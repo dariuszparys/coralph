@@ -175,12 +175,13 @@ Coralph defaults to an interactive TUI in terminals, with automatic fallback to 
 
 ### Tool Permissions
 
-By default Coralph uses an **allow-all** posture: every tool request from the Copilot agent is approved automatically so unattended loop runs never stall.
+By default Coralph uses a **deny-dangerous-tools** posture: shell execution and file-write style tools are blocked unless you explicitly allow them.
 
-Use `--tool-deny` to block specific tools while keeping everything else allowed. Use `--tool-allow` to create an explicit allowlist; any tool not on the list will be denied.
+Use `--tool-allow` to opt specific dangerous tools back in, or to create a full explicit allowlist. Use `--tool-deny` to add stricter blocks on top; deny rules still win.
 
 ```bash
-./coralph --tool-deny bash,read_file      # Block specific tools; everything else allowed
+./coralph --tool-allow bash,edit*         # Opt shell and write tools back in explicitly
+./coralph --tool-deny bash,read_file      # Add stricter blocks on top of the defaults
 ./coralph --tool-allow list_open_issues   # Allow only listed tools; everything else denied
 ```
 
