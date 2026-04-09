@@ -81,6 +81,42 @@ public sealed class DockerSandboxArgumentTests : IDisposable
     }
 
     [Fact]
+    public void BuildDockerRunProcessStartInfo_WithCopilotToken_UsesExplicitEnvironmentCopy()
+    {
+        var psi = BuildProcessStartInfo(new LoopOptions { CopilotToken = "ghp-explicit-token" });
+
+        var args = psi.ArgumentList.ToArray();
+        Assert.Contains("-e", args);
+        Assert.Contains("GH_TOKEN", args);
+        Assert.DoesNotContain("GITHUB_TOKEN", args);
+        Assert.DoesNotContain("ghp-explicit-token", args);
+        Assert.Equal("ghp-explicit-token", psi.Environment["GH_TOKEN"]);
+    }
+
+    [Fact]
+    public void BuildDockerRunProcessStartInfo_WithoutCopilotToken_DoesNotForwardHostGitHubTokens()
+    {
+        var originalGhToken = Environment.GetEnvironmentVariable("GH_TOKEN");
+        var originalGithubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        Environment.SetEnvironmentVariable("GH_TOKEN", "ghp-host-token");
+        Environment.SetEnvironmentVariable("GITHUB_TOKEN", "ghp-host-token-2");
+
+        try
+        {
+            var psi = BuildProcessStartInfo(new LoopOptions());
+
+            var args = psi.ArgumentList.ToArray();
+            Assert.DoesNotContain("GH_TOKEN", args);
+            Assert.DoesNotContain("GITHUB_TOKEN", args);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GH_TOKEN", originalGhToken);
+            Environment.SetEnvironmentVariable("GITHUB_TOKEN", originalGithubToken);
+        }
+    }
+
+    [Fact]
     public void BuildDockerRunProcessStartInfo_WithInvalidDockerImage_Throws()
     {
         var options = new LoopOptions { DockerImage = "coralph:latest;rm -rf /" };

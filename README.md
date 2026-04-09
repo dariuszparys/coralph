@@ -144,8 +144,11 @@ Coralph now defaults unattended loop iterations to isolated Docker containers. O
 
 When you pass `--copilot-config-path`, Coralph mounts that host auth directory into the container as **read-only** by default so sandboxed runs cannot modify the host Copilot state.
 
+Coralph also **does not inherit host `GH_TOKEN` or `GITHUB_TOKEN` into the container automatically**. If a sandboxed run needs token-based Copilot auth, pass `--copilot-token` explicitly so the credential boundary stays intentional and reviewable.
+
 ```bash
 ./coralph --max-iterations 5
+./coralph --copilot-token ghp_example   # Explicit token pass-through when needed
 ./coralph --docker-image ghcr.io/devcontainers/dotnet:10.0
 ./coralph --docker-sandbox false   # Opt back into host execution
 ```

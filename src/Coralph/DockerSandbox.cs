@@ -596,20 +596,6 @@ internal static class DockerSandbox
         if (!string.IsNullOrWhiteSpace(opt.CopilotToken))
         {
             AddDockerEnv(psi, "GH_TOKEN", opt.CopilotToken);
-            return;
-        }
-
-        var ghToken = Environment.GetEnvironmentVariable("GH_TOKEN");
-        var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
-
-        if (!string.IsNullOrWhiteSpace(ghToken))
-        {
-            AddDockerEnv(psi, "GH_TOKEN", ghToken);
-        }
-
-        if (!string.IsNullOrWhiteSpace(githubToken))
-        {
-            AddDockerEnv(psi, "GITHUB_TOKEN", githubToken);
         }
     }
 

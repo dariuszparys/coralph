@@ -1356,3 +1356,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - The mount definition itself is the narrowest enforcement point for protecting host auth state in sandboxed runs
   - Exact `-v host:container:ro` assertions are a simple way to regression-test Docker mount mode without launching containers
+
+## 2026-04-09 - #114 (task 114-002)
+
+- Stopped inheriting host `GH_TOKEN` and `GITHUB_TOKEN` into Docker sandbox containers by default so token pass-through only happens when `--copilot-token` is set explicitly
+- Added regression coverage for explicit `GH_TOKEN` forwarding vs host-token non-inheritance and updated CLI/docs/diagnostics to describe the safer boundary
+- Files changed: src/Coralph/DockerSandbox.cs, src/Coralph.Tests/DockerSandboxArgumentTests.cs, src/Coralph/ArgParser.cs, src/Coralph/CopilotDiagnostics.cs, README.md, generated_tasks.json
+- **Learnings:**
+  - The container exposure boundary is controlled by Docker `-e` arguments, not the inherited environment on the local `docker` client process
+  - Reusing the existing `--copilot-token` option keeps credential forwarding explicit without adding more sandbox flags

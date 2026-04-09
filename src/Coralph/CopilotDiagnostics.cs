@@ -67,7 +67,7 @@ internal static class CopilotDiagnostics
 
         if (opt.DockerSandbox)
         {
-            hints.Add("When using --docker-sandbox, ensure the image includes Copilot CLI and mount auth config with --copilot-config-path ~/.copilot (mounted read-only by default).");
+            hints.Add("When using --docker-sandbox, ensure the image includes Copilot CLI and mount auth config with --copilot-config-path ~/.copilot (mounted read-only by default). Pass --copilot-token explicitly if the container also needs a GitHub token.");
         }
 
         if (!string.IsNullOrWhiteSpace(opt.CliUrl))

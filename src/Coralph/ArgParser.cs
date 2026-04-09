@@ -304,7 +304,7 @@ internal static class ArgParser
             CliPath = new Option<string?>("--cli-path", "Optional: Copilot CLI executable path");
             CliUrl = new Option<string?>("--cli-url", "Optional: connect to existing CLI server");
             CopilotConfigPath = new Option<string?>("--copilot-config-path", "Optional: Copilot CLI config directory to mount into Docker sandbox");
-            CopilotToken = new Option<string?>("--copilot-token", "Optional: GitHub token for non-interactive Copilot CLI auth (sets GH_TOKEN)");
+            CopilotToken = new Option<string?>("--copilot-token", "Optional: explicitly pass a GitHub token into the Docker sandbox for non-interactive Copilot CLI auth (sets GH_TOKEN)");
             ToolAllow = new Option<string[]>("--tool-allow", "Allow listed tool/permission kinds. Dangerous tools are denied by default and can be explicitly opted back in here; unspecified tools are denied when this list is non-empty (repeatable or comma-separated)")
             {
                 AllowMultipleArgumentsPerToken = true
