@@ -1,7 +1,7 @@
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "GPT-5.1-Codex",
+    "Model": "GPT-5.4",
     "ProviderType": null,
     "ProviderBaseUrl": null,
     "ProviderWireApi": null,
@@ -17,7 +17,7 @@
     "AzdoProject": null,
     "CliPath": null,
     "CliUrl": null,
-    "DockerSandbox": true,
+    "DockerSandbox": false,
     "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0",
     "ClientName": "coralph",
     "ShowReasoning": true,
