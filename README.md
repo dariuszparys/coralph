@@ -142,6 +142,8 @@ just bump-dev major
 
 Coralph now defaults unattended loop iterations to isolated Docker containers. Opt back into host execution only when you explicitly trust the local run environment.
 
+When you pass `--copilot-config-path`, Coralph mounts that host auth directory into the container as **read-only** by default so sandboxed runs cannot modify the host Copilot state.
+
 ```bash
 ./coralph --max-iterations 5
 ./coralph --docker-image ghcr.io/devcontainers/dotnet:10.0

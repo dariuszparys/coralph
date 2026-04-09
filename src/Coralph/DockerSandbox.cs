@@ -459,8 +459,8 @@ internal static class DockerSandbox
             throw new InvalidOperationException($"Copilot config directory not found: {fullPath}");
         }
 
-        AddMountIfMissing(mounts, fullPath, "/home/vscode/.copilot", readOnly: false);
-        AddMountIfMissing(mounts, fullPath, "/root/.copilot", readOnly: false);
+        AddMountIfMissing(mounts, fullPath, "/home/vscode/.copilot", readOnly: true);
+        AddMountIfMissing(mounts, fullPath, "/root/.copilot", readOnly: true);
     }
 
     private static void AddMountIfMissing(List<DockerMount> mounts, string hostPath, string containerPath, bool readOnly)

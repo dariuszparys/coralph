@@ -68,6 +68,19 @@ public sealed class DockerSandboxArgumentTests : IDisposable
     }
 
     [Fact]
+    public void BuildDockerRunProcessStartInfo_WithCopilotConfigPath_MountsReadOnly()
+    {
+        var configPath = Path.Combine(_repoRoot, ".copilot-config");
+        Directory.CreateDirectory(configPath);
+
+        var psi = BuildProcessStartInfo(new LoopOptions { CopilotConfigPath = configPath });
+
+        var args = psi.ArgumentList.ToArray();
+        Assert.Contains($"{configPath}:/home/vscode/.copilot:ro", args);
+        Assert.Contains($"{configPath}:/root/.copilot:ro", args);
+    }
+
+    [Fact]
     public void BuildDockerRunProcessStartInfo_WithInvalidDockerImage_Throws()
     {
         var options = new LoopOptions { DockerImage = "coralph:latest;rm -rf /" };

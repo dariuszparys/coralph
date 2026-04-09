@@ -1347,3 +1347,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - The prompt assembly layer is the narrowest place to add trust-boundary guardrails without changing loop orchestration
   - Dedicated begin/end markers make it easy to regression-test that malicious issue text stays within untrusted sections
+
+## 2026-04-09 - #114 (task 114-001)
+
+- Changed Docker sandbox Copilot auth mounts to read-only by default so containers cannot modify host-side Copilot state
+- Added regression coverage for read-only `.copilot` mounts and updated Docker sandbox guidance/diagnostics to describe the safer default
+- Files changed: src/Coralph/DockerSandbox.cs, src/Coralph.Tests/DockerSandboxArgumentTests.cs, src/Coralph/CopilotDiagnostics.cs, README.md, generated_tasks.json
+- **Learnings:**
+  - The mount definition itself is the narrowest enforcement point for protecting host auth state in sandboxed runs
+  - Exact `-v host:container:ro` assertions are a simple way to regression-test Docker mount mode without launching containers
