@@ -189,6 +189,10 @@ Use `--tool-allow` to opt specific dangerous tools back in, or to create a full 
 
 Deny takes precedence over allow when both lists are non-empty.
 
+### Prompt Trust Boundary
+
+Issue bodies, comments, generated task descriptions, and prior progress are passed to the model as **untrusted input blocks**. Coralph treats them as planning data only, not as authority to override `prompt.md`, request tools, or change trust boundaries.
+
 ### Client Name
 
 Set the client name sent to the Copilot session (defaults to `coralph`):

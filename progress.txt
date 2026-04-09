@@ -1338,3 +1338,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - Flipping the `LoopOptions` default is enough to change the merged runtime behavior because CLI and config overrides already flow through `ConfigurationService.Merge`
   - Keeping `--docker-sandbox false` as the documented escape hatch makes the trust boundary explicit without adding a new option
+
+## 2026-04-09 - #113 (task 113-003)
+
+- Added explicit untrusted-input guardrails to the combined prompt so issue JSON, generated task data, and prior progress are fenced as data instead of instructions
+- Added regression tests proving prompt-injection strings remain inside untrusted blocks and documenting the trust boundary in README
+- Files changed: src/Coralph/PromptHelpers.cs, src/Coralph.Tests/PromptHelpersTests.cs, README.md, generated_tasks.json
+- **Learnings:**
+  - The prompt assembly layer is the narrowest place to add trust-boundary guardrails without changing loop orchestration
+  - Dedicated begin/end markers make it easy to regression-test that malicious issue text stays within untrusted sections
