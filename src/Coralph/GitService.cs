@@ -5,6 +5,12 @@ namespace Coralph;
 
 internal static class GitService
 {
+    internal static Task<string> GetHeadCommitAsync(CancellationToken ct)
+        => RunGitAsync(["rev-parse", "HEAD"], ct);
+
+    internal static Task<string> GetWorktreeStatusAsync(CancellationToken ct)
+        => RunGitAsync(["status", "--porcelain", "--untracked-files=normal"], ct);
+
     internal static async Task CommitProgressIfNeededAsync(string progressFile, CancellationToken ct)
     {
         if (!File.Exists(progressFile))

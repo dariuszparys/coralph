@@ -127,7 +127,8 @@ internal sealed class GeneratedTasksSnapshotReader
             }
 
             var orderedTasks = tasks
-                .OrderBy(t => t.Order)
+                .OrderBy(t => t.IssueNumber)
+                .ThenBy(t => t.Order)
                 .ThenBy(t => t.SourceIndex)
                 .ToArray();
 

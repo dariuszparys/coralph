@@ -47,8 +47,8 @@ public class TuiStateTests
         var expanded = BuildSnapshotWithStatuses(["open", "open", "open", "open", "open", "open", "open"]);
         state.SetTasksSnapshot(expanded);
 
-        Assert.Equal(1, state.GetTaskSelectedIndex(-1));
-        Assert.Equal(1, state.GetTaskListScrollOffset());
+        Assert.Equal(0, state.GetTaskSelectedIndex(-1));
+        Assert.Equal(0, state.GetTaskListScrollOffset());
     }
 
     [Fact]
@@ -121,6 +121,77 @@ public class TuiStateTests
             ReadAtUtc: DateTimeOffset.UtcNow);
 
         Assert.Equal(1, snapshot.ActiveTaskIndex());
+    }
+
+    [Fact]
+    public async Task SnapshotReader_OrdersTasksByIssueThenOrder()
+    {
+        var reader = new GeneratedTasksSnapshotReader();
+        var tempDir = Path.Combine(Path.GetTempPath(), $"coralph-tui-order-tests-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var snapshotPath = Path.Combine(tempDir, "generated_tasks.json");
+            await File.WriteAllTextAsync(snapshotPath, """
+                {
+                  "version": 1,
+                  "tasks": [
+                    { "id": "5-001", "issueNumber": 5, "title": "Issue 5 / 1", "description": "", "status": "open", "order": 1 },
+                    { "id": "3-002", "issueNumber": 3, "title": "Issue 3 / 2", "description": "", "status": "open", "order": 2 },
+                    { "id": "3-001", "issueNumber": 3, "title": "Issue 3 / 1", "description": "", "status": "open", "order": 1 }
+                  ]
+                }
+                """);
+
+            var snapshot = reader.Read(snapshotPath);
+
+            Assert.Equal(["3-001", "3-002", "5-001"], snapshot.Tasks.Select(t => t.Id).ToArray());
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+            catch
+            {
+                // Best-effort cleanup for temp files.
+            }
+        }
+    }
+
+    [Fact]
+    public void SetTasksSnapshot_WhenActiveTaskMoves_TracksNewActiveTask()
+    {
+        var state = new TuiState();
+        var initial = new GeneratedTasksSnapshot(
+            Path: "generated_tasks.json",
+            Exists: true,
+            Error: null,
+            Tasks:
+            [
+                new GeneratedTaskSnapshotItem("1-001", 1, "Task 1", "", "in_progress", 1, 1),
+                new GeneratedTaskSnapshotItem("1-002", 1, "Task 2", "", "open", 2, 2)
+            ],
+            ReadAtUtc: DateTimeOffset.UtcNow);
+
+        state.SetTasksSnapshot(initial);
+
+        var updated = new GeneratedTasksSnapshot(
+            Path: "generated_tasks.json",
+            Exists: true,
+            Error: null,
+            Tasks:
+            [
+                new GeneratedTaskSnapshotItem("1-001", 1, "Task 1", "", "done", 1, 1),
+                new GeneratedTaskSnapshotItem("1-002", 1, "Task 2", "", "in_progress", 2, 2)
+            ],
+            ReadAtUtc: DateTimeOffset.UtcNow);
+
+        state.SetTasksSnapshot(updated);
+
+        Assert.Equal(1, state.GetTaskSelectedIndex(-1));
     }
 
     [Fact]

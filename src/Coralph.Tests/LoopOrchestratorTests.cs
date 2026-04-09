@@ -30,4 +30,30 @@ public sealed class LoopOrchestratorTests
         Assert.False(decision.UseDockerPerIteration);
         Assert.Equal("Docker is not installed.", decision.FallbackReason);
     }
+
+    [Fact]
+    public void IsTerminalSignalStillValid_WithCompleteAndRemainingTasks_ReturnsFalse()
+    {
+        var state = new LoopIterationState(
+            IssuesJson: """
+                [
+                  { "number": 1, "title": "Open", "state": "open" }
+                ]
+                """,
+            ProgressText: string.Empty,
+            GeneratedTasksJson: """
+                {
+                  "version": 1,
+                  "tasks": [
+                    { "id": "1-001", "issueNumber": 1, "title": "Work", "status": "open", "order": 1 }
+                  ]
+                }
+                """,
+            GitHead: "abc",
+            GitStatus: string.Empty);
+
+        var isValid = LoopOrchestrator.IsTerminalSignalStillValid(TerminalSignal.Complete, state);
+
+        Assert.False(isValid);
+    }
 }

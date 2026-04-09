@@ -113,6 +113,31 @@ public class TaskBacklogTests
     }
 
     [Fact]
+    public void BuildBacklogJson_WithExistingInProgressTask_ReopensTaskOnNextIteration()
+    {
+        var issuesJson = """
+            [
+              {
+                "number": 17,
+                "title": "PRD: Loop hardening",
+                "body": "1. Refresh issue state\n2. Reconcile backlog entries",
+                "state": "open"
+              }
+            ]
+            """;
+
+        var initialBacklogJson = TaskBacklog.BuildBacklogJson(issuesJson);
+        var inProgressBacklogJson = initialBacklogJson.Replace("\"status\": \"open\"", "\"status\": \"in_progress\"", StringComparison.Ordinal);
+
+        var rebuiltBacklogJson = TaskBacklog.BuildBacklogJson(issuesJson, inProgressBacklogJson);
+
+        using var doc = JsonDocument.Parse(rebuiltBacklogJson);
+        var firstTaskStatus = doc.RootElement.GetProperty("tasks")[0].GetProperty("status").GetString();
+
+        Assert.Equal("open", firstTaskStatus);
+    }
+
+    [Fact]
     public void BuildBacklogJson_WithSimpleIssue_FallsBackToSingleTask()
     {
         var issuesJson = """
@@ -729,9 +754,9 @@ public class TaskBacklogTests
         using var doc = JsonDocument.Parse(backlogJson);
         var tasks = doc.RootElement.GetProperty("tasks").EnumerateArray().ToArray();
 
-        // "completed" should normalize to "done", "in-progress" to "in_progress"
+        // "completed" should normalize to "done"; persisted "in-progress" is reopened on the next iteration.
         Assert.Equal("done", tasks[0].GetProperty("status").GetString());
-        Assert.Equal("in_progress", tasks[1].GetProperty("status").GetString());
+        Assert.Equal("open", tasks[1].GetProperty("status").GetString());
         Assert.Equal("blocked", tasks[2].GetProperty("status").GetString());
     }
 

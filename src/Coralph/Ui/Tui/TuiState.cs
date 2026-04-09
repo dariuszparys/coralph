@@ -100,6 +100,12 @@ internal sealed class TuiState
     {
         lock (_lock)
         {
+            var previousSnapshot = _tasksSnapshot;
+            var previousSelectedId = TryGetTaskId(previousSnapshot, _taskSelectedIndex);
+            var previousActiveId = previousSnapshot.Tasks.Count > 0
+                ? TryGetTaskId(previousSnapshot, previousSnapshot.ActiveTaskIndex())
+                : null;
+
             _tasksSnapshot = snapshot;
             if (snapshot.Tasks.Count == 0)
             {
@@ -108,13 +114,22 @@ internal sealed class TuiState
                 return;
             }
 
-            if (_taskSelectedIndex < 0 || _taskSelectedIndex >= snapshot.Tasks.Count)
+            if (!string.IsNullOrWhiteSpace(previousSelectedId) &&
+                string.Equals(previousSelectedId, previousActiveId, StringComparison.OrdinalIgnoreCase))
             {
                 _taskSelectedIndex = snapshot.ActiveTaskIndex();
             }
+            else if (!string.IsNullOrWhiteSpace(previousSelectedId))
+            {
+                _taskSelectedIndex = FindTaskIndexById(snapshot, previousSelectedId);
+                if (_taskSelectedIndex < 0)
+                {
+                    _taskSelectedIndex = snapshot.ActiveTaskIndex();
+                }
+            }
             else
             {
-                _taskSelectedIndex = Math.Clamp(_taskSelectedIndex, 0, snapshot.Tasks.Count - 1);
+                _taskSelectedIndex = snapshot.ActiveTaskIndex();
             }
 
             EnsureTaskSelectionVisible(1);
@@ -459,6 +474,29 @@ internal sealed class TuiState
         var visibleTaskRows = Math.Max(1, visibleRows);
         var maxOffset = Math.Max(0, _tasksSnapshot.Tasks.Count - visibleTaskRows);
         return Math.Clamp(scrollOffset, 0, maxOffset);
+    }
+
+    private static int FindTaskIndexById(GeneratedTasksSnapshot snapshot, string taskId)
+    {
+        for (var i = 0; i < snapshot.Tasks.Count; i++)
+        {
+            if (string.Equals(snapshot.Tasks[i].Id, taskId, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static string? TryGetTaskId(GeneratedTasksSnapshot snapshot, int index)
+    {
+        if (index < 0 || index >= snapshot.Tasks.Count)
+        {
+            return null;
+        }
+
+        return snapshot.Tasks[index].Id;
     }
 }
 

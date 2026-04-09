@@ -5,6 +5,8 @@ namespace Coralph;
 
 internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? eventStream)
 {
+    private const int MaxConsecutiveStalledIterations = 2;
+
     private readonly LoopOptions _opt = opt ?? throw new ArgumentNullException(nameof(opt));
     private readonly EventStreamWriter? _eventStream = eventStream;
     private readonly FileContentCache _fileCache = FileContentCache.Shared;
@@ -112,12 +114,10 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
         }
 
         var promptTemplate = await File.ReadAllTextAsync(_opt.PromptFile, ct).ConfigureAwait(false);
-        var issuesRead = await _fileCache.TryReadTextAsync(_opt.IssuesFile, ct).ConfigureAwait(false);
-        var issues = issuesRead.Exists ? issuesRead.Content : "[]";
-        var progressRead = await _fileCache.TryReadTextAsync(_opt.ProgressFile, ct).ConfigureAwait(false);
-        var progress = progressRead.Exists ? progressRead.Content : string.Empty;
+        InvalidateLoopArtifactCache();
+        var initialState = await LoopIterationState.CaptureAsync(_opt, _fileCache, ct).ConfigureAwait(false);
 
-        if (!PromptHelpers.TryGetHasOpenIssues(issues, out var hasOpenIssues, out var issuesError))
+        if (!PromptHelpers.TryGetHasOpenIssues(initialState.IssuesJson, out var hasOpenIssues, out var issuesError))
         {
             ConsoleOutput.WriteErrorLine(issuesError ?? "Failed to parse issues JSON.");
             return 1;
@@ -125,18 +125,14 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
 
         if (!hasOpenIssues)
         {
-            Log.Information("No open issues found, exiting");
-            ConsoleOutput.WriteLine(TerminalSignal.NoOpenIssues);
-            TryCleanupGeneratedTasksFile(_opt.GeneratedTasksFile, "no open issues remained");
-            await ConsoleOutput.WaitForAnyKeyToExitAsync("No open issues remain. Press Enter, Esc, or Q to close the TUI.", ct).ConfigureAwait(false);
-            return 0;
+            return await FinishForTerminalSignalAsync(TerminalSignal.NoOpenIssues, iteration: 0, ct).ConfigureAwait(false);
         }
 
         CopilotSessionRunner? sessionRunner = null;
 
         try
         {
-            var stoppedByTerminalSignal = false;
+            var consecutiveStalledIterations = 0;
             if (!useDockerPerIteration)
             {
                 try
@@ -169,19 +165,40 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
                         ConsoleOutput.WriteLine($"[DRY RUN] ╚══════════════════════════════════════════╝");
                     }
 
-                    progressRead = await _fileCache.TryReadTextAsync(_opt.ProgressFile, ct).ConfigureAwait(false);
-                    progress = progressRead.Exists ? progressRead.Content : string.Empty;
-                    issuesRead = await _fileCache.TryReadTextAsync(_opt.IssuesFile, ct).ConfigureAwait(false);
-                    issues = issuesRead.Exists ? issuesRead.Content : "[]";
-                    var generatedTasks = await TaskBacklog.EnsureBacklogAsync(issues, _opt.GeneratedTasksFile, ct).ConfigureAwait(false);
+                    if (i > 1)
+                    {
+                        await RefreshIssuesIfRequestedAsync(ct).ConfigureAwait(false);
+                    }
+
+                    InvalidateLoopArtifactCache();
+                    var issuesRead = await _fileCache.TryReadTextAsync(_opt.IssuesFile, ct).ConfigureAwait(false);
+                    var issues = issuesRead.Exists ? issuesRead.Content : "[]";
+                    await TaskBacklog.EnsureBacklogAsync(issues, _opt.GeneratedTasksFile, ct).ConfigureAwait(false);
                     ConsoleOutput.RefreshGeneratedTasks();
+
+                    var preTurnState = await LoopIterationState.CaptureAsync(_opt, _fileCache, ct, invalidateArtifacts: true).ConfigureAwait(false);
+                    if (preTurnState.TryGetImplicitTerminalSignal(out var preTurnSignal, out var preTurnError))
+                    {
+                        return await FinishForTerminalSignalAsync(preTurnSignal, i, ct).ConfigureAwait(false);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(preTurnError))
+                    {
+                        ConsoleOutput.WriteErrorLine(preTurnError);
+                        return 1;
+                    }
 
                     if (_opt.DryRun)
                     {
                         ConsoleOutput.WriteLine("[DRY RUN] Planning tasks and building combined prompt...");
                     }
 
-                    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(promptTemplate, issues, progress, generatedTasks, dryRun: _opt.DryRun);
+                    var combinedPrompt = PromptHelpers.BuildCombinedPrompt(
+                        promptTemplate,
+                        preTurnState.IssuesJson,
+                        preTurnState.ProgressText,
+                        preTurnState.GeneratedTasksJson,
+                        dryRun: _opt.DryRun);
 
                     string output;
                     string? turnError = null;
@@ -224,53 +241,65 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
                         ["terminalSignal"] = PromptHelpers.TryGetTerminalSignal(output, out var signalForEvent) ? signalForEvent : null
                     });
 
+                    var postTurnState = await LoopIterationState.CaptureAsync(_opt, _fileCache, ct, invalidateArtifacts: true).ConfigureAwait(false);
+                    if (postTurnState.TryGetImplicitTerminalSignal(out var implicitSignal, out var implicitSignalError))
+                    {
+                        return await FinishForTerminalSignalAsync(implicitSignal, i, ct).ConfigureAwait(false);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(implicitSignalError))
+                    {
+                        ConsoleOutput.WriteErrorLine(implicitSignalError);
+                        return 1;
+                    }
+
                     if (!PromptHelpers.TryGetTerminalSignal(output, out var terminalSignal))
                     {
+                        if (postTurnState.HasMeaningfulChangesComparedTo(preTurnState))
+                        {
+                            consecutiveStalledIterations = 0;
+                            continue;
+                        }
+
+                        consecutiveStalledIterations++;
+                        Log.Warning(
+                            "Iteration {Iteration} made no meaningful progress ({StalledIterations}/{MaxStalledIterations})",
+                            i,
+                            consecutiveStalledIterations,
+                            MaxConsecutiveStalledIterations);
+                        ConsoleOutput.WriteWarningLine(
+                            $"Iteration {i} made no meaningful progress ({consecutiveStalledIterations}/{MaxConsecutiveStalledIterations}).");
+
+                        if (consecutiveStalledIterations < MaxConsecutiveStalledIterations)
+                        {
+                            continue;
+                        }
+
+                        ConsoleOutput.WriteErrorLine(
+                            "Stopping Coralph because consecutive iterations left issues, backlog, progress, and git state unchanged.");
+                        Log.Warning(
+                            "Stopping Coralph after {MaxStalledIterations} consecutive stalled iterations",
+                            MaxConsecutiveStalledIterations);
+                        return 1;
+                    }
+
+                    consecutiveStalledIterations = 0;
+
+                    if (!IsTerminalSignalStillValid(terminalSignal, postTurnState))
+                    {
+                        Log.Warning("{TerminalSignal} ignored at iteration {Iteration} because work still remains", terminalSignal, i);
+                        ConsoleOutput.WriteWarningLine($"{terminalSignal} signal ignored — repository state still shows remaining work.");
                         continue;
                     }
 
-                    if (string.Equals(terminalSignal, TerminalSignal.Complete, StringComparison.OrdinalIgnoreCase))
-                    {
-                        try
-                        {
-                            var backlogContent = await File.ReadAllTextAsync(_opt.GeneratedTasksFile, ct).ConfigureAwait(false);
-                            if (TaskBacklog.HasOpenTasks(backlogContent))
-                            {
-                                Log.Warning("COMPLETE signal ignored — open tasks remain in {BacklogFile}", _opt.GeneratedTasksFile);
-                                ConsoleOutput.WriteWarningLine("COMPLETE signal ignored — open tasks remain in generated_tasks.json");
-                                continue;
-                            }
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            // No backlog file means no open tasks.
-                        }
-                    }
-
-                    Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, i);
-                    ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
-                    await GitService.CommitProgressIfNeededAsync(_opt.ProgressFile, ct).ConfigureAwait(false);
-                    if (BacklogCleanup.ShouldDeleteForTerminalSignal(terminalSignal))
-                    {
-                        TryCleanupGeneratedTasksFile(_opt.GeneratedTasksFile, $"terminal signal {terminalSignal}");
-                    }
-                    if (TerminalSignal.All.Contains(terminalSignal))
-                    {
-                        await ConsoleOutput.WaitForAnyKeyToExitAsync("No work remaining. Press Enter, Esc, or Q to close the TUI.", ct).ConfigureAwait(false);
-                    }
-
-                    stoppedByTerminalSignal = true;
-                    break;
+                    return await FinishForTerminalSignalAsync(terminalSignal, i, ct).ConfigureAwait(false);
                 }
             }
 
-            if (!stoppedByTerminalSignal)
-            {
-                Log.Information(
-                    "Max iterations reached ({MaxIterations}); keeping backlog file {BacklogFile} for resume",
-                    _opt.MaxIterations,
-                    _opt.GeneratedTasksFile);
-            }
+            Log.Information(
+                "Max iterations reached ({MaxIterations}); keeping backlog file {BacklogFile} for resume",
+                _opt.MaxIterations,
+                _opt.GeneratedTasksFile);
         }
         finally
         {
@@ -424,6 +453,63 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
 
         await File.WriteAllTextAsync(_opt.IssuesFile, workItemsJson, ct).ConfigureAwait(false);
         _fileCache.Invalidate(_opt.IssuesFile);
+    }
+
+    private async Task<int> FinishForTerminalSignalAsync(string terminalSignal, int iteration, CancellationToken ct)
+    {
+        if (iteration > 0)
+        {
+            Log.Information("{TerminalSignal} detected at iteration {Iteration}, stopping loop", terminalSignal, iteration);
+        }
+        else
+        {
+            Log.Information("{TerminalSignal} detected before iteration processing, stopping loop", terminalSignal);
+        }
+
+        ConsoleOutput.WriteLine($"\n{terminalSignal} detected, stopping.\n");
+        await GitService.CommitProgressIfNeededAsync(_opt.ProgressFile, ct).ConfigureAwait(false);
+        if (BacklogCleanup.ShouldDeleteForTerminalSignal(terminalSignal))
+        {
+            TryCleanupGeneratedTasksFile(_opt.GeneratedTasksFile, $"terminal signal {terminalSignal}");
+        }
+
+        if (TerminalSignal.All.Contains(terminalSignal))
+        {
+            var message = string.Equals(terminalSignal, TerminalSignal.NoOpenIssues, StringComparison.OrdinalIgnoreCase)
+                ? "No open issues remain. Press Enter, Esc, or Q to close the TUI."
+                : "No work remaining. Press Enter, Esc, or Q to close the TUI.";
+            await ConsoleOutput.WaitForAnyKeyToExitAsync(message, ct).ConfigureAwait(false);
+        }
+
+        Log.Information("Coralph loop finished");
+        return 0;
+    }
+
+    private void InvalidateLoopArtifactCache()
+    {
+        _fileCache.Invalidate(_opt.IssuesFile);
+        _fileCache.Invalidate(_opt.ProgressFile);
+        _fileCache.Invalidate(_opt.GeneratedTasksFile);
+    }
+
+    internal static bool IsTerminalSignalStillValid(string terminalSignal, LoopIterationState state)
+    {
+        if (string.Equals(terminalSignal, TerminalSignal.NoOpenIssues, StringComparison.OrdinalIgnoreCase))
+        {
+            return PromptHelpers.TryGetHasOpenIssues(state.IssuesJson, out var hasOpenIssues, out _) && !hasOpenIssues;
+        }
+
+        if (string.Equals(terminalSignal, TerminalSignal.AllTasksComplete, StringComparison.OrdinalIgnoreCase))
+        {
+            return !TaskBacklog.HasOpenTasks(state.GeneratedTasksJson);
+        }
+
+        if (string.Equals(terminalSignal, TerminalSignal.Complete, StringComparison.OrdinalIgnoreCase))
+        {
+            return !TaskBacklog.HasOpenTasks(state.GeneratedTasksJson);
+        }
+
+        return true;
     }
 
     private async Task EmitCopilotDiagnosticsIfNeededAsync(Exception ex, CancellationToken ct)

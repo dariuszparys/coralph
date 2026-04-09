@@ -47,9 +47,13 @@ Before starting work:
    `gh issue view <number> --json state`)
 2. Check if the work was already done in a previous iteration (review recent
    commits and progress.txt)
-3. If already done or issue is closed, skip to the next open issue or output
+3. If the requested behavior is already present in the repository or already
+   merged into the current branch, treat that task as complete. Do NOT redo the
+   work just because the GitHub issue is still open.
+4. If already done or issue is closed, update `generated_tasks.json` so the task
+   is not left as `in_progress`, then skip to the next open issue or output
    "ALL_TASKS_COMPLETE"
-4. Mark the selected task as `in_progress` in `generated_tasks.json`
+5. Mark the selected task as `in_progress` in `generated_tasks.json`
 
 # EXPLORATION
 
@@ -68,6 +72,7 @@ complete the smaller refactor).
 
 When the task is completed in this iteration, mark it `done` in
 `generated_tasks.json`. Leave any remaining tasks as `open`.
+Do NOT leave a task as `in_progress` at the end of the iteration.
 
 # FEEDBACK LOOPS
 
@@ -122,6 +127,7 @@ If the issue is not complete, leave a comment explaining what was done and what 
 - After completing one issue, DO NOT output COMPLETE - instead, the loop will
   continue and you will work on the next open issue in the next iteration
 - Do NOT re-work already completed/closed issues
+- Do NOT re-work code that is already present in the current branch
 - Do NOT make unnecessary commits (like updating progress.txt for work already
   logged)
 - If nothing needs to be done, output "ALL_TASKS_COMPLETE" and stop

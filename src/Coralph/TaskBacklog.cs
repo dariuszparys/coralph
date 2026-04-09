@@ -374,7 +374,10 @@ internal static partial class TaskBacklog
                 continue;
             }
 
-            map[task.StableKey.Trim()] = TaskStatusHelper.NormalizeStatus(task.Status);
+            var normalizedStatus = TaskStatusHelper.NormalizeStatus(task.Status);
+            map[task.StableKey.Trim()] = string.Equals(normalizedStatus, "in_progress", StringComparison.OrdinalIgnoreCase)
+                ? "open"
+                : normalizedStatus;
         }
 
         return map;
@@ -1113,9 +1116,8 @@ internal static partial class TaskBacklog
                     statusProp.ValueKind != JsonValueKind.String)
                     continue;
 
-                var status = statusProp.GetString();
-                if (string.Equals(status, "open", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(status, "in_progress", StringComparison.OrdinalIgnoreCase))
+                var status = TaskStatusHelper.NormalizeStatus(statusProp.GetString());
+                if (!string.Equals(status, "done", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
