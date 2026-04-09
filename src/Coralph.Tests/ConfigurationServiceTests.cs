@@ -68,6 +68,7 @@ public sealed class ConfigurationServiceTests
         Assert.Equal(defaults.Model, options.Model);
         Assert.Equal(defaults.PromptFile, options.PromptFile);
         Assert.Equal(defaults.UiMode, options.UiMode);
+        Assert.Equal(defaults.DockerSandbox, options.DockerSandbox);
         Assert.Equal(defaults.DockerNetworkMode, options.DockerNetworkMode);
         Assert.Equal(defaults.DockerMemoryLimit, options.DockerMemoryLimit);
         Assert.Equal(defaults.DockerCpuLimit, options.DockerCpuLimit);

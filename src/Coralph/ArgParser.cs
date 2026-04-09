@@ -320,7 +320,7 @@ internal static class ArgParser
             Ui = new Option<string?>("--ui", $"UI mode ({UiModeParser.HelpText}, default: auto)");
             Demo = new Option<bool>("--demo", "Run in demo mode with mock UI data");
             StreamEvents = new Option<bool?>(new[] { "--stream-events", "--event-stream" }, "Emit structured JSON events to stdout");
-            DockerSandbox = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: false)");
+            DockerSandbox = new Option<bool?>("--docker-sandbox", "Run each iteration inside a Docker container (default: true; set false to opt back into host execution)");
             DockerImage = new Option<string?>("--docker-image", "Docker image for sandbox (default: mcr.microsoft.com/devcontainers/dotnet:10.0)");
             DockerNetworkMode = new Option<string?>("--docker-network", "Docker network mode for sandbox (default: none)");
             DockerMemoryLimit = new Option<string?>("--docker-memory", "Docker memory limit for sandbox (default: 2g)");

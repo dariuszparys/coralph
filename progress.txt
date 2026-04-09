@@ -1329,3 +1329,12 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - A safe default can be added without removing flexibility by evaluating explicit allow rules before the built-in dangerous-tool deny set
   - Reusing the same dangerous-tool patterns already used for `--dry-run` keeps the approval model consistent across execution modes
+
+## 2026-04-09 - #113 (task 113-002)
+
+- Changed the loop default to run inside Docker sandbox containers instead of host execution for unattended issue-driven runs
+- Updated config, CLI help text, README guidance, and regression tests so host execution is now the explicit opt-out path
+- Files changed: src/Coralph/LoopOptions.cs, src/Coralph/ArgParser.cs, src/Coralph.Tests/ArgParserTests.cs, src/Coralph.Tests/ConfigurationServiceTests.cs, coralph.config.json, README.md, generated_tasks.json
+- **Learnings:**
+  - Flipping the `LoopOptions` default is enough to change the merged runtime behavior because CLI and config overrides already flow through `ConfigurationService.Merge`
+  - Keeping `--docker-sandbox false` as the documented escape hatch makes the trust boundary explicit without adding a new option

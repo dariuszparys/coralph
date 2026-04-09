@@ -140,10 +140,12 @@ just bump-dev major
 
 ### Docker Sandbox
 
-Run iterations in isolated containers:
+Coralph now defaults unattended loop iterations to isolated Docker containers. Opt back into host execution only when you explicitly trust the local run environment.
+
 ```bash
-./coralph --max-iterations 5 --docker-sandbox true
-./coralph --docker-sandbox true --docker-image ghcr.io/devcontainers/dotnet:10.0
+./coralph --max-iterations 5
+./coralph --docker-image ghcr.io/devcontainers/dotnet:10.0
+./coralph --docker-sandbox false   # Opt back into host execution
 ```
 
 ### Azure Boards Integration

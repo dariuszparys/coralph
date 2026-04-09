@@ -17,7 +17,7 @@
     "AzdoProject": null,
     "CliPath": null,
     "CliUrl": null,
-    "DockerSandbox": false,
+    "DockerSandbox": true,
     "DockerImage": "mcr.microsoft.com/devcontainers/dotnet:10.0",
     "ClientName": "coralph",
     "ShowReasoning": true,
