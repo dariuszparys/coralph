@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 <a id="unreleased"></a>
 ## [Unreleased]
 
+<a id="v1-1-5"></a>
+## [1.1.5] - 2026-04-09
+### Changed
+- update configurations
+- bump github/gh-aw-actions from 0.64.5 to 0.67.1
+- bump github/gh-aw-actions from 0.62.5 to 0.64.5
+- remove sample review
+### Fixed
+- harden loop termination and backlog sync
+- harden workflows and copilot image supply chain
+- require explicit sandbox token forwarding
+- mount copilot config read-only
+- guard untrusted prompt input
+- default to docker sandbox
+- default-deny dangerous tools
+### Other
+- Adjust Docker sandbox defaults and fallback
+- Bump GitHub.Copilot.SDK from 0.2.0 to 0.2.1
 <a id="v1-1-4"></a>
 ## [1.1.4] - 2026-03-23
 ### Added
@@ -238,7 +256,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial release.
 
-[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/dariuszparys/coralph/compare/v1.1.5...HEAD
+[1.1.5]: https://github.com/dariuszparys/coralph/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/dariuszparys/coralph/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/dariuszparys/coralph/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/dariuszparys/coralph/compare/v1.1.1...v1.1.2
