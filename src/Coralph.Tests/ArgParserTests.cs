@@ -486,6 +486,19 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void PrintUsage_DescribesDockerSandboxAsOptIn()
+    {
+        var sw = new StringWriter();
+
+        ArgParser.PrintUsage(sw);
+
+        var output = sw.ToString();
+        Assert.Contains("--docker-sandbox", output);
+        Assert.Contains("default: false", output);
+        Assert.Contains("set true to opt into sandboxed execution", output);
+    }
+
+    [Fact]
     public void RegisteredOptions_IncludeHelpDriftOptions()
     {
         var optionNames = ArgParser.GetRegisteredOptionNames();

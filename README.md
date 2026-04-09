@@ -140,17 +140,21 @@ just bump-dev major
 
 ### Docker Sandbox
 
-Coralph now defaults unattended loop iterations to isolated Docker containers. Opt back into host execution only when you explicitly trust the local run environment.
+Coralph runs on the host by default. Opt into Docker sandboxing when you want isolated loop iterations.
 
 When you pass `--copilot-config-path`, Coralph mounts that host auth directory into the container as **read-only** by default so sandboxed runs cannot modify the host Copilot state.
 
 Coralph also **does not inherit host `GH_TOKEN` or `GITHUB_TOKEN` into the container automatically**. If a sandboxed run needs token-based Copilot auth, pass `--copilot-token` explicitly so the credential boundary stays intentional and reviewable.
 
+If Docker is missing, not running, or the configured image is not Copilot-ready, Coralph now warns and falls back to host execution for that run instead of exiting immediately.
+
+The repository includes a Copilot-ready image definition in `Dockerfile.copilot`:
+
 ```bash
+docker build -t coralph-copilot -f Dockerfile.copilot .
 ./coralph --max-iterations 5
-./coralph --copilot-token ghp_example   # Explicit token pass-through when needed
-./coralph --docker-image ghcr.io/devcontainers/dotnet:10.0
-./coralph --docker-sandbox false   # Opt back into host execution
+./coralph --docker-sandbox true --docker-image coralph-copilot
+./coralph --docker-sandbox true --docker-image coralph-copilot --copilot-token ghp_example
 ```
 
 ### Azure Boards Integration

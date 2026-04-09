@@ -68,13 +68,20 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
             return await ListModelsAsync(inDockerSandbox, ct).ConfigureAwait(false);
         }
 
+        string? dockerUnavailableReason = null;
         if (_opt.DockerSandbox && !inDockerSandbox)
         {
-            var sandboxReady = await ValidateDockerHostAsync(ct).ConfigureAwait(false);
-            if (!sandboxReady)
-            {
-                return 1;
-            }
+            dockerUnavailableReason = await ValidateDockerHostAsync(ct).ConfigureAwait(false);
+        }
+
+        var (useDockerPerIteration, dockerFallbackReason) = ResolveDockerExecution(_opt.DockerSandbox, inDockerSandbox, dockerUnavailableReason);
+        if (!string.IsNullOrWhiteSpace(dockerFallbackReason))
+        {
+            _opt.DockerSandbox = false;
+            Log.Warning("Docker sandbox unavailable, falling back to host execution: {Reason}", dockerFallbackReason);
+            ConsoleOutput.WriteWarningLine($"Docker sandbox unavailable: {dockerFallbackReason}");
+            ConsoleOutput.WriteWarningLine("Falling back to host execution for this run.");
+            ConsoleOutput.WriteLine();
         }
 
         if (!inDockerSandbox || string.IsNullOrWhiteSpace(combinedPromptFile))
@@ -125,7 +132,6 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
             return 0;
         }
 
-        var useDockerPerIteration = _opt.DockerSandbox && !inDockerSandbox;
         CopilotSessionRunner? sessionRunner = null;
 
         try
@@ -308,13 +314,27 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
         }
     }
 
-    private async Task<bool> ValidateDockerHostAsync(CancellationToken ct)
+    internal static (bool UseDockerPerIteration, string? FallbackReason) ResolveDockerExecution(bool dockerSandboxRequested, bool inDockerSandbox, string? unavailableReason)
+    {
+        if (!dockerSandboxRequested || inDockerSandbox)
+        {
+            return (false, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(unavailableReason))
+        {
+            return (true, null);
+        }
+
+        return (false, unavailableReason.Trim());
+    }
+
+    private async Task<string?> ValidateDockerHostAsync(CancellationToken ct)
     {
         var dockerCheck = await DockerSandbox.CheckDockerAsync(ct).ConfigureAwait(false);
         if (!dockerCheck.Success)
         {
-            ConsoleOutput.WriteErrorLine(dockerCheck.Message ?? "Docker is not available.");
-            return false;
+            return dockerCheck.Message ?? "Docker is not available.";
         }
 
         if (!string.IsNullOrWhiteSpace(_opt.CliPath))
@@ -325,26 +345,24 @@ internal sealed class LoopOrchestrator(LoopOptions opt, EventStreamWriter? event
                 : Path.GetFullPath(Path.Combine(repoRoot, _opt.CliPath));
             if (!File.Exists(fullCliPath))
             {
-                ConsoleOutput.WriteErrorLine($"Copilot CLI not found: {fullCliPath}");
-                return false;
+                return $"Copilot CLI not found: {fullCliPath}";
             }
 
-            return true;
+            return null;
         }
 
         if (!string.IsNullOrWhiteSpace(_opt.CliUrl))
         {
-            return true;
+            return null;
         }
 
         var cliCheck = await DockerSandbox.CheckCopilotCliAsync(_opt.DockerImage, ct).ConfigureAwait(false);
         if (!cliCheck.Success)
         {
-            ConsoleOutput.WriteErrorLine(cliCheck.Message ?? "Copilot CLI is not available in the Docker image.");
-            return false;
+            return cliCheck.Message ?? "Copilot CLI is not available in the Docker image.";
         }
 
-        return true;
+        return null;
     }
 
     private async Task<int> RunCombinedPromptFileAsync(string combinedPromptFile, CancellationToken ct)

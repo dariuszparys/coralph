@@ -37,7 +37,7 @@ internal sealed class LoopOptions
     public bool ColorizedOutput { get; set; } = true;
     public UiMode UiMode { get; set; } = UiMode.Auto;
     public bool StreamEvents { get; set; }
-    public bool DockerSandbox { get; set; } = true;
+    public bool DockerSandbox { get; set; }
     public string DockerImage { get; set; } = "mcr.microsoft.com/devcontainers/dotnet:10.0";
     public string DockerNetworkMode { get; set; } = "none";
     public string DockerMemoryLimit { get; set; } = "2g";
