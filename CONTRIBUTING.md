@@ -42,6 +42,12 @@ dotnet build
 dotnet test
 ```
 
+## Workflow And Image Supply Chain
+
+GitHub Actions in this repository are pinned to immutable commit SHAs rather than mutable tags. Update those pins through Dependabot pull requests or by resolving the current tag with `git ls-remote` before changing a workflow.
+
+`Dockerfile.copilot` also avoids `curl | bash`. Node.js is installed through the signed NodeSource APT repository so package signatures are verified during `apt-get install`.
+
 ## Pre-Commit Hook (Optional)
 
 Coralph includes a pre-commit hook that automatically runs code formatting and validation checks before each commit. This helps maintain consistent code style across the repository.
