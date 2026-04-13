@@ -1365,3 +1365,14 @@ Model: GPT-5.1-Codex
 - **Learnings:**
   - The container exposure boundary is controlled by Docker `-e` arguments, not the inherited environment on the local `docker` client process
   - Reusing the existing `--copilot-token` option keeps credential forwarding explicit without adding more sandbox flags
+
+## 2026-04-13 - #120
+
+- Reviewed and updated AGENTS.md to reflect the current state of the codebase
+- Added: overview description, high-level architecture (startup, iteration pipeline, Copilot integration, tooling/permissions, output/telemetry, Docker sandboxing, provider config), execution modes table, key conventions, environment variables, expanded project layout
+- Kept existing sections (core commands, logging, git hooks) and refreshed them for accuracy
+- Files changed: AGENTS.md
+- **Learnings:**
+  - AGENTS.md serves as a concise quick-reference for AI agents and developers; detailed docs belong in docs/ and README
+  - Documenting the 5-step PermissionPolicy evaluation order helps agents understand the security model
+  - Tables are more scannable than prose for execution modes and component descriptions
