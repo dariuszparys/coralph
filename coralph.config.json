@@ -1,7 +1,7 @@
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "GPT-5.4",
+    "Model": "gpt-5.4",
     "ProviderType": null,
     "ProviderBaseUrl": null,
     "ProviderWireApi": null,

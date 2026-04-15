@@ -146,7 +146,7 @@ Customize behavior for your repository. The JSON binds to the `LoopOptions` sect
 {
   "LoopOptions": {
     "MaxIterations": 10,
-    "Model": "GPT-5.1-Codex",
+    "Model": "gpt-5.4",
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
     "IssuesFile": "issues.json",
@@ -165,7 +165,7 @@ Customize behavior for your repository. The JSON binds to the `LoopOptions` sect
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `Model` | `GPT-5.1-Codex` | AI model to use |
+| `Model` | `gpt-5.4` | AI model to use |
 | `MaxIterations` | `10` | Maximum loop iterations |
 | `GeneratedTasksFile` | `generated_tasks.json` | Generated task backlog file |
 | `PromptFile` | `prompt.md` | Instructions file |

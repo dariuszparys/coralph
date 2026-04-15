@@ -6,9 +6,10 @@ internal sealed class LoopOptions
 {
     internal const string ConfigurationSectionName = "LoopOptions";
     internal const string ConfigurationFileName = "coralph.config.json";
+    internal const string DefaultModel = "gpt-5.4";
 
     public int MaxIterations { get; set; } = 10;
-    public string Model { get; set; } = "GPT-5.4";
+    public string Model { get; set; } = DefaultModel;
     public string? ProviderType { get; set; }
     public string? ProviderBaseUrl { get; set; }
     public string? ProviderWireApi { get; set; }

@@ -287,7 +287,7 @@ internal static class ArgParser
             Version = new Option<bool>(new[] { "-v", "--version" }, "Show version");
             WorkingDir = new Option<string?>("--working-dir", "Path to target git repository (run Coralph as if launched there)");
             MaxIterations = new Option<int?>("--max-iterations", "Max loop iterations (default: 10)");
-            Model = new Option<string?>("--model", "Model (default: GPT-5.1-Codex)");
+            Model = new Option<string?>("--model", $"Model (default: {LoopOptions.DefaultModel})");
             ProviderType = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
             ProviderBaseUrl = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
             ProviderWireApi = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");

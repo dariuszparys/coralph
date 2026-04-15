@@ -499,6 +499,17 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void PrintUsage_DescribesActualDefaultModel()
+    {
+        var sw = new StringWriter();
+
+        ArgParser.PrintUsage(sw);
+
+        var output = sw.ToString();
+        Assert.Contains($"default: {new LoopOptions().Model}", output);
+    }
+
+    [Fact]
     public void RegisteredOptions_IncludeHelpDriftOptions()
     {
         var optionNames = ArgParser.GetRegisteredOptionNames();
