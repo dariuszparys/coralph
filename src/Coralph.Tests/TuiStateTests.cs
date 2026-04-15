@@ -19,6 +19,16 @@ public class TuiStateTests
     }
 
     [Fact]
+    public void SetSelectedModel_StoresTrimmedModel()
+    {
+        var state = new TuiState();
+
+        state.SetSelectedModel("  gpt-5.4  ");
+
+        Assert.Equal("gpt-5.4", state.GetSelectedModel());
+    }
+
+    [Fact]
     public void SetTasksSnapshot_SelectsInProgressFirst()
     {
         var state = new TuiState();

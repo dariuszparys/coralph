@@ -62,6 +62,7 @@ internal sealed class CopilotSessionEventRouter(
         {
             case SessionStartEvent sessionStart:
                 _copilotSessionId = sessionStart.Data.SessionId;
+                ConsoleOutput.SetSelectedModel(sessionStart.Data.SelectedModel);
                 Emit("copilot_session_start", fields: _eventStream is null ? null : new Dictionary<string, object?>
                 {
                     ["copilotSessionId"] = sessionStart.Data.SessionId,

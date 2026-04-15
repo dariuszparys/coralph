@@ -1376,3 +1376,13 @@ Model: GPT-5.1-Codex
   - AGENTS.md serves as a concise quick-reference for AI agents and developers; detailed docs belong in docs/ and README
   - Documenting the 5-step PermissionPolicy evaluation order helps agents understand the security model
   - Tables are more scannable than prose for execution modes and component descriptions
+
+## 2026-04-15 - #126
+
+- Added the selected model to the top of the TUI information pane so the active run shows its model immediately.
+- Seeded the TUI with the configured model and refresh it from Copilot session-start events when the SDK reports the selected model.
+- Added focused regression tests for TUI state, task-pane rendering, and session event routing.
+- Files changed: src/Coralph/ConsoleOutput.cs, src/Coralph/CopilotSessionEventRouter.cs, src/Coralph/Ui/IConsoleOutputBackend.cs, src/Coralph/Ui/ClassicConsoleOutputBackend.cs, src/Coralph/Ui/Tui/TuiState.cs, src/Coralph/Ui/Tui/Hex1bConsoleOutputBackend.cs, src/Coralph.Tests/ConsoleOutputSupervisorTests.cs, src/Coralph.Tests/CopilotSessionEventRouterTests.cs, src/Coralph.Tests/Hex1bConsoleOutputBackendTests.cs, src/Coralph.Tests/TuiStateTests.cs
+- **Learnings:**
+  - The safest place to pick up the runtime-selected model is the session-start event, but the TUI should still seed from configured options so the pane is populated immediately.
+  - Extracting task-pane text generation into a helper makes narrow TUI layout changes much easier to regression-test.

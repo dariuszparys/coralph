@@ -36,6 +36,27 @@ public sealed class Hex1bConsoleOutputBackendTests : IDisposable
         Assert.Same(firstSnapshot, secondSnapshot);
     }
 
+    [Fact]
+    public void BuildTasksPaneLines_PutsSelectedModelAtTop()
+    {
+        var state = new TuiState();
+        state.SetSelectedModel("gpt-5.4");
+        state.SetTasksSnapshot(new GeneratedTasksSnapshot(
+            Path: "generated_tasks.json",
+            Exists: true,
+            Error: null,
+            Tasks:
+            [
+                new GeneratedTaskSnapshotItem("126-001", 126, "Show model name", "Display the selected model in the info pane.", "in_progress", 1, 1)
+            ],
+            ReadAtUtc: DateTimeOffset.UtcNow));
+
+        var lines = Hex1bConsoleOutputBackend.BuildTasksPaneLines(state.GetTasksSnapshot(), state, visibleTaskRows: 3, contentWidth: 40, contentHeight: 18);
+
+        Assert.Equal("Model: gpt-5.4", lines[0]);
+        Assert.Equal("Current Task", lines[2]);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))

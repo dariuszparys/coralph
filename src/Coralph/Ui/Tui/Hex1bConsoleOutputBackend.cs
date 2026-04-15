@@ -35,6 +35,7 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
         _options = options;
         _out = ConsoleOutput.CreateConsole(Console.Out, Console.IsOutputRedirected);
         _error = ConsoleOutput.CreateConsole(Console.Error, Console.IsErrorRedirected);
+        _state.SetSelectedModel(options.Model);
     }
 
     public bool UsesTui => true;
@@ -205,6 +206,12 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     public void WriteSectionSeparator(string title)
     {
         _state.AppendLine(TranscriptEntryKind.System, $"--- {title} ---");
+        RequestInvalidate();
+    }
+
+    public void SetSelectedModel(string? model)
+    {
+        _state.SetSelectedModel(model);
         RequestInvalidate();
     }
 
@@ -494,75 +501,8 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
     private Hex1bWidget BuildTasksPane<TParent>(WidgetContext<TParent> ctx, GeneratedTasksSnapshot snapshot, int visibleTaskRows)
         where TParent : Hex1bWidget
     {
-        if (!snapshot.Exists)
-        {
-            return ctx.Border(ctx.VStack(v =>
-            [
-                v.Text("generated_tasks.json not found"),
-                v.Text(snapshot.Path)
-            ])).Title("Generated Tasks");
-        }
-
-        if (!string.IsNullOrWhiteSpace(snapshot.Error))
-        {
-            return ctx.Border(ctx.VStack(v =>
-            [
-                v.Text("Unable to read generated tasks"),
-                v.Text(snapshot.Error)
-            ])).Title("Generated Tasks");
-        }
-
-        if (snapshot.Tasks.Count == 0)
-        {
-            return ctx.Border(ctx.VStack(v =>
-            [
-                v.Text("No generated tasks."),
-                v.Text("Backlog is empty or still loading.")
-            ])).Title("Generated Tasks");
-        }
-
         var contentWidth = CalculateTasksPaneContentWidth();
-        var activeTaskIndex = _state.GetTaskSelectedIndex(snapshot.ActiveTaskIndex());
-        if (activeTaskIndex < 0 || activeTaskIndex >= snapshot.Tasks.Count)
-        {
-            activeTaskIndex = snapshot.ActiveTaskIndex();
-            _state.SetTaskSelectedIndex(activeTaskIndex);
-        }
-
-        var activeTask = snapshot.Tasks[activeTaskIndex];
-        var clampedVisibleRows = Math.Max(1, Math.Min(visibleTaskRows, snapshot.Tasks.Count));
-        var scrollOffset = Math.Clamp(
-            _state.GetTaskListScrollOffset(),
-            0,
-            Math.Max(0, snapshot.Tasks.Count - clampedVisibleRows));
-        var lines = new List<string>
-        {
-            "Current Task"
-        };
-        var activeTaskLines = BuildTaskBlock(activeTask, contentWidth, isActive: true, includeDescription: true).ToList();
-        var maxCurrentTaskLines = Math.Max(1, CalculateTaskPaneContentHeight() / 3);
-        var visibleCurrentTaskLines = activeTaskLines.Take(maxCurrentTaskLines).ToList();
-
-        lines.AddRange(visibleCurrentTaskLines);
-        if (activeTaskLines.Count > visibleCurrentTaskLines.Count)
-        {
-            lines.Add("  ...");
-        }
-        lines.Add(string.Empty);
-        lines.Add("All Tasks");
-
-        var startIndex = Math.Max(0, scrollOffset);
-        var endIndex = Math.Min(snapshot.Tasks.Count, startIndex + clampedVisibleRows);
-
-        for (var i = startIndex; i < endIndex; i++)
-        {
-            lines.AddRange(BuildTaskBlock(snapshot.Tasks[i], contentWidth, isActive: i == activeTaskIndex, includeDescription: false));
-            if (i < endIndex - 1)
-            {
-                lines.Add(string.Empty);
-            }
-        }
-
+        var lines = BuildTasksPaneLines(snapshot, _state, visibleTaskRows, contentWidth, CalculateTaskPaneContentHeight());
         var tasksText = string.Join(Environment.NewLine, lines);
         return ctx.Border(ctx.WithClipping(ctx.Text(tasksText).Fill())).Title("Generated Tasks");
     }
@@ -604,6 +544,79 @@ internal sealed class Hex1bConsoleOutputBackend : IConsoleOutputBackend
 
         var description = string.IsNullOrWhiteSpace(task.Description) ? "No description" : task.Description;
         lines.AddRange(IndentLines(WrapTextBlock(description, Math.Max(10, width - 2)), "  "));
+        return lines;
+    }
+
+    internal static IReadOnlyList<string> BuildTasksPaneLines(
+        GeneratedTasksSnapshot snapshot,
+        TuiState state,
+        int visibleTaskRows,
+        int contentWidth,
+        int contentHeight)
+    {
+        var lines = new List<string>();
+        lines.AddRange(WrapWithPrefix("Model: ", state.GetSelectedModel() ?? "unknown", contentWidth));
+        lines.Add(string.Empty);
+
+        if (!snapshot.Exists)
+        {
+            lines.Add("generated_tasks.json not found");
+            lines.Add(snapshot.Path);
+            return lines;
+        }
+
+        if (!string.IsNullOrWhiteSpace(snapshot.Error))
+        {
+            lines.Add("Unable to read generated tasks");
+            lines.Add(snapshot.Error);
+            return lines;
+        }
+
+        if (snapshot.Tasks.Count == 0)
+        {
+            lines.Add("No generated tasks.");
+            lines.Add("Backlog is empty or still loading.");
+            return lines;
+        }
+
+        var activeTaskIndex = state.GetTaskSelectedIndex(snapshot.ActiveTaskIndex());
+        if (activeTaskIndex < 0 || activeTaskIndex >= snapshot.Tasks.Count)
+        {
+            activeTaskIndex = snapshot.ActiveTaskIndex();
+            state.SetTaskSelectedIndex(activeTaskIndex);
+        }
+
+        var activeTask = snapshot.Tasks[activeTaskIndex];
+        var clampedVisibleRows = Math.Max(1, Math.Min(visibleTaskRows, snapshot.Tasks.Count));
+        var scrollOffset = Math.Clamp(
+            state.GetTaskListScrollOffset(),
+            0,
+            Math.Max(0, snapshot.Tasks.Count - clampedVisibleRows));
+        lines.Add("Current Task");
+        var activeTaskLines = BuildTaskBlock(activeTask, contentWidth, isActive: true, includeDescription: true).ToList();
+        var maxCurrentTaskLines = Math.Max(1, contentHeight / 3);
+        var visibleCurrentTaskLines = activeTaskLines.Take(maxCurrentTaskLines).ToList();
+
+        lines.AddRange(visibleCurrentTaskLines);
+        if (activeTaskLines.Count > visibleCurrentTaskLines.Count)
+        {
+            lines.Add("  ...");
+        }
+        lines.Add(string.Empty);
+        lines.Add("All Tasks");
+
+        var startIndex = Math.Max(0, scrollOffset);
+        var endIndex = Math.Min(snapshot.Tasks.Count, startIndex + clampedVisibleRows);
+
+        for (var i = startIndex; i < endIndex; i++)
+        {
+            lines.AddRange(BuildTaskBlock(snapshot.Tasks[i], contentWidth, isActive: i == activeTaskIndex, includeDescription: false));
+            if (i < endIndex - 1)
+            {
+                lines.Add(string.Empty);
+            }
+        }
+
         return lines;
     }
 

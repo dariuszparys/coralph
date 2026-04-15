@@ -135,6 +135,8 @@ internal static class ConsoleOutput
 
     internal static void WriteSectionSeparator(string title) => _backend.WriteSectionSeparator(title);
 
+    internal static void SetSelectedModel(string? model) => _backend.SetSelectedModel(model);
+
     internal static void RefreshGeneratedTasks() => _backend.RefreshGeneratedTasks();
 
     internal static Task WaitForAnyKeyToExitAsync(string message, CancellationToken ct = default)

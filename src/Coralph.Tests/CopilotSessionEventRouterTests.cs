@@ -143,6 +143,26 @@ public class CopilotSessionEventRouterTests
     }
 
     [Fact]
+    public async Task HandleEvent_SessionStart_UpdatesSelectedModelOnConsoleOutput()
+    {
+        var backend = new CapturingConsoleBackend();
+
+        await ConsoleOutput.UseBackendAsync(backend);
+        try
+        {
+            var router = new CopilotSessionEventRouter(new LoopOptions(), eventStream: null, emitSessionEndOnIdle: false, emitSessionEndOnDispose: false);
+
+            router.HandleEvent(CreateSessionStartEvent("session-model"));
+
+            Assert.Equal("gpt-4.1", backend.SelectedModel);
+        }
+        finally
+        {
+            await ConsoleOutput.ResetAsync();
+        }
+    }
+
+    [Fact]
     public async Task HandleEvent_SessionError_CompletesTurnAndRejectsFurtherTurns()
     {
         var backend = new CapturingConsoleBackend();
@@ -303,6 +323,7 @@ public class CopilotSessionEventRouterTests
         public Task<ConsoleOutputBackendExit>? ExitTask => null;
 
         public string Output => _buffer.ToString();
+        public string? SelectedModel { get; private set; }
 
         public Task InitializeAsync(CancellationToken ct = default) => Task.CompletedTask;
 
@@ -385,6 +406,11 @@ public class CopilotSessionEventRouterTests
         public void WriteSectionSeparator(string title)
         {
             _buffer.AppendLine($"[section:{title}]");
+        }
+
+        public void SetSelectedModel(string? model)
+        {
+            SelectedModel = model;
         }
 
         public void RefreshGeneratedTasks()

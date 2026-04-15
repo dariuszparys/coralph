@@ -123,6 +123,10 @@ public class ConsoleOutputSupervisorTests
         {
         }
 
+        public void SetSelectedModel(string? model)
+        {
+        }
+
         public void RefreshGeneratedTasks()
         {
         }

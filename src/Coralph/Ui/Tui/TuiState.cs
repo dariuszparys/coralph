@@ -34,6 +34,7 @@ internal sealed class TuiState
     private readonly List<TranscriptEntry> _transcript = [];
 
     private GeneratedTasksSnapshot _tasksSnapshot = GeneratedTasksSnapshot.Missing(TaskBacklog.DefaultBacklogFile);
+    private string? _selectedModel;
     private int _taskSelectedIndex = -1;
     private int _taskListScrollOffset;
 
@@ -93,6 +94,27 @@ internal sealed class TuiState
         lock (_lock)
         {
             return _tasksSnapshot;
+        }
+    }
+
+    internal string? GetSelectedModel()
+    {
+        lock (_lock)
+        {
+            return _selectedModel;
+        }
+    }
+
+    internal void SetSelectedModel(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+        {
+            return;
+        }
+
+        lock (_lock)
+        {
+            _selectedModel = model.Trim();
         }
     }
 

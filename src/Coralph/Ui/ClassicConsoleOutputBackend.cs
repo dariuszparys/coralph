@@ -134,6 +134,11 @@ internal sealed class ClassicConsoleOutputBackend : IConsoleOutputBackend
         }
     }
 
+    public void SetSelectedModel(string? model)
+    {
+        // Classic output does not render a dedicated info pane.
+    }
+
     public void RefreshGeneratedTasks()
     {
         // No-op for classic output.

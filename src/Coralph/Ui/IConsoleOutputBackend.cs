@@ -31,6 +31,7 @@ internal interface IConsoleOutputBackend : IProjectTypePrompt, IAsyncDisposable
     void WriteToolStart(string toolName);
     void WriteToolComplete(string toolName, string summary);
     void WriteSectionSeparator(string title);
+    void SetSelectedModel(string? model);
 
     void RefreshGeneratedTasks();
 }
