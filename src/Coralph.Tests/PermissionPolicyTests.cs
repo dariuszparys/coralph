@@ -26,7 +26,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -242,7 +242,7 @@ public sealed class PermissionPolicyTests
 
         var result = await policy.HandleAsync(request, CreateInvocation());
 
-        AssertDeniedByRules(result);
+        AssertRejected(result);
     }
 
     [Fact]
@@ -267,9 +267,9 @@ public sealed class PermissionPolicyTests
         Assert.Equal(PermissionRequestResultKind.Approved, result.Kind);
     }
 
-    private static void AssertDeniedByRules(PermissionRequestResult result)
+    private static void AssertRejected(PermissionRequestResult result)
     {
-        Assert.Equal(PermissionRequestResultKind.DeniedByRules, result.Kind);
+        Assert.Equal(PermissionRequestResultKind.Rejected, result.Kind);
     }
 
     private static PermissionInvocation CreateInvocation()

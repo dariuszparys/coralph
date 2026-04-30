@@ -286,6 +286,7 @@ internal sealed class CopilotSessionEventRouter(
                     ["model"] = assistantUsage.Data.Model,
                     ["inputTokens"] = assistantUsage.Data.InputTokens,
                     ["outputTokens"] = assistantUsage.Data.OutputTokens,
+                    ["reasoningTokens"] = assistantUsage.Data.ReasoningTokens,
                     ["cacheReadTokens"] = assistantUsage.Data.CacheReadTokens,
                     ["cacheWriteTokens"] = assistantUsage.Data.CacheWriteTokens,
                     ["cost"] = assistantUsage.Data.Cost,
@@ -401,7 +402,7 @@ internal sealed class CopilotSessionEventRouter(
         _eventStream.Emit(type, eventTurn ?? state?.Turn, messageId, toolCallId, fields);
     }
 
-    private static List<Dictionary<string, object?>>? MapToolRequests(AssistantMessageDataToolRequestsItem[]? requests)
+    private static List<Dictionary<string, object?>>? MapToolRequests(AssistantMessageToolRequest[]? requests)
     {
         if (requests is null || requests.Length == 0)
         {
@@ -416,14 +417,17 @@ internal sealed class CopilotSessionEventRouter(
                 ["toolCallId"] = request.ToolCallId,
                 ["name"] = request.Name,
                 ["type"] = request.Type?.ToString(),
-                ["arguments"] = request.Arguments
+                ["arguments"] = request.Arguments,
+                ["toolTitle"] = request.ToolTitle,
+                ["mcpServerName"] = request.McpServerName,
+                ["intentionSummary"] = request.IntentionSummary
             });
         }
 
         return result;
     }
 
-    private static Dictionary<string, object?>? MapSystemNotificationKind(SystemNotificationDataKind? kind)
+    private static Dictionary<string, object?>? MapSystemNotificationKind(SystemNotification? kind)
     {
         if (kind is null)
         {
@@ -432,7 +436,7 @@ internal sealed class CopilotSessionEventRouter(
 
         return kind switch
         {
-            SystemNotificationDataKindAgentCompleted agentCompleted => new Dictionary<string, object?>
+            SystemNotificationAgentCompleted agentCompleted => new Dictionary<string, object?>
             {
                 ["type"] = agentCompleted.Type,
                 ["agentId"] = agentCompleted.AgentId,
@@ -441,25 +445,33 @@ internal sealed class CopilotSessionEventRouter(
                 ["description"] = agentCompleted.Description,
                 ["prompt"] = agentCompleted.Prompt
             },
-            SystemNotificationDataKindAgentIdle agentIdle => new Dictionary<string, object?>
+            SystemNotificationAgentIdle agentIdle => new Dictionary<string, object?>
             {
                 ["type"] = agentIdle.Type,
                 ["agentId"] = agentIdle.AgentId,
                 ["agentType"] = agentIdle.AgentType,
                 ["description"] = agentIdle.Description
             },
-            SystemNotificationDataKindShellCompleted shellCompleted => new Dictionary<string, object?>
+            SystemNotificationShellCompleted shellCompleted => new Dictionary<string, object?>
             {
                 ["type"] = shellCompleted.Type,
                 ["shellId"] = shellCompleted.ShellId,
                 ["exitCode"] = shellCompleted.ExitCode,
                 ["description"] = shellCompleted.Description
             },
-            SystemNotificationDataKindShellDetachedCompleted shellDetachedCompleted => new Dictionary<string, object?>
+            SystemNotificationShellDetachedCompleted shellDetachedCompleted => new Dictionary<string, object?>
             {
                 ["type"] = shellDetachedCompleted.Type,
                 ["shellId"] = shellDetachedCompleted.ShellId,
                 ["description"] = shellDetachedCompleted.Description
+            },
+            SystemNotificationNewInboxMessage newInboxMessage => new Dictionary<string, object?>
+            {
+                ["type"] = newInboxMessage.Type,
+                ["entryId"] = newInboxMessage.EntryId,
+                ["senderName"] = newInboxMessage.SenderName,
+                ["senderType"] = newInboxMessage.SenderType,
+                ["summary"] = newInboxMessage.Summary
             },
             _ => new Dictionary<string, object?>
             {

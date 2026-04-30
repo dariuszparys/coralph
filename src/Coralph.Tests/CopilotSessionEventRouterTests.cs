@@ -119,7 +119,7 @@ public class CopilotSessionEventRouterTests
                 {
                     ToolCallId = "tool-1",
                     Success = true,
-                    Result = new ToolExecutionCompleteDataResult
+                    Result = new ToolExecutionCompleteResult
                     {
                         Content = "Intent logged"
                     }
@@ -258,7 +258,7 @@ public class CopilotSessionEventRouterTests
                 Data = new SystemNotificationData
                 {
                     Content = "<system_notification>Shell completed</system_notification>",
-                    Kind = new SystemNotificationDataKindShellCompleted
+                    Kind = new SystemNotificationShellCompleted
                     {
                         ShellId = "shell-1",
                         ExitCode = 0,
@@ -274,6 +274,135 @@ public class CopilotSessionEventRouterTests
             Assert.Equal("shell-1", lines[1].GetProperty("kind").GetProperty("shellId").GetString());
             Assert.Equal(0, lines[1].GetProperty("kind").GetProperty("exitCode").GetInt32());
             Assert.Equal("dotnet test", lines[1].GetProperty("kind").GetProperty("description").GetString());
+        }
+        finally
+        {
+            await ConsoleOutput.ResetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task HandleEvent_SystemNotification_WithUnknownKind_EmitsTypeFallback()
+    {
+        var backend = new CapturingConsoleBackend();
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "session-unknown-notification");
+        var options = new LoopOptions();
+
+        await ConsoleOutput.UseBackendAsync(backend);
+        try
+        {
+            var router = new CopilotSessionEventRouter(options, stream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: false);
+
+            router.HandleEvent(CreateSessionStartEvent("session-unknown-notification"));
+            router.HandleEvent(new SystemNotificationEvent
+            {
+                Data = new SystemNotificationData
+                {
+                    Content = "<system_notification>New SDK notification</system_notification>",
+                    Kind = new SystemNotification
+                    {
+                        Type = "new_notification_kind"
+                    }
+                }
+            });
+
+            var lines = ParseJsonLines(output.ToString());
+            Assert.Equal("system_notification", lines[1].GetProperty("type").GetString());
+            Assert.Equal("new_notification_kind", lines[1].GetProperty("kind").GetProperty("type").GetString());
+        }
+        finally
+        {
+            await ConsoleOutput.ResetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task HandleEvent_AssistantMessage_WithToolRequests_EmitsStableToolRequestFields()
+    {
+        var backend = new CapturingConsoleBackend();
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "session-tool-requests");
+        var options = new LoopOptions();
+
+        await ConsoleOutput.UseBackendAsync(backend);
+        try
+        {
+            var router = new CopilotSessionEventRouter(options, stream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: false);
+            router.StartTurn(8);
+
+            router.HandleEvent(new AssistantMessageEvent
+            {
+                Data = new AssistantMessageData
+                {
+                    MessageId = "message-tool-request",
+                    Content = "I need a tool",
+                    ToolRequests =
+                    [
+                        new AssistantMessageToolRequest
+                        {
+                            ToolCallId = "tool-call-1",
+                            Name = "list_open_issues",
+                            Type = AssistantMessageToolRequestType.Function,
+                            Arguments = new Dictionary<string, object?>
+                            {
+                                ["includeClosed"] = false
+                            },
+                            ToolTitle = "List issues",
+                            McpServerName = "coralph",
+                            IntentionSummary = "Read current issue state"
+                        }
+                    ]
+                }
+            });
+
+            var lines = ParseJsonLines(output.ToString());
+            Assert.Equal("message_end", lines[1].GetProperty("type").GetString());
+            var request = lines[1]
+                .GetProperty("message")
+                .GetProperty("toolRequests")[0];
+
+            Assert.Equal("tool-call-1", request.GetProperty("toolCallId").GetString());
+            Assert.Equal("list_open_issues", request.GetProperty("name").GetString());
+            Assert.Equal("Function", request.GetProperty("type").GetString());
+            Assert.False(request.GetProperty("arguments").GetProperty("includeClosed").GetBoolean());
+            Assert.Equal("List issues", request.GetProperty("toolTitle").GetString());
+            Assert.Equal("coralph", request.GetProperty("mcpServerName").GetString());
+            Assert.Equal("Read current issue state", request.GetProperty("intentionSummary").GetString());
+        }
+        finally
+        {
+            await ConsoleOutput.ResetAsync();
+        }
+    }
+
+    [Fact]
+    public async Task HandleEvent_AssistantUsage_EmitsReasoningTokens()
+    {
+        var backend = new CapturingConsoleBackend();
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "session-usage");
+        var options = new LoopOptions();
+
+        await ConsoleOutput.UseBackendAsync(backend);
+        try
+        {
+            var router = new CopilotSessionEventRouter(options, stream, emitSessionEndOnIdle: false, emitSessionEndOnDispose: false);
+
+            router.HandleEvent(new AssistantUsageEvent
+            {
+                Data = new AssistantUsageData
+                {
+                    Model = "gpt-5.1-codex",
+                    InputTokens = 100,
+                    OutputTokens = 20,
+                    ReasoningTokens = 7
+                }
+            });
+
+            var lines = ParseJsonLines(output.ToString());
+            Assert.Equal("usage", lines[0].GetProperty("type").GetString());
+            Assert.Equal(7d, lines[0].GetProperty("reasoningTokens").GetDouble());
         }
         finally
         {

@@ -45,6 +45,8 @@ internal static class CopilotClientFactory
             OnPermissionRequest = onPermissionRequest,
             OnEvent = onEvent,
             Provider = ProviderConfigFactory.Create(options),
+            GitHubToken = string.IsNullOrWhiteSpace(options.CopilotToken) ? null : options.CopilotToken,
+            IncludeSubAgentStreamingEvents = true,
             ClientName = options.ClientName,
             ReasoningEffort = options.ReasoningEffort,
             SystemMessage = CopilotSystemMessageFactory.Create(options)
