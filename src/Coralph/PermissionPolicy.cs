@@ -68,7 +68,7 @@ internal sealed class PermissionPolicy
         var decision = EvaluateDecision(candidates, out var matchedRule);
         var resultKind = decision == PermissionDecision.Allow
             ? PermissionRequestResultKind.Approved
-            : PermissionRequestResultKind.DeniedByRules;
+            : PermissionRequestResultKind.Rejected;
 
         EmitDecision(kind, toolName, candidates, decision, matchedRule);
 

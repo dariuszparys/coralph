@@ -54,6 +54,7 @@ public class CopilotClientFactoryTests
             Model = "GPT-5.1-Codex",
             ProviderType = "openrouter",
             ProviderApiKey = "sk-or-test",
+            CopilotToken = "ghp_session_token",
             ClientName = "coralph-test",
             ReasoningEffort = "high"
         };
@@ -69,8 +70,10 @@ public class CopilotClientFactoryTests
         Assert.Equal("openrouter", config.Provider!.Type);
         Assert.Equal("https://openrouter.ai/api/v1", config.Provider.BaseUrl);
         Assert.Equal("sk-or-test", config.Provider.ApiKey);
+        Assert.Equal("ghp_session_token", config.GitHubToken);
         Assert.Equal("coralph-test", config.ClientName);
         Assert.Equal("high", config.ReasoningEffort);
+        Assert.True(config.IncludeSubAgentStreamingEvents);
         Assert.NotNull(config.SystemMessage);
         Assert.Equal(SystemMessageMode.Customize, config.SystemMessage!.Mode);
         Assert.NotNull(config.SystemMessage.Sections);
@@ -89,6 +92,8 @@ public class CopilotClientFactoryTests
         Assert.True(config.Streaming);
         Assert.Same(tools, config.Tools);
         Assert.Null(config.Provider);
+        Assert.Null(config.GitHubToken);
+        Assert.True(config.IncludeSubAgentStreamingEvents);
         Assert.NotNull(config.SystemMessage);
     }
 }

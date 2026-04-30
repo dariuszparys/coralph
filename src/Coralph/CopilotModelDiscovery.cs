@@ -6,7 +6,7 @@ namespace Coralph;
 
 internal static class CopilotModelDiscovery
 {
-    internal static async Task<IReadOnlyList<ModelInfo>> ListModelsAsync(LoopOptions opt, CancellationToken ct)
+    internal static async Task<IList<ModelInfo>> ListModelsAsync(LoopOptions opt, CancellationToken ct)
     {
         await using var client = new CopilotClient(CopilotClientFactory.CreateClientOptions(opt));
         var started = false;
@@ -121,7 +121,7 @@ internal static class CopilotModelDiscovery
                                 model.Capabilities.Limits.Vision is null
                                     ? null
                                     : new ModelVisionLimitsDto(
-                                        model.Capabilities.Limits.Vision.SupportedMediaTypes,
+                                        model.Capabilities.Limits.Vision.SupportedMediaTypes.ToArray(),
                                         model.Capabilities.Limits.Vision.MaxPromptImages,
                                         model.Capabilities.Limits.Vision.MaxPromptImageSize))),
                 model.Policy is null

@@ -111,7 +111,7 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
         {
             try
             {
-                await DisposeAsync().ConfigureAwait(false);
+                await _session.AbortAsync(CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
