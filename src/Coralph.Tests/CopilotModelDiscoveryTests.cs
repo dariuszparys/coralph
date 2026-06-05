@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Coralph;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Spectre.Console.Testing;
 
 namespace Coralph.Tests;

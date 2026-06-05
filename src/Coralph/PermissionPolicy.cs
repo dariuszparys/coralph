@@ -1,8 +1,11 @@
 using System.Collections;
+using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 using Serilog;
-using GitHub.Copilot.SDK;
 
 namespace Coralph;
+
+#pragma warning disable GHCP001
 
 /// <summary>
 /// Coralph permission policy for Copilot tool requests.
@@ -54,7 +57,7 @@ internal sealed class PermissionPolicy
         _eventStream = eventStream;
     }
 
-    internal Task<PermissionRequestResult> HandleAsync(PermissionRequest request, PermissionInvocation invocation)
+    internal Task<PermissionDecision> HandleAsync(PermissionRequest request, PermissionInvocation invocation)
     {
         var kind = request.Kind;
         if (string.IsNullOrWhiteSpace(kind))
@@ -66,50 +69,49 @@ internal sealed class PermissionPolicy
         var candidates = BuildCandidates(kind, toolName);
 
         var decision = EvaluateDecision(candidates, out var matchedRule);
-        var resultKind = decision == PermissionDecision.Allow
-            ? PermissionRequestResultKind.Approved
-            : PermissionRequestResultKind.Rejected;
 
         EmitDecision(kind, toolName, candidates, decision, matchedRule);
 
-        return Task.FromResult(new PermissionRequestResult { Kind = resultKind });
+        return Task.FromResult(decision == ToolPermissionDecision.Allow
+            ? PermissionDecision.ApproveOnce()
+            : PermissionDecision.Reject("Rejected by Coralph permission policy."));
     }
 
-    private PermissionDecision EvaluateDecision(IReadOnlyList<string> candidates, out string? matchedRule)
+    private ToolPermissionDecision EvaluateDecision(IReadOnlyList<string> candidates, out string? matchedRule)
     {
         if (MatchesRuleSet(_userDeny, candidates, out matchedRule))
         {
-            return PermissionDecision.Deny;
+            return ToolPermissionDecision.Deny;
         }
 
         if (MatchesRuleSet(_userAllow, candidates, out matchedRule))
         {
-            return PermissionDecision.Allow;
+            return ToolPermissionDecision.Allow;
         }
 
         if (MatchesRuleSet(DefaultDangerousRules, candidates, out matchedRule))
         {
-            return PermissionDecision.Deny;
+            return ToolPermissionDecision.Deny;
         }
 
         if (_hasExplicitAllowList)
         {
             matchedRule = null;
-            return PermissionDecision.Deny;
+            return ToolPermissionDecision.Deny;
         }
 
         matchedRule = null;
-        return PermissionDecision.Allow;
+        return ToolPermissionDecision.Allow;
     }
 
     private void EmitDecision(
         string? kind,
         string? toolName,
         IReadOnlyList<string> candidates,
-        PermissionDecision decision,
+        ToolPermissionDecision decision,
         string? matchedRule)
     {
-        if (decision == PermissionDecision.Deny)
+        if (decision == ToolPermissionDecision.Deny)
         {
             Log.Warning(
                 "Permission denied (Kind={Kind}, Tool={Tool}, Rule={Rule})",
@@ -123,7 +125,7 @@ internal sealed class PermissionPolicy
             ["kind"] = kind,
             ["toolName"] = toolName,
             ["candidates"] = candidates,
-            ["decision"] = decision == PermissionDecision.Allow ? "approved" : "denied",
+            ["decision"] = decision == ToolPermissionDecision.Allow ? "approved" : "denied",
             ["matchedRule"] = matchedRule
         });
     }
@@ -219,6 +221,12 @@ internal sealed class PermissionPolicy
 
     private static string? TryGetToolName(PermissionRequest request)
     {
+        var toolNameProperty = TryGetStringProperty(request, "ToolName");
+        if (!string.IsNullOrWhiteSpace(toolNameProperty))
+        {
+            return toolNameProperty;
+        }
+
         var extra = TryGetExtraDictionary(request);
         if (extra is null)
         {
@@ -277,7 +285,7 @@ internal sealed class PermissionPolicy
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    private enum PermissionDecision
+    private enum ToolPermissionDecision
     {
         Allow,
         Deny

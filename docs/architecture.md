@@ -55,7 +55,7 @@ flowchart TD
     end
 
     subgraph External["External Dependencies"]
-        CopilotSDK["GitHub.Copilot.SDK 0.1.32<br/>AI Runtime"]
+        CopilotSDK["GitHub.Copilot.SDK 1.0.0<br/>AI Runtime"]
         Hex1b["Hex1b 0.83.0<br/>TUI Framework"]
         ConfigJson["Microsoft.Extensions.Configuration.Json 8.0.0<br/>JSON Config Loading"]
         SpectreConsole["Spectre.Console 0.49.1<br/>Rich Terminal UI"]
@@ -169,7 +169,7 @@ sequenceDiagram
     participant Config as ConfigurationService
     participant Runner as LoopOrchestrator
     participant Tasks as TaskBacklog
-    participant SDK as GitHub.Copilot.SDK
+    participant SDK as GitHub.Copilot
     participant Output as ConsoleOutput
     participant Git as GitService
     participant Files as File System
@@ -194,7 +194,7 @@ sequenceDiagram
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| **GitHub.Copilot.SDK** | 0.1.32 | AI runtime for Copilot integration |
+| **GitHub.Copilot.SDK** | 1.0.0 | AI runtime for Copilot integration |
 | **Hex1b** | 0.83.0 | Interactive split-pane TUI rendering |
 | **Microsoft.Extensions.Configuration.Json** | 8.0.0 | Load configuration from JSON files |
 | **Microsoft.Extensions.Options.ConfigurationExtensions** | 8.0.0 | Bind configuration to options classes |
@@ -213,7 +213,7 @@ sequenceDiagram
 
 ## Key Design Decisions
 
-1. **Streaming Architecture**: Uses event-based streaming from GitHub.Copilot.SDK for real-time output
+1. **Streaming Architecture**: Uses event-based streaming from GitHub.Copilot for real-time output
 2. **Pluggable Output Backends**: Runtime logic writes to a single facade; rendering is switched between classic and TUI modes
 3. **Stream Compatibility Guardrail**: `--stream-events` forces classic output to preserve JSONL integrations
 4. **Tool Extensibility**: Custom AI tools exposed via `AIFunctionFactory.Create()` pattern

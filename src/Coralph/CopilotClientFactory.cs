@@ -1,5 +1,8 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 using Microsoft.Extensions.AI;
+
+#pragma warning disable GHCP001
 
 namespace Coralph;
 
@@ -9,18 +12,18 @@ internal static class CopilotClientFactory
     {
         var clientOptions = new CopilotClientOptions
         {
-            Cwd = Directory.GetCurrentDirectory(),
+            WorkingDirectory = Directory.GetCurrentDirectory(),
             Telemetry = CreateTelemetryConfig(options)
         };
 
         if (!string.IsNullOrWhiteSpace(options.CliPath))
         {
-            clientOptions.CliPath = options.CliPath;
+            clientOptions.Connection = RuntimeConnection.ForStdio(options.CliPath, args: null);
         }
 
         if (!string.IsNullOrWhiteSpace(options.CliUrl))
         {
-            clientOptions.CliUrl = options.CliUrl;
+            clientOptions.Connection = RuntimeConnection.ForUri(options.CliUrl, connectionToken: null);
         }
 
         if (!string.IsNullOrWhiteSpace(options.CopilotToken))
@@ -34,8 +37,8 @@ internal static class CopilotClientFactory
     internal static SessionConfig CreateSessionConfig(
         LoopOptions options,
         AIFunction[] tools,
-        PermissionRequestHandler onPermissionRequest,
-        SessionEventHandler? onEvent = null)
+        Func<PermissionRequest, PermissionInvocation, Task<PermissionDecision>> onPermissionRequest,
+        Action<SessionEvent>? onEvent = null)
     {
         return new SessionConfig
         {

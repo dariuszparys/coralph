@@ -1,7 +1,10 @@
 using Coralph;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 
 namespace Coralph.Tests;
+
+#pragma warning disable GHCP001
 
 public class CopilotClientFactoryTests
 {
@@ -20,10 +23,11 @@ public class CopilotClientFactoryTests
 
         var clientOptions = CopilotClientFactory.CreateClientOptions(options);
 
-        Assert.False(string.IsNullOrWhiteSpace(clientOptions.Cwd));
-        Assert.True(Path.IsPathRooted(clientOptions.Cwd));
-        Assert.Equal("/usr/local/bin/copilot", clientOptions.CliPath);
-        Assert.Equal("http://localhost:3000", clientOptions.CliUrl);
+        Assert.False(string.IsNullOrWhiteSpace(clientOptions.WorkingDirectory));
+        Assert.True(Path.IsPathRooted(clientOptions.WorkingDirectory));
+        var connection = Assert.IsType<UriRuntimeConnection>(clientOptions.Connection);
+        Assert.Equal("http://localhost:3000", connection.Url);
+        Assert.Null(connection.ConnectionToken);
         Assert.Equal("ghp_test_token", clientOptions.GitHubToken);
         Assert.NotNull(clientOptions.Telemetry);
         Assert.Equal("http://localhost:4318", clientOptions.Telemetry!.OtlpEndpoint);
@@ -32,14 +36,26 @@ public class CopilotClientFactoryTests
     }
 
     [Fact]
+    public void CreateClientOptions_WithCliPath_UsesStdioConnection()
+    {
+        var clientOptions = CopilotClientFactory.CreateClientOptions(new LoopOptions
+        {
+            CliPath = "/usr/local/bin/copilot"
+        });
+
+        var connection = Assert.IsType<StdioRuntimeConnection>(clientOptions.Connection);
+        Assert.Equal("/usr/local/bin/copilot", connection.Path);
+        Assert.Null(connection.Args);
+    }
+
+    [Fact]
     public void CreateClientOptions_WithNullOptionalValues_LeavesThemUnset()
     {
         var clientOptions = CopilotClientFactory.CreateClientOptions(new LoopOptions());
 
-        Assert.False(string.IsNullOrWhiteSpace(clientOptions.Cwd));
-        Assert.True(Path.IsPathRooted(clientOptions.Cwd));
-        Assert.Null(clientOptions.CliPath);
-        Assert.Null(clientOptions.CliUrl);
+        Assert.False(string.IsNullOrWhiteSpace(clientOptions.WorkingDirectory));
+        Assert.True(Path.IsPathRooted(clientOptions.WorkingDirectory));
+        Assert.Null(clientOptions.Connection);
         Assert.Null(clientOptions.GitHubToken);
         Assert.Null(clientOptions.Telemetry);
     }
@@ -48,7 +64,7 @@ public class CopilotClientFactoryTests
     public void CreateSessionConfig_WithToolsAndProvider_CopiesExpectedFields()
     {
         var tools = CustomTools.GetDefaultTools("issues.json", "progress.txt", "generated_tasks.json");
-        SessionEventHandler onEvent = _ => { };
+        Action<SessionEvent> onEvent = _ => { };
         var options = new LoopOptions
         {
             Model = "GPT-5.1-Codex",
@@ -77,10 +93,10 @@ public class CopilotClientFactoryTests
         Assert.NotNull(config.SystemMessage);
         Assert.Equal(SystemMessageMode.Customize, config.SystemMessage!.Mode);
         Assert.NotNull(config.SystemMessage.Sections);
-        Assert.Contains(SystemPromptSections.Tone, config.SystemMessage.Sections.Keys);
-        Assert.Contains(SystemPromptSections.Guidelines, config.SystemMessage.Sections.Keys);
-        Assert.Contains(SystemPromptSections.ToolInstructions, config.SystemMessage.Sections.Keys);
-        Assert.Contains(SystemPromptSections.Safety, config.SystemMessage.Sections.Keys);
+        Assert.Contains(SystemMessageSection.Tone, config.SystemMessage.Sections.Keys);
+        Assert.Contains(SystemMessageSection.Guidelines, config.SystemMessage.Sections.Keys);
+        Assert.Contains(SystemMessageSection.ToolInstructions, config.SystemMessage.Sections.Keys);
+        Assert.Contains(SystemMessageSection.Safety, config.SystemMessage.Sections.Keys);
     }
 
     [Fact]

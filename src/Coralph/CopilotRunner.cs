@@ -1,6 +1,6 @@
 using System.Linq;
 using Serilog;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace Coralph;
 

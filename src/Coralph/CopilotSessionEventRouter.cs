@@ -1,8 +1,10 @@
 using System.Text;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Serilog;
 
 namespace Coralph;
+
+#pragma warning disable GHCP001
 
 internal sealed class CopilotSessionEventRouter(
     LoopOptions opt,
@@ -292,7 +294,7 @@ internal sealed class CopilotSessionEventRouter(
                     ["cost"] = assistantUsage.Data.Cost,
                     ["duration"] = assistantUsage.Data.Duration,
                     ["initiator"] = assistantUsage.Data.Initiator,
-                    ["quotaSnapshots"] = assistantUsage.Data.QuotaSnapshots
+                    ["quotaSnapshots"] = TryGetPropertyValue(assistantUsage.Data, "QuotaSnapshots")
                 }, state: state);
                 break;
             case SystemNotificationEvent notification:
@@ -478,6 +480,11 @@ internal sealed class CopilotSessionEventRouter(
                 ["type"] = kind.Type
             }
         };
+    }
+
+    private static object? TryGetPropertyValue(object target, string propertyName)
+    {
+        return target.GetType().GetProperty(propertyName)?.GetValue(target);
     }
 
     private string ResolveAssistantMessageId(TurnState state, string? messageId)
