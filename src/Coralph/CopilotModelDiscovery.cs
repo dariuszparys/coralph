@@ -1,5 +1,5 @@
 using System.Text.Json;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Serilog;
 
 namespace Coralph;
@@ -183,5 +183,5 @@ internal static class CopilotModelDiscovery
         string? Terms);
 
     private sealed record ModelBillingDto(
-        double Multiplier);
+        double? Multiplier);
 }

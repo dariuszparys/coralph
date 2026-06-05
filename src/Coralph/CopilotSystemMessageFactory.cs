@@ -1,4 +1,4 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 
 namespace Coralph;
 
@@ -15,14 +15,14 @@ internal static class CopilotSystemMessageFactory
         return new SystemMessageConfig
         {
             Mode = SystemMessageMode.Customize,
-            Sections = new Dictionary<string, SectionOverride>
+            Sections = new Dictionary<SystemMessageSection, SectionOverride>
             {
-                [SystemPromptSections.Tone] = new()
+                [SystemMessageSection.Tone] = new()
                 {
                     Action = SectionOverrideAction.Append,
                     Content = "\n- Be concise, direct, and execution-focused."
                 },
-                [SystemPromptSections.Guidelines] = new()
+                [SystemMessageSection.Guidelines] = new()
                 {
                     Action = SectionOverrideAction.Append,
                     Content =
@@ -30,14 +30,14 @@ internal static class CopilotSystemMessageFactory
                         "\n- Match the repository's existing conventions, libraries, and coding style." +
                         "\n- Prefer small, targeted changes that preserve existing behavior unless the task requires broader edits."
                 },
-                [SystemPromptSections.ToolInstructions] = new()
+                [SystemMessageSection.ToolInstructions] = new()
                 {
                     Action = SectionOverrideAction.Append,
                     Content =
                         "\n- Prefer Coralph's internal read-only tools and available repository context before broader exploration when they can answer the question." +
                         "\n- Do not stop to ask for interactive input during a loop run."
                 },
-                [SystemPromptSections.Safety] = new()
+                [SystemMessageSection.Safety] = new()
                 {
                     Action = SectionOverrideAction.Append,
                     Content =

@@ -222,9 +222,9 @@ Passed as `SessionConfig.ReasoningEffort`. Not all models respect this setting.
 
 ### Hooks and User-Input Handlers
 
-The Copilot SDK provides `OnPreToolUse`, `OnPostToolUse`, and `OnUserInputRequest` callbacks on `SessionConfig`. Coralph intentionally does not implement them:
+The Copilot SDK exposes tool hooks through `SessionConfig.Hooks` and user-input callbacks through `SessionConfig.OnUserInputRequest`. Coralph intentionally does not configure them:
 
-- **Tool-use hooks** are unnecessary because `CopilotSessionEventRouter` already captures all tool events via `session.On()`.
+- **Tool-use hooks** are unnecessary because `CopilotSessionEventRouter` already captures all tool events via `SessionConfig.OnEvent`.
 - **User-input handlers** are inappropriate for an unattended loop; models should not prompt for interactive input during an automated run.
 
 ### OpenAI-Compatible Providers

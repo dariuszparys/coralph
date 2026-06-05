@@ -1,7 +1,10 @@
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
+using GitHub.Copilot.Rpc;
 using Xunit;
 
 namespace Coralph.Tests;
+
+#pragma warning disable GHCP001
 
 public sealed class PermissionPolicyTests
 {
@@ -262,14 +265,15 @@ public sealed class PermissionPolicyTests
         return new PermissionRequest { Kind = kind };
     }
 
-    private static void AssertApproved(PermissionRequestResult result)
+    private static void AssertApproved(PermissionDecision result)
     {
-        Assert.Equal(PermissionRequestResultKind.Approved, result.Kind);
+        Assert.IsType<PermissionDecisionApproveOnce>(result);
     }
 
-    private static void AssertRejected(PermissionRequestResult result)
+    private static void AssertRejected(PermissionDecision result)
     {
-        Assert.Equal(PermissionRequestResultKind.Rejected, result.Kind);
+        var rejected = Assert.IsType<PermissionDecisionReject>(result);
+        Assert.Equal("Rejected by Coralph permission policy.", rejected.Feedback);
     }
 
     private static PermissionInvocation CreateInvocation()

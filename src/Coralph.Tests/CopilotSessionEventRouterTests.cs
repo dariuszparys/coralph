@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Coralph;
 using Coralph.Ui;
-using GitHub.Copilot.SDK;
+using GitHub.Copilot;
 using Spectre.Console;
 using Spectre.Console.Testing;
 
@@ -107,10 +107,10 @@ public class CopilotSessionEventRouterTests
                 {
                     ToolCallId = "tool-1",
                     ToolName = "report_intent",
-                    Arguments = new Dictionary<string, object?>
+                    Arguments = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
                     {
                         ["intent"] = "test"
-                    }
+                    })
                 }
             });
             router.HandleEvent(new ToolExecutionCompleteEvent
@@ -344,10 +344,10 @@ public class CopilotSessionEventRouterTests
                             ToolCallId = "tool-call-1",
                             Name = "list_open_issues",
                             Type = AssistantMessageToolRequestType.Function,
-                            Arguments = new Dictionary<string, object?>
+                            Arguments = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
                             {
                                 ["includeClosed"] = false
-                            },
+                            }),
                             ToolTitle = "List issues",
                             McpServerName = "coralph",
                             IntentionSummary = "Read current issue state"
@@ -364,7 +364,7 @@ public class CopilotSessionEventRouterTests
 
             Assert.Equal("tool-call-1", request.GetProperty("toolCallId").GetString());
             Assert.Equal("list_open_issues", request.GetProperty("name").GetString());
-            Assert.Equal("Function", request.GetProperty("type").GetString());
+            Assert.Equal("function", request.GetProperty("type").GetString());
             Assert.False(request.GetProperty("arguments").GetProperty("includeClosed").GetBoolean());
             Assert.Equal("List issues", request.GetProperty("toolTitle").GetString());
             Assert.Equal("coralph", request.GetProperty("mcpServerName").GetString());
