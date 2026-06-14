@@ -13,7 +13,9 @@ internal static class CopilotClientFactory
         var clientOptions = new CopilotClientOptions
         {
             WorkingDirectory = Directory.GetCurrentDirectory(),
-            Telemetry = CreateTelemetryConfig(options)
+            Telemetry = CreateTelemetryConfig(options),
+            Logger = CopilotSdkLogger.Instance,
+            LogLevel = CreateCopilotLogLevel(options.CopilotLogLevel)
         };
 
         if (!string.IsNullOrWhiteSpace(options.CliPath))
@@ -38,8 +40,11 @@ internal static class CopilotClientFactory
         LoopOptions options,
         AIFunction[] tools,
         Func<PermissionRequest, PermissionInvocation, Task<PermissionDecision>> onPermissionRequest,
-        Action<SessionEvent>? onEvent = null)
+        Action<SessionEvent>? onEvent = null,
+        EventStreamWriter? eventStream = null)
     {
+        var modeSwitchHandlers = new CopilotModeSwitchHandlers(options, eventStream);
+
         return new SessionConfig
         {
             Model = options.Model,
@@ -47,6 +52,8 @@ internal static class CopilotClientFactory
             Tools = tools,
             OnPermissionRequest = onPermissionRequest,
             OnEvent = onEvent,
+            OnAutoModeSwitchRequest = modeSwitchHandlers.HandleAutoModeSwitchRequestAsync,
+            OnExitPlanModeRequest = modeSwitchHandlers.HandleExitPlanModeRequestAsync,
             Provider = ProviderConfigFactory.Create(options),
             GitHubToken = string.IsNullOrWhiteSpace(options.CopilotToken) ? null : options.CopilotToken,
             IncludeSubAgentStreamingEvents = true,
@@ -70,6 +77,25 @@ internal static class CopilotClientFactory
             OtlpEndpoint = options.TelemetryOtlpEndpoint,
             SourceName = options.TelemetrySourceName,
             CaptureContent = options.TelemetryCaptureContent
+        };
+    }
+
+    private static CopilotLogLevel? CreateCopilotLogLevel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "all" => CopilotLogLevel.All,
+            "debug" => CopilotLogLevel.Debug,
+            "error" => CopilotLogLevel.Error,
+            "info" or "information" => CopilotLogLevel.Info,
+            "none" => CopilotLogLevel.None,
+            "warn" or "warning" => CopilotLogLevel.Warning,
+            var custom => new CopilotLogLevel(custom)
         };
     }
 }

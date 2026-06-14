@@ -18,7 +18,8 @@ public class CopilotClientFactoryTests
             CopilotToken = "ghp_test_token",
             TelemetryOtlpEndpoint = "http://localhost:4318",
             TelemetrySourceName = "coralph-test",
-            TelemetryCaptureContent = true
+            TelemetryCaptureContent = true,
+            CopilotLogLevel = "debug"
         };
 
         var clientOptions = CopilotClientFactory.CreateClientOptions(options);
@@ -33,6 +34,8 @@ public class CopilotClientFactoryTests
         Assert.Equal("http://localhost:4318", clientOptions.Telemetry!.OtlpEndpoint);
         Assert.Equal("coralph-test", clientOptions.Telemetry.SourceName);
         Assert.True(clientOptions.Telemetry.CaptureContent);
+        Assert.NotNull(clientOptions.Logger);
+        Assert.Equal(CopilotLogLevel.Debug, clientOptions.LogLevel);
     }
 
     [Fact]
@@ -58,6 +61,8 @@ public class CopilotClientFactoryTests
         Assert.Null(clientOptions.Connection);
         Assert.Null(clientOptions.GitHubToken);
         Assert.Null(clientOptions.Telemetry);
+        Assert.NotNull(clientOptions.Logger);
+        Assert.Null(clientOptions.LogLevel);
     }
 
     [Fact]
@@ -100,6 +105,82 @@ public class CopilotClientFactoryTests
     }
 
     [Fact]
+    public async Task CreateSessionConfig_AutoModeSwitchHandler_ApprovesAndEmitsEvent()
+    {
+        var tools = CustomTools.GetDefaultTools("issues.json", "progress.txt", "generated_tasks.json");
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "event-session");
+        var config = CopilotClientFactory.CreateSessionConfig(new LoopOptions(), tools, PermissionHandler.ApproveAll, eventStream: stream);
+
+        var response = await config.OnAutoModeSwitchRequest!(
+            new AutoModeSwitchRequest
+            {
+                ErrorCode = "rate_limited",
+                RetryAfterSeconds = 2.5
+            },
+            new AutoModeSwitchInvocation
+            {
+                SessionId = "sdk-session"
+            });
+
+        Assert.Equal(AutoModeSwitchResponse.Yes, response);
+        var line = ParseSingleJsonLine(output.ToString());
+        Assert.Equal("auto_mode_switch_request", line.GetProperty("type").GetString());
+        Assert.Equal("sdk-session", line.GetProperty("copilotSessionId").GetString());
+        Assert.Equal("rate_limited", line.GetProperty("errorCode").GetString());
+        Assert.Equal(2.5, line.GetProperty("retryAfterSeconds").GetDouble());
+        Assert.Equal("yes", line.GetProperty("decision").GetString());
+    }
+
+    [Theory]
+    [InlineData(false, true, "apply")]
+    [InlineData(true, false, null)]
+    public async Task CreateSessionConfig_ExitPlanModeHandler_UsesDryRunDecision(
+        bool dryRun,
+        bool expectedApproved,
+        string? expectedSelectedAction)
+    {
+        var tools = CustomTools.GetDefaultTools("issues.json", "progress.txt", "generated_tasks.json");
+        var output = new StringWriter();
+        var stream = new EventStreamWriter(output, "event-session");
+        var config = CopilotClientFactory.CreateSessionConfig(
+            new LoopOptions { DryRun = dryRun },
+            tools,
+            PermissionHandler.ApproveAll,
+            eventStream: stream);
+
+        var result = await config.OnExitPlanModeRequest!(
+            new ExitPlanModeRequest
+            {
+                Summary = "Plan summary",
+                RecommendedAction = "apply",
+                Actions = ["apply", "revise"],
+                PlanContent = "Plan content"
+            },
+            new ExitPlanModeInvocation
+            {
+                SessionId = "sdk-session"
+            });
+
+        Assert.Equal(expectedApproved, result.Approved);
+        Assert.Equal(expectedSelectedAction, result.SelectedAction);
+        if (dryRun)
+        {
+            Assert.Contains("dry-run", result.Feedback, StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            Assert.Null(result.Feedback);
+        }
+
+        var line = ParseSingleJsonLine(output.ToString());
+        Assert.Equal("exit_plan_mode_request", line.GetProperty("type").GetString());
+        Assert.Equal("sdk-session", line.GetProperty("copilotSessionId").GetString());
+        Assert.Equal(expectedApproved, line.GetProperty("approved").GetBoolean());
+        Assert.Equal(dryRun, line.GetProperty("dryRun").GetBoolean());
+    }
+
+    [Fact]
     public void CreateSessionConfig_WithNullProviderValues_LeavesProviderUnset()
     {
         var tools = CustomTools.GetDefaultTools("issues.json", "progress.txt", "generated_tasks.json");
@@ -111,5 +192,12 @@ public class CopilotClientFactoryTests
         Assert.Null(config.GitHubToken);
         Assert.True(config.IncludeSubAgentStreamingEvents);
         Assert.NotNull(config.SystemMessage);
+    }
+
+    private static System.Text.Json.JsonElement ParseSingleJsonLine(string jsonl)
+    {
+        var line = Assert.Single(jsonl.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        using var doc = System.Text.Json.JsonDocument.Parse(line);
+        return doc.RootElement.Clone();
     }
 }

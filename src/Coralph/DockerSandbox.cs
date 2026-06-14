@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -239,6 +240,36 @@ internal static class DockerSandbox
         {
             psi.ArgumentList.Add("--provider-wire-api");
             psi.ArgumentList.Add(opt.ProviderWireApi);
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.ProviderModelId))
+        {
+            psi.ArgumentList.Add("--provider-model-id");
+            psi.ArgumentList.Add(opt.ProviderModelId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.ProviderWireModel))
+        {
+            psi.ArgumentList.Add("--provider-wire-model");
+            psi.ArgumentList.Add(opt.ProviderWireModel);
+        }
+
+        if (opt.ProviderMaxPromptTokens.HasValue)
+        {
+            psi.ArgumentList.Add("--provider-max-prompt-tokens");
+            psi.ArgumentList.Add(opt.ProviderMaxPromptTokens.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (opt.ProviderMaxOutputTokens.HasValue)
+        {
+            psi.ArgumentList.Add("--provider-max-output-tokens");
+            psi.ArgumentList.Add(opt.ProviderMaxOutputTokens.Value.ToString(CultureInfo.InvariantCulture));
+        }
+
+        if (!string.IsNullOrWhiteSpace(opt.CopilotLogLevel))
+        {
+            psi.ArgumentList.Add("--copilot-log-level");
+            psi.ArgumentList.Add(opt.CopilotLogLevel);
         }
 
         return psi;

@@ -117,6 +117,33 @@ public sealed class ConfigurationServiceTests
     }
 
     [Fact]
+    public void Merge_ProviderAndCopilotLogValuesFollowOverridePrecedence()
+    {
+        var cli = new LoopOptionsOverrides
+        {
+            ProviderWireModel = "cli-wire-model",
+            ProviderMaxOutputTokens = 12000,
+            CopilotLogLevel = "debug"
+        };
+        var config = new LoopOptionsOverrides
+        {
+            ProviderModelId = "config-model",
+            ProviderWireModel = "config-wire-model",
+            ProviderMaxPromptTokens = 100000,
+            ProviderMaxOutputTokens = 8000,
+            CopilotLogLevel = "info"
+        };
+
+        var options = ConfigurationService.Merge(cli, config);
+
+        Assert.Equal("config-model", options.ProviderModelId);
+        Assert.Equal("cli-wire-model", options.ProviderWireModel);
+        Assert.Equal(100000, options.ProviderMaxPromptTokens);
+        Assert.Equal(12000, options.ProviderMaxOutputTokens);
+        Assert.Equal("debug", options.CopilotLogLevel);
+    }
+
+    [Fact]
     public void LoadOptions_WithUiModeInConfig_BindsUiMode()
     {
         var tempPath = CreateTempConfig(
@@ -161,6 +188,38 @@ public sealed class ConfigurationServiceTests
             Assert.Equal("http://localhost:4318", options.TelemetryOtlpEndpoint);
             Assert.Equal("coralph-config", options.TelemetrySourceName);
             Assert.True(options.TelemetryCaptureContent);
+        }
+        finally
+        {
+            File.Delete(tempPath);
+        }
+    }
+
+    [Fact]
+    public void LoadOptions_WithProviderOverridesInConfig_BindsProviderOptions()
+    {
+        var tempPath = CreateTempConfig(
+            """
+            {
+              "LoopOptions": {
+                "ProviderModelId": "gpt-5.4",
+                "ProviderWireModel": "openrouter/gpt-5.4",
+                "ProviderMaxPromptTokens": 100000,
+                "ProviderMaxOutputTokens": 12000,
+                "CopilotLogLevel": "warning"
+              }
+            }
+            """);
+
+        try
+        {
+            var options = ConfigurationService.LoadOptions(new LoopOptionsOverrides(), tempPath);
+
+            Assert.Equal("gpt-5.4", options.ProviderModelId);
+            Assert.Equal("openrouter/gpt-5.4", options.ProviderWireModel);
+            Assert.Equal(100000, options.ProviderMaxPromptTokens);
+            Assert.Equal(12000, options.ProviderMaxOutputTokens);
+            Assert.Equal("warning", options.CopilotLogLevel);
         }
         finally
         {

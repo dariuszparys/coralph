@@ -58,6 +58,10 @@ internal static class ConfigurationService
             ProviderType = CoalesceNullable(cli.ProviderType, config.ProviderType),
             ProviderBaseUrl = CoalesceNullable(cli.ProviderBaseUrl, config.ProviderBaseUrl),
             ProviderWireApi = CoalesceNullable(cli.ProviderWireApi, config.ProviderWireApi),
+            ProviderModelId = CoalesceNullable(cli.ProviderModelId, config.ProviderModelId),
+            ProviderWireModel = CoalesceNullable(cli.ProviderWireModel, config.ProviderWireModel),
+            ProviderMaxPromptTokens = cli.ProviderMaxPromptTokens ?? config.ProviderMaxPromptTokens ?? defaults.ProviderMaxPromptTokens,
+            ProviderMaxOutputTokens = cli.ProviderMaxOutputTokens ?? config.ProviderMaxOutputTokens ?? defaults.ProviderMaxOutputTokens,
             ProviderApiKey = CoalesceNullable(cli.ProviderApiKey, config.ProviderApiKey),
             PromptFile = Coalesce(cli.PromptFile, config.PromptFile, defaults.PromptFile),
             ProgressFile = Coalesce(cli.ProgressFile, config.ProgressFile, defaults.ProgressFile),
@@ -91,6 +95,7 @@ internal static class ConfigurationService
             TelemetryOtlpEndpoint = CoalesceNullable(cli.TelemetryOtlpEndpoint, config.TelemetryOtlpEndpoint),
             TelemetrySourceName = CoalesceNullable(cli.TelemetrySourceName, config.TelemetrySourceName),
             TelemetryCaptureContent = cli.TelemetryCaptureContent ?? config.TelemetryCaptureContent ?? defaults.TelemetryCaptureContent,
+            CopilotLogLevel = CoalesceNullable(cli.CopilotLogLevel, config.CopilotLogLevel),
             DryRun = cli.DryRun ?? config.DryRun ?? defaults.DryRun
         };
     }

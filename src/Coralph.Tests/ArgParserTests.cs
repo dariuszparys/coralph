@@ -123,6 +123,37 @@ public class ArgParserTests
     }
 
     [Fact]
+    public void Parse_WithProviderOverrideOptions_SetsOverrides()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(
+        [
+            "--provider-model-id", "gpt-5.4",
+            "--provider-wire-model", "openrouter/gpt-5.4",
+            "--provider-max-prompt-tokens", "100000",
+            "--provider-max-output-tokens", "12000",
+            "--copilot-log-level", "debug"
+        ]);
+
+        Assert.NotNull(overrides);
+        Assert.Null(err);
+        Assert.Equal("gpt-5.4", overrides.ProviderModelId);
+        Assert.Equal("openrouter/gpt-5.4", overrides.ProviderWireModel);
+        Assert.Equal(100000, overrides.ProviderMaxPromptTokens);
+        Assert.Equal(12000, overrides.ProviderMaxOutputTokens);
+        Assert.Equal("debug", overrides.CopilotLogLevel);
+    }
+
+    [Fact]
+    public void Parse_WithZeroProviderMaxPromptTokens_ReturnsError()
+    {
+        var (overrides, err, _, _, _, _) = ArgParser.Parse(["--provider-max-prompt-tokens", "0"]);
+
+        Assert.Null(overrides);
+        Assert.NotNull(err);
+        Assert.Contains("--provider-max-prompt-tokens", err);
+    }
+
+    [Fact]
     public void Parse_WithEmptyModel_ReturnsError()
     {
         var (overrides, err, _, _, _, _) = ArgParser.Parse(["--model", ""]);
@@ -467,6 +498,10 @@ public class ArgParserTests
         Assert.Contains("--max-iterations", output);
         Assert.Contains("--model", output);
         Assert.Contains("--provider-type", output);
+        Assert.Contains("--provider-model-id", output);
+        Assert.Contains("--provider-wire-model", output);
+        Assert.Contains("--provider-max-prompt-tokens", output);
+        Assert.Contains("--provider-max-output-tokens", output);
         Assert.Contains("--generated-tasks-file", output);
         Assert.Contains("--refresh-issues-azdo", output);
         Assert.Contains("--init", output);
@@ -480,6 +515,7 @@ public class ArgParserTests
         Assert.Contains("--telemetry-otlp-endpoint", output);
         Assert.Contains("--telemetry-source-name", output);
         Assert.Contains("--telemetry-capture-content", output);
+        Assert.Contains("--copilot-log-level", output);
         Assert.Contains("--docker-network", output);
         Assert.Contains("--docker-memory", output);
         Assert.Contains("--docker-cpus", output);
@@ -515,7 +551,12 @@ public class ArgParserTests
         var optionNames = ArgParser.GetRegisteredOptionNames();
 
         Assert.Contains("--client-name", optionNames);
+        Assert.Contains("--provider-model-id", optionNames);
+        Assert.Contains("--provider-wire-model", optionNames);
+        Assert.Contains("--provider-max-prompt-tokens", optionNames);
+        Assert.Contains("--provider-max-output-tokens", optionNames);
         Assert.Contains("--reasoning-effort", optionNames);
+        Assert.Contains("--copilot-log-level", optionNames);
         Assert.Contains("--telemetry-otlp-endpoint", optionNames);
         Assert.Contains("--telemetry-source-name", optionNames);
         Assert.Contains("--telemetry-capture-content", optionNames);

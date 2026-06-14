@@ -13,6 +13,10 @@ internal sealed class LoopOptions
     public string? ProviderType { get; set; }
     public string? ProviderBaseUrl { get; set; }
     public string? ProviderWireApi { get; set; }
+    public string? ProviderModelId { get; set; }
+    public string? ProviderWireModel { get; set; }
+    public int? ProviderMaxPromptTokens { get; set; }
+    public int? ProviderMaxOutputTokens { get; set; }
     public string? ProviderApiKey { get; set; }
 
     public string PromptFile { get; set; } = "prompt.md";
@@ -51,6 +55,7 @@ internal sealed class LoopOptions
     public string? TelemetryOtlpEndpoint { get; set; }
     public string? TelemetrySourceName { get; set; }
     public bool? TelemetryCaptureContent { get; set; }
+    public string? CopilotLogLevel { get; set; }
     public bool DryRun { get; set; }
 }
 
@@ -63,6 +68,10 @@ internal sealed class LoopOptionsOverrides
     public string? ProviderType { get; set; }
     public string? ProviderBaseUrl { get; set; }
     public string? ProviderWireApi { get; set; }
+    public string? ProviderModelId { get; set; }
+    public string? ProviderWireModel { get; set; }
+    public int? ProviderMaxPromptTokens { get; set; }
+    public int? ProviderMaxOutputTokens { get; set; }
     public string? ProviderApiKey { get; set; }
 
     public string? PromptFile { get; set; }
@@ -101,5 +110,6 @@ internal sealed class LoopOptionsOverrides
     public string? TelemetryOtlpEndpoint { get; set; }
     public string? TelemetrySourceName { get; set; }
     public bool? TelemetryCaptureContent { get; set; }
+    public string? CopilotLogLevel { get; set; }
     public bool? DryRun { get; set; }
 }

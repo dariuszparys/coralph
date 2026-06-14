@@ -57,7 +57,11 @@ public class ProviderConfigFactoryTests
         {
             ProviderType = "openai",
             ProviderBaseUrl = "https://example.com/api/",
-            ProviderWireApi = "chat"
+            ProviderWireApi = "chat",
+            ProviderModelId = "gpt-5.4",
+            ProviderWireModel = "provider/gpt-5.4",
+            ProviderMaxPromptTokens = 100000,
+            ProviderMaxOutputTokens = 12000
         };
 
         var config = ProviderConfigFactory.Create(options);
@@ -66,6 +70,27 @@ public class ProviderConfigFactoryTests
         Assert.Equal("openai", config.Type);
         Assert.Equal("https://example.com/api/", config.BaseUrl);
         Assert.Equal("chat", config.WireApi);
+        Assert.Equal("gpt-5.4", config.ModelId);
+        Assert.Equal("provider/gpt-5.4", config.WireModel);
+        Assert.Equal(100000, config.MaxPromptTokens);
+        Assert.Equal(12000, config.MaxOutputTokens);
+    }
+
+    [Fact]
+    public void Create_WithOnlyProviderModelOverride_DefaultsToOpenAiProvider()
+    {
+        var options = new LoopOptions
+        {
+            ProviderModelId = "gpt-5.4"
+        };
+
+        var config = ProviderConfigFactory.Create(options);
+
+        Assert.NotNull(config);
+        Assert.Equal("openai", config.Type);
+        Assert.Equal("https://api.openai.com/v1/", config.BaseUrl);
+        Assert.Equal("responses", config.WireApi);
+        Assert.Equal("gpt-5.4", config.ModelId);
     }
 
     [Fact]

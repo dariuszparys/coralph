@@ -5,6 +5,10 @@
     "ProviderType": null,
     "ProviderBaseUrl": null,
     "ProviderWireApi": null,
+    "ProviderModelId": null,
+    "ProviderWireModel": null,
+    "ProviderMaxPromptTokens": null,
+    "ProviderMaxOutputTokens": null,
     "ProviderApiKey": null,
     "PromptFile": "prompt.md",
     "ProgressFile": "progress.txt",
@@ -22,6 +26,7 @@
     "ClientName": "coralph",
     "ShowReasoning": true,
     "ColorizedOutput": true,
-    "ReasoningEffort": null
+    "ReasoningEffort": null,
+    "CopilotLogLevel": null
   }
 }
