@@ -24,9 +24,20 @@ internal static class ProviderConfigFactory
         var hasType = !string.IsNullOrWhiteSpace(options.ProviderType);
         var hasBaseUrl = !string.IsNullOrWhiteSpace(options.ProviderBaseUrl);
         var hasWireApi = !string.IsNullOrWhiteSpace(options.ProviderWireApi);
+        var hasModelId = !string.IsNullOrWhiteSpace(options.ProviderModelId);
+        var hasWireModel = !string.IsNullOrWhiteSpace(options.ProviderWireModel);
+        var hasMaxPromptTokens = options.ProviderMaxPromptTokens.HasValue;
+        var hasMaxOutputTokens = options.ProviderMaxOutputTokens.HasValue;
         var hasApiKey = !string.IsNullOrWhiteSpace(apiKey);
 
-        if (!hasType && !hasBaseUrl && !hasWireApi && !hasApiKey)
+        if (!hasType &&
+            !hasBaseUrl &&
+            !hasWireApi &&
+            !hasModelId &&
+            !hasWireModel &&
+            !hasMaxPromptTokens &&
+            !hasMaxOutputTokens &&
+            !hasApiKey)
         {
             return null;
         }
@@ -65,6 +76,10 @@ internal static class ProviderConfigFactory
             Type = type,
             BaseUrl = baseUrl ?? string.Empty,
             WireApi = wireApi,
+            ModelId = options.ProviderModelId,
+            WireModel = options.ProviderWireModel,
+            MaxPromptTokens = options.ProviderMaxPromptTokens,
+            MaxOutputTokens = options.ProviderMaxOutputTokens,
             ApiKey = apiKey
         };
     }

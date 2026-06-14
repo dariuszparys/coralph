@@ -25,7 +25,7 @@ internal static class CopilotRunner
             // Coralph runs unattended; models must not prompt for user input during a loop iteration.
             // Tool-use events are captured by CopilotSessionEventRouter via SessionConfig.OnEvent.
             await using (var session = await client.CreateSessionAsync(
-                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent)))
+                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent, eventStream)))
             {
                 var state = router.StartTurn(turn);
                 using var cancelRegistration = ct.Register(() =>

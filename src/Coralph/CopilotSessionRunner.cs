@@ -43,7 +43,7 @@ internal sealed class CopilotSessionRunner : IAsyncDisposable
             // Coralph runs unattended; models must not prompt for user input during a loop iteration.
             // Tool-use events are captured by CopilotSessionEventRouter via SessionConfig.OnEvent.
             session = await client.CreateSessionAsync(
-                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent));
+                CopilotClientFactory.CreateSessionConfig(opt, customTools, permissionPolicy.HandleAsync, router.HandleEvent, eventStream));
 
             return new CopilotSessionRunner(client, session, router, started);
         }

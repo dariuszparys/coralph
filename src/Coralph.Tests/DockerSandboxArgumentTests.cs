@@ -40,6 +40,26 @@ public sealed class DockerSandboxArgumentTests : IDisposable
     }
 
     [Fact]
+    public void BuildDockerRunProcessStartInfo_WithProviderOverrides_ForwardsArguments()
+    {
+        var psi = BuildProcessStartInfo(new LoopOptions
+        {
+            ProviderModelId = "gpt-5.4",
+            ProviderWireModel = "openrouter/gpt-5.4",
+            ProviderMaxPromptTokens = 100000,
+            ProviderMaxOutputTokens = 12000,
+            CopilotLogLevel = "debug"
+        });
+
+        var args = psi.ArgumentList.ToArray();
+        AssertArgumentPair(args, "--provider-model-id", "gpt-5.4");
+        AssertArgumentPair(args, "--provider-wire-model", "openrouter/gpt-5.4");
+        AssertArgumentPair(args, "--provider-max-prompt-tokens", "100000");
+        AssertArgumentPair(args, "--provider-max-output-tokens", "12000");
+        AssertArgumentPair(args, "--copilot-log-level", "debug");
+    }
+
+    [Fact]
     public void BuildDockerRunProcessStartInfo_AddsDockerHardeningDefaults()
     {
         var psi = BuildProcessStartInfo(new LoopOptions());

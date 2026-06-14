@@ -220,6 +220,15 @@ Control the model's reasoning budget (low, medium, or high). Omit to use the mod
 
 Passed as `SessionConfig.ReasoningEffort`. Not all models respect this setting.
 
+### Copilot SDK Diagnostics
+
+Coralph routes Copilot SDK diagnostics into the existing Serilog file sink at `logs/coralph-{date}.log` without writing those SDK logs to the normal console output:
+```bash
+./coralph --copilot-log-level debug
+```
+
+Supported SDK log levels are `all`, `debug`, `info`, `warning`, `error`, and `none`. Omit the option to use the SDK default.
+
 ### Hooks and User-Input Handlers
 
 The Copilot SDK exposes tool hooks through `SessionConfig.Hooks` and user-input callbacks through `SessionConfig.OnUserInputRequest`. Coralph intentionally does not configure them:
@@ -229,11 +238,13 @@ The Copilot SDK exposes tool hooks through `SessionConfig.Hooks` and user-input 
 
 ### OpenAI-Compatible Providers
 
-Use an OpenAI-compatible provider with optional base URL and wire API overrides:
+Use an OpenAI-compatible provider with optional base URL, wire API, model, and token-limit overrides:
 ```bash
 ./coralph --provider-type openai --provider-api-key sk-your-key \
 	--provider-base-url https://api.your-provider.example/v1 \
-	--provider-wire-api openai
+	--provider-wire-api responses \
+	--provider-model-id gpt-5.4 \
+	--provider-max-output-tokens 12000
 ```
 
 ### OpenRouter
@@ -244,9 +255,9 @@ Use an OpenAI-compatible provider with optional base URL and wire API overrides:
 # Minimal usage — model defaults to whatever the Copilot SDK selects
 ./coralph --provider-type openrouter --provider-api-key sk-or-xxxxx
 
-# Select a specific model via --provider-wire-api
+# Select a specific provider model via --provider-wire-model
 ./coralph --provider-type openrouter --provider-api-key sk-or-xxxxx \
-    --provider-wire-api anthropic/claude-3.5-sonnet
+    --provider-wire-model anthropic/claude-3.5-sonnet
 ```
 
 Or via `coralph.config.json`:
@@ -255,7 +266,9 @@ Or via `coralph.config.json`:
   "LoopOptions": {
     "ProviderType": "openrouter",
     "ProviderApiKey": "sk-or-xxxxx",
-    "ProviderWireApi": "anthropic/claude-3.5-sonnet"
+    "ProviderWireModel": "anthropic/claude-3.5-sonnet",
+    "ProviderMaxPromptTokens": 200000,
+    "ProviderMaxOutputTokens": 12000
   }
 }
 ```

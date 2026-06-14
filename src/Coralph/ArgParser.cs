@@ -42,6 +42,10 @@ internal static class ArgParser
         ApplyRequiredStringOption(result, optionSet.ProviderType, value => options.ProviderType = value, errorMessages, "--provider-type is required");
         ApplyRequiredStringOption(result, optionSet.ProviderBaseUrl, value => options.ProviderBaseUrl = value, errorMessages, "--provider-base-url is required");
         ApplyRequiredStringOption(result, optionSet.ProviderWireApi, value => options.ProviderWireApi = value, errorMessages, "--provider-wire-api is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderModelId, value => options.ProviderModelId = value, errorMessages, "--provider-model-id is required");
+        ApplyRequiredStringOption(result, optionSet.ProviderWireModel, value => options.ProviderWireModel = value, errorMessages, "--provider-wire-model is required");
+        ApplyPositiveIntOption(result.GetValueForOption(optionSet.ProviderMaxPromptTokens), value => options.ProviderMaxPromptTokens = value, errorMessages, "--provider-max-prompt-tokens must be an integer >= 1");
+        ApplyPositiveIntOption(result.GetValueForOption(optionSet.ProviderMaxOutputTokens), value => options.ProviderMaxOutputTokens = value, errorMessages, "--provider-max-output-tokens must be an integer >= 1");
         ApplyRequiredStringOption(result, optionSet.ProviderApiKey, value => options.ProviderApiKey = value, errorMessages, "--provider-api-key is required");
         ApplyRequiredStringOption(result, optionSet.PromptFile, value => options.PromptFile = value, errorMessages, "--prompt-file is required");
         ApplyRequiredStringOption(result, optionSet.ProgressFile, value => options.ProgressFile = value, errorMessages, "--progress-file is required");
@@ -176,6 +180,8 @@ internal static class ArgParser
             options.TelemetryCaptureContent = telemetryCaptureContent.Value;
         }
 
+        ApplyRequiredStringOption(result, optionSet.CopilotLogLevel, value => options.CopilotLogLevel = value.Trim(), errorMessages, "--copilot-log-level must not be empty");
+
         if (result.GetValueForOption(optionSet.DryRun))
         {
             options.DryRun = true;
@@ -256,6 +262,22 @@ internal static class ArgParser
         assign(value);
     }
 
+    private static void ApplyPositiveIntOption(int? value, Action<int> assign, List<string> errorMessages, string errorMessage)
+    {
+        if (!value.HasValue)
+        {
+            return;
+        }
+
+        if (value.Value < 1)
+        {
+            errorMessages.Add(errorMessage);
+            return;
+        }
+
+        assign(value.Value);
+    }
+
     private static string[] NormalizeMultiValueOption(IEnumerable<string> values)
     {
         var results = new List<string>();
@@ -291,6 +313,10 @@ internal static class ArgParser
             ProviderType = new Option<string?>("--provider-type", "Optional: provider type (e.g. openai, openrouter)");
             ProviderBaseUrl = new Option<string?>("--provider-base-url", "Optional: provider base URL (e.g. https://api.openai.com/v1/)");
             ProviderWireApi = new Option<string?>("--provider-wire-api", "Optional: provider wire API (e.g. responses)");
+            ProviderModelId = new Option<string?>("--provider-model-id", "Optional: provider model identifier override");
+            ProviderWireModel = new Option<string?>("--provider-wire-model", "Optional: provider wire model override");
+            ProviderMaxPromptTokens = new Option<int?>("--provider-max-prompt-tokens", "Optional: provider prompt token limit override");
+            ProviderMaxOutputTokens = new Option<int?>("--provider-max-output-tokens", "Optional: provider output token limit override");
             ProviderApiKey = new Option<string?>("--provider-api-key", "Optional: provider API key (e.g. for openrouter: sk-or-...)");
             PromptFile = new Option<string?>("--prompt-file", "Prompt file (default: prompt.md)");
             ProgressFile = new Option<string?>("--progress-file", "Progress file (default: progress.txt)");
@@ -332,6 +358,7 @@ internal static class ArgParser
             TelemetryOtlpEndpoint = new Option<string?>("--telemetry-otlp-endpoint", "Optional: OTLP HTTP endpoint for Copilot SDK telemetry (e.g. http://localhost:4318)");
             TelemetrySourceName = new Option<string?>("--telemetry-source-name", "Optional: source name for Copilot SDK telemetry spans");
             TelemetryCaptureContent = new Option<bool?>("--telemetry-capture-content", "Optional: include prompt/response content in Copilot SDK telemetry");
+            CopilotLogLevel = new Option<string?>("--copilot-log-level", "Optional: Copilot SDK diagnostic log level (all, debug, info, warning, error, none)");
             DryRun = new Option<bool>("--dry-run", "Execute the full loop but prevent any actual file writes or git commits (preview mode)");
         }
 
@@ -343,6 +370,10 @@ internal static class ArgParser
         internal Option<string?> ProviderType { get; }
         internal Option<string?> ProviderBaseUrl { get; }
         internal Option<string?> ProviderWireApi { get; }
+        internal Option<string?> ProviderModelId { get; }
+        internal Option<string?> ProviderWireModel { get; }
+        internal Option<int?> ProviderMaxPromptTokens { get; }
+        internal Option<int?> ProviderMaxOutputTokens { get; }
         internal Option<string?> ProviderApiKey { get; }
         internal Option<string?> PromptFile { get; }
         internal Option<string?> ProgressFile { get; }
@@ -378,6 +409,7 @@ internal static class ArgParser
         internal Option<string?> TelemetryOtlpEndpoint { get; }
         internal Option<string?> TelemetrySourceName { get; }
         internal Option<bool?> TelemetryCaptureContent { get; }
+        internal Option<string?> CopilotLogLevel { get; }
         internal Option<bool> DryRun { get; }
 
         internal IReadOnlyList<Option> AllOptions =>
@@ -390,6 +422,10 @@ internal static class ArgParser
             ProviderType,
             ProviderBaseUrl,
             ProviderWireApi,
+            ProviderModelId,
+            ProviderWireModel,
+            ProviderMaxPromptTokens,
+            ProviderMaxOutputTokens,
             ProviderApiKey,
             PromptFile,
             ProgressFile,
@@ -425,6 +461,7 @@ internal static class ArgParser
             TelemetryOtlpEndpoint,
             TelemetrySourceName,
             TelemetryCaptureContent,
+            CopilotLogLevel,
             DryRun
         ];
 
