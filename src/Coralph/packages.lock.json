@@ -4,9 +4,9 @@
     "net10.0": {
       "GitHub.Copilot.SDK": {
         "type": "Direct",
-        "requested": "[1.0.3, )",
-        "resolved": "1.0.3",
-        "contentHash": "jvYwY/czVrj/H0XKKhQ8N+WsODiHkrZqF5dsOCpqZIHXmo1K8W74ZGrFDfF4hjaWZKN4yQgKIFTpe2fYc7tbAw==",
+        "requested": "[1.0.4, )",
+        "resolved": "1.0.4",
+        "contentHash": "tFtrvaLLN/zXVQKQfH72B929Y6ggBE7X4rfaqrRhWnh4ITFXnpuBL+Lsl39aH/wn49jAEkANJl0OTCreSEzBOw==",
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.2"
